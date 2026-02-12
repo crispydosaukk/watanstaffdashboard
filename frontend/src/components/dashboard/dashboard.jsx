@@ -219,36 +219,40 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                               <>
                                 <button
                                   onClick={() => onReadyClick(item.order_number)}
-                                  className="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all"
+                                  className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
                                   title="Accept"
                                 >
-                                  <CheckCircle size={16} />
+                                  <CheckCircle size={14} />
+                                  <span className="text-[10px] font-black uppercase tracking-wider">Accept</span>
                                 </button>
                                 <button
                                   onClick={() => onUpdateStatus(item.order_number, 2)}
-                                  className="p-1.5 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 rounded-lg transition-all"
+                                  className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 rounded-lg transition-all flex items-center gap-1.5 border border-rose-500/20"
                                   title="Reject"
                                 >
-                                  <XCircle size={16} />
+                                  <XCircle size={14} />
+                                  <span className="text-[10px] font-black uppercase tracking-wider">Reject</span>
                                 </button>
                               </>
                             )}
                             {Number(item.order_status) === 1 && (
                               <button
                                 onClick={() => onUpdateStatus(item.order_number, 3)}
-                                className="p-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 rounded-lg transition-all"
+                                className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 rounded-lg transition-all flex items-center gap-1.5 border border-purple-500/20"
                                 title="Mark as Ready"
                               >
-                                <ShoppingBag size={16} />
+                                <ShoppingBag size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-wider">Ready</span>
                               </button>
                             )}
                             {Number(item.order_status) === 3 && (
                               <button
                                 onClick={() => onUpdateStatus(item.order_number, 4)}
-                                className="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all"
+                                className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
                                 title="Mark Collected"
                               >
-                                <CheckCircle size={16} />
+                                <CheckCircle size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-wider">Collected</span>
                               </button>
                             )}
                           </div>
@@ -575,6 +579,8 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
   const [loadingItems, setLoadingItems] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
+  const [isLoyaltyApplied, setIsLoyaltyApplied] = useState(false);
+  const [loyaltyValue, setLoyaltyValue] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -584,6 +590,22 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
       }
     }
   }, [isOpen, initialUserId]);
+
+  useEffect(() => {
+    if (isLoyaltyApplied && customer) {
+      const points = Number(customer.loyalty_points || 0);
+      const redeemPoints = Number(customer.loyalty_redeem_points || 10);
+      const redeemValue = Number(customer.loyalty_redeem_value || 1);
+
+      const cartTotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      const maxPointsValue = Math.floor(points / redeemPoints) * redeemValue;
+
+      const applyValue = Math.min(maxPointsValue, cartTotal);
+      setLoyaltyValue(applyValue);
+    } else {
+      setLoyaltyValue(0);
+    }
+  }, [cart, isLoyaltyApplied, customer]);
 
   useEffect(() => {
     if (localUserId) {
@@ -603,6 +625,8 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
     setSelectedCategory("");
     setSearchTerm("");
     setSuccessOrderNumber("");
+    setIsLoyaltyApplied(false);
+    setLoyaltyValue(0);
   };
 
   const fetchCategories = async () => {
@@ -664,6 +688,10 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
     }
   };
 
+  const toggleLoyalty = () => {
+    setIsLoyaltyApplied(!isLoyaltyApplied);
+  };
+
   const addToCart = (prod, qty = 1) => {
     const existing = cart.find(item => item.product_id === prod.id);
     if (existing) {
@@ -702,13 +730,14 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
     if (cart.length === 0) return;
     setLoading(true);
     try {
-      const res = await api.post("/create-order", {
+      const res = await api.post("/mobile/create-order", {
         customer_id: customer.id,
         payment_mode: 0, // COD
         instore: 1, // Default to Instore for Dashboard orders
         items: cart,
         order_source: 'Dashboard',
-        user_id: localUserId // Ensure order is linked to correct restaurant
+        user_id: localUserId, // Ensure order is linked to correct restaurant
+        loyalty_used: loyaltyValue
       });
 
       if (res.data.status === 1) {
@@ -979,9 +1008,46 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
 
                 <div className="p-5 bg-white/5 border-t border-white/10 space-y-4">
                   <div className="flex justify-between items-center">
+                    <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Subtotal</span>
+                    <span className="text-white text-sm font-bold">
+                      £{cart.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {customer && (
+                    <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Loyalty Credits</p>
+                          <p className="text-[9px] text-white/40 mt-1">{customer.loyalty_points || 0} points available</p>
+                        </div>
+                        {Number(customer.loyalty_points) >= (Number(customer.loyalty_redeem_points) || 10) ? (
+                          <button
+                            onClick={toggleLoyalty}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isLoyaltyApplied
+                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                              : "bg-emerald-500 text-white shadow-lg shadow-emerald-900/40"
+                              }`}
+                          >
+                            {isLoyaltyApplied ? "Remove" : "Claim"}
+                          </button>
+                        ) : (
+                          <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest border border-white/5 px-2 py-1 rounded-lg">Insufficient</span>
+                        )}
+                      </div>
+                      {isLoyaltyApplied && (
+                        <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                          <span className="text-rose-400 text-[10px] font-bold uppercase">Discount</span>
+                          <span className="text-rose-400 text-xs font-black">-£{Number(loyaltyValue).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-2">
                     <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Total Amount</span>
                     <span className="text-emerald-400 text-xl font-black">
-                      £{cart.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}
+                      £{(cart.reduce((s, i) => s + i.price * i.quantity, 0) - loyaltyValue).toFixed(2)}
                     </span>
                   </div>
                   {error && <p className="text-rose-400 text-[10px] font-bold bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 text-center">{error}</p>}
@@ -998,7 +1064,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div >
   );
 };
 
