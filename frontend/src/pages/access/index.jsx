@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Shield } from "lucide-react";
 
 export default function AccessManagement() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [openModal, setOpenModal] = useState(false); // create modal
   const [title, setTitle] = useState("");
   const [permissions, setPermissions] = useState([]);
@@ -95,7 +95,7 @@ export default function AccessManagement() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col pt-36 lg:pt-24 lg:pl-72">
+      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
 
           <motion.div

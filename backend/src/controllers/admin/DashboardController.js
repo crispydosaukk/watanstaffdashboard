@@ -12,7 +12,12 @@ export const getDashboardStats = async (req, res) => {
         const baseParams = isSuperAdmin ? [] : [userId];
 
         // Filter by Restaurant (Super Admin only)
-        const { startDate, endDate, restaurantId } = req.query;
+        // incoming filter parameters: dates are already handled above, but we also
+        // allow filtering by specific customer IDs (comma-separated) and by a
+        // time-of-day range.  These are only applied to the *selected range* queries
+        // (not lifetime stats) so that the dashboard can show data for particular
+        // customers/times on the chosen date.
+        const { startDate, endDate, restaurantId, customerIds, startTime, endTime } = req.query;
         let targetUserId = userId;
         let effectiveWhere = whereClause;
         let effectiveParams = [...baseParams];
@@ -21,6 +26,25 @@ export const getDashboardStats = async (req, res) => {
             effectiveWhere = "rd.user_id = ?";
             effectiveParams = [restaurantId];
             targetUserId = restaurantId;
+        }
+
+        // build extra SQL clauses for customer/time filters
+        let extraWhere = "";
+        const extraParams = [];
+        if (customerIds) {
+            const ids = customerIds
+                .split(",")
+                .map(i => parseInt(i, 10))
+                .filter(i => !isNaN(i));
+            if (ids.length) {
+                extraWhere += ` AND o.customer_id IN (${ids.map(() => "?").join(",")})`;
+                extraParams.push(...ids);
+            }
+        }
+        if (startTime && endTime) {
+            // basic validation: expect HH:MM(:SS) format
+            extraWhere += " AND TIME(o.created_at) >= ? AND TIME(o.created_at) <= ?";
+            extraParams.push(startTime, endTime);
         }
 
         // Parse Date or Range
@@ -101,7 +125,7 @@ export const getDashboardStats = async (req, res) => {
                 FROM orders o
                 JOIN products p ON o.product_id = p.id
                 JOIN restaurant_details rd ON p.user_id = rd.user_id
-                WHERE ${effectiveWhere} 
+                WHERE ${effectiveWhere} ${extraWhere}
                   AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
             `;
             const [[rangeStats]] = await conn.query(rangeStatsQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr]);
@@ -126,12 +150,11 @@ export const getDashboardStats = async (req, res) => {
                          FROM orders o
                          JOIN products p ON o.product_id = p.id
                          JOIN restaurant_details rd ON p.user_id = rd.user_id
-                         WHERE ${effectiveWhere} AND DATE(o.created_at) IN (?, ?)
-                         GROUP BY o.order_number
+                         WHERE ${effectiveWhere} AND DATE(o.created_at) IN (?, ?) ${extraWhere}                          GROUP BY o.order_number
                     ) as o
                     GROUP BY DATE(o.created_at), HOUR(o.created_at)
                 `;
-                const [rows] = await conn.query(hourlyQuery, [...effectiveParams, prevStartDateStr, targetStartDateStr]);
+                const [rows] = await conn.query(hourlyQuery, [...effectiveParams, prevStartDateStr, targetStartDateStr, ...extraParams]);
 
                 const map = {};
                 for (let i = 0; i < 24; i++) map[i] = { label: `${i}:00`, current: 0, previous: 0 };
@@ -158,7 +181,7 @@ export const getDashboardStats = async (req, res) => {
                          FROM orders o
                          JOIN products p ON o.product_id = p.id
                          JOIN restaurant_details rd ON p.user_id = rd.user_id
-                         WHERE ${effectiveWhere} AND (
+                         WHERE ${effectiveWhere} ${extraWhere} AND (
                              (DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?) OR
                              (DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?)
                          )
@@ -166,7 +189,7 @@ export const getDashboardStats = async (req, res) => {
                     ) as o
                     GROUP BY DATE(o.created_at)
                 `;
-                const [rows] = await conn.query(dailyQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, prevStartDateStr, prevEndDateStr]);
+                const [rows] = await conn.query(dailyQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, prevStartDateStr, prevEndDateStr, ...extraParams]);
 
                 // Map results
                 // Strategy: Create array of days for target range. Match previous by index.
@@ -210,13 +233,12 @@ export const getDashboardStats = async (req, res) => {
                         FROM orders o
                         JOIN products p ON o.product_id = p.id
                         JOIN restaurant_details rd ON p.user_id = rd.user_id
-                        WHERE ${effectiveWhere} AND DATE(o.created_at) = ?
-                        GROUP BY o.order_number
+                        WHERE ${effectiveWhere} AND DATE(o.created_at) = ? ${extraWhere}                         GROUP BY o.order_number
                     ) as unique_orders
                     GROUP BY HOUR(created_at)
                     ORDER BY unit ASC
                 `;
-                const [rows] = await conn.query(hourlyAvgQuery, [...effectiveParams, targetStartDateStr]);
+const [rows] = await conn.query(hourlyAvgQuery, [...effectiveParams, targetStartDateStr, ...extraParams]);
 
                 for (let i = 0; i < 24; i++) {
                     const row = rows.find(r => r.unit === i);
@@ -235,13 +257,12 @@ export const getDashboardStats = async (req, res) => {
                         FROM orders o
                         JOIN products p ON o.product_id = p.id
                         JOIN restaurant_details rd ON p.user_id = rd.user_id
-                        WHERE ${effectiveWhere} AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
-                        GROUP BY o.order_number
+                        WHERE ${effectiveWhere} AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ? ${extraWhere}                         GROUP BY o.order_number
                     ) as unique_orders
                     GROUP BY DATE(created_at)
                     ORDER BY date ASC
                 `;
-                const [rows] = await conn.query(dailyAvgQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr]);
+                const [rows] = await conn.query(dailyAvgQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, ...extraParams]);
 
                 // Fill gaps
                 let curr = new Date(targetStartDateStr);
@@ -270,7 +291,7 @@ export const getDashboardStats = async (req, res) => {
                 GROUP BY DATE(o.created_at)
                 ORDER BY date ASC
             `;
-            const [ordersTrendRows] = await conn.query(ordersTrendQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr]);
+            const [ordersTrendRows] = await conn.query(ordersTrendQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, ...extraParams]);
 
             // Normalize dates to ensure continuity for graphs
             let ordersTrendData = [];
@@ -304,11 +325,10 @@ export const getDashboardStats = async (req, res) => {
                     JOIN products p ON o.product_id = p.id
                     JOIN restaurant_details rd ON p.user_id = rd.user_id
                     WHERE ${effectiveWhere} 
-                      AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
-                    GROUP BY DATE(o.created_at)
+                      AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?                     GROUP BY DATE(o.created_at)
                     ORDER BY date ASC
                 `;
-                const [wRows] = await conn.query(weeklyQuery, [...effectiveParams, sStr, eStr]);
+                const [wRows] = await conn.query(weeklyQuery, [...effectiveParams, sStr, eStr, ...extraParams]);
 
                 let currW = new Date(sStr);
                 const endW = new Date(eStr);
@@ -335,12 +355,11 @@ export const getDashboardStats = async (req, res) => {
                 JOIN restaurant_details rd ON p.user_id = rd.user_id
                 LEFT JOIN categories c ON p.cat_id = c.id
                 WHERE ${effectiveWhere}
-                  AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
-                GROUP BY p.id, p.product_name, p.product_image, p.product_price, p.product_desc, c.category_name
+                  AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?                 GROUP BY p.id, p.product_name, p.product_image, p.product_price, p.product_desc, c.category_name
                 ORDER BY count DESC
                 LIMIT 10
             `;
-            const [topProductsRows] = await conn.query(topProductsQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr]);
+            const [topProductsRows] = await conn.query(topProductsQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, ...extraParams]);
 
 
             // 4. RECENT ORDERS
@@ -357,11 +376,11 @@ export const getDashboardStats = async (req, res) => {
                 JOIN products p ON o.product_id = p.id
                 JOIN restaurant_details rd ON p.user_id = rd.user_id
                 LEFT JOIN customers c ON o.customer_id = c.id
-                WHERE ${effectiveWhere} AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+                WHERE ${effectiveWhere} AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ? ${extraWhere} ${extraWhere} ${extraWhere}
                 GROUP BY o.order_number
                 ORDER BY MAX(o.created_at) DESC
             `;
-            const [recentOrders] = await conn.query(recentOrdersQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr]);
+            const [recentOrders] = await conn.query(recentOrdersQuery, [...effectiveParams, targetStartDateStr, targetEndDateStr, ...extraParams]);
 
             // 5. NEW METRICS & EXTRAS
             let pendingOrdersVal = 0;

@@ -12,7 +12,7 @@ import { usePopup } from "../../context/PopupContext";
 
 export default function Settings() {
   const { showPopup } = usePopup();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [form, setForm] = useState({
     signup_bonus_amount: "",
@@ -125,7 +125,7 @@ export default function Settings() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col pt-36 lg:pt-24 lg:pl-72">
+      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
           <div className="max-w-7xl mx-auto">
             {/* Page Header */}

@@ -17,7 +17,7 @@ export default function Restuarent() {
   const { showPopup } = usePopup();
   const API = import.meta.env.VITE_API_URL;
   const API_BASE = API ? API.replace(/\/api\/?$/i, "") : "";
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [info, setInfo] = useState({
     restaurant_name: "",
     address: "",
@@ -265,7 +265,7 @@ export default function Restuarent() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="pt-36 lg:pt-24 pb-12 px-4 sm:px-6 lg:pl-80 lg:pr-8">
+      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
         <div className="max-w-7xl mx-auto">
 
           {/* Page Header */}

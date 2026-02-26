@@ -207,7 +207,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
 
 export default function Orders() {
   const { showPopup } = usePopup();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -389,7 +389,7 @@ export default function Orders() {
         orderNumber={orderForReady}
       />
 
-      <div className="flex-1 flex flex-col pt-36 lg:pt-24 lg:pl-72">
+      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
 
           {/* Top Header */}

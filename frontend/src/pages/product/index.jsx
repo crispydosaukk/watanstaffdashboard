@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
@@ -15,7 +17,7 @@ export default function ProductPage() {
   const API = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -625,7 +627,7 @@ export default function ProductPage() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col pt-36 lg:pt-24 lg:pl-72">
+      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
           <div className="max-w-7xl mx-auto space-y-8">
             {/* Header */}
@@ -752,112 +754,169 @@ export default function ProductPage() {
                             >
                               {filteredProducts.map((p, index) => (
                                 <Draggable
-                                  key={p.id}
+                                  key={String(p.id)}
                                   draggableId={String(p.id)}
                                   index={index}
                                 >
-                                  {(drag) => (
-                                    <tr
-                                      ref={drag.innerRef}
-                                      {...drag.draggableProps}
-                                      className={`transition-colors ${p.status === 0 ? "opacity-60" : ""
-                                        } hover:bg-white/5`}
-                                    >
-                                      {/* Drag Handle */}
-                                      <td {...drag.dragHandleProps} className="px-6 py-4 cursor-grab text-white/30 hover:text-white/60">
-                                        <GripVertical size={20} />
-                                      </td>
+                                  {(drag, snapshot) => {
+                                    const rowContent = (
+                                      <tr
+                                        ref={drag.innerRef}
+                                        {...drag.draggableProps}
+                                        className={`transition-colors ${p.status === 0 ? "opacity-60" : ""
+                                          } hover:bg-white/5 ${snapshot.isDragging
+                                            ? "bg-white/20 backdrop-blur-xl border-y border-white/30 z-[9999]"
+                                            : ""
+                                          }`}
+                                        style={{
+                                          ...drag.draggableProps.style,
+                                          backgroundColor: snapshot.isDragging
+                                            ? "rgba(255, 255, 255, 0.15)"
+                                            : undefined,
+                                          display: snapshot.isDragging ? "table" : "table-row",
+                                          tableLayout: "fixed",
+                                          width: snapshot.isDragging
+                                            ? drag.draggableProps.style.width || "100%"
+                                            : "auto",
+                                        }}
+                                      >
+                                        <td
+                                          {...drag.dragHandleProps}
+                                          className="px-6 py-4 cursor-grab text-white/30 hover:text-white/60 w-12"
+                                        >
+                                          <GripVertical size={20} />
+                                        </td>
 
-                                      <td className="px-6 py-4">
-                                        <div className="h-12 w-12 rounded-lg bg-white/10 border border-white/10 overflow-hidden">
-                                          <img
-                                            src={`${API_BASE}/uploads/${p.image}`}
-                                            className="h-full w-full object-cover"
-                                            alt={p.name}
-                                            onError={(e) => e.target.style.display = 'none'}
-                                          />
-                                        </div>
-                                      </td>
-
-                                      <td className="px-6 py-4 max-w-[260px]">
-                                        <div className="font-semibold text-white truncate text-base">{p.name}</div>
-                                        <div className="text-xs text-white/50 truncate mt-0.5">{p.description}</div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="flex gap-1.5 flex-wrap">
-                                          {Array.isArray(p.contains) && p.contains.map((c) => {
-                                            const icon = CONTAINS_OPTIONS.find((i) => i.key === c);
-                                            return icon ? (
-                                              <img key={c} src={icon.icon} className="h-5 w-5 drop-shadow-sm" title={c} />
-                                            ) : null;
-                                          })}
-                                        </div>
-                                      </td>
-                                      <td className="px-6 py-4">
-                                        <div className="font-bold text-white text-base">{formatGBP(p.price)}</div>
-                                        {p.discountPrice && Number(p.discountPrice) > 0 && (
-                                          <div className="text-xs text-white/50 line-through">
-                                            {formatGBP(p.discountPrice)}
+                                        <td className="px-6 py-4 w-24">
+                                          <div className="h-12 w-12 rounded-lg bg-white/10 border border-white/10 overflow-hidden flex-shrink-0">
+                                            <img
+                                              src={`${API_BASE}/uploads/${p.image}`}
+                                              className="h-full w-full object-cover"
+                                              alt={p.name}
+                                              onError={(e) => (e.target.style.display = "none")}
+                                            />
                                           </div>
-                                        )}
-                                      </td>
+                                        </td>
 
-                                      <td className="px-6 py-4 text-white/80 font-medium">
-                                        {categories.find((c) => c.id == p.cat_id)?.name || "—"}
-                                      </td>
-
-                                      <td className="px-6 py-4 text-center">
-                                        <label className="inline-flex items-center cursor-pointer">
-                                          <input
-                                            type="checkbox"
-                                            checked={p.status === 1}
-                                            onChange={() => handleToggleStatus(p)}
-                                            className="sr-only peer"
-                                          />
-                                          <div className="w-11 h-6 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10 shadow-inner">
-                                            <div className="absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full transition-all peer-checked:translate-x-5 shadow-sm" />
+                                        <td className="px-6 py-4 max-w-[260px]">
+                                          <div className="font-semibold text-white truncate text-base">
+                                            {p.name}
                                           </div>
-                                        </label>
-                                      </td>
+                                          <div className="text-xs text-white/50 truncate mt-0.5">
+                                            {p.description}
+                                          </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <div className="flex gap-1.5 flex-wrap">
+                                            {Array.isArray(p.contains) &&
+                                              p.contains.map((c) => {
+                                                const icon = CONTAINS_OPTIONS.find((i) => i.key === c);
+                                                return icon ? (
+                                                  <img
+                                                    key={c}
+                                                    src={icon.icon}
+                                                    className="h-5 w-5 drop-shadow-sm"
+                                                    title={c}
+                                                  />
+                                                ) : null;
+                                              })}
+                                          </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <div className="font-bold text-white text-base">
+                                            {formatGBP(p.price)}
+                                          </div>
+                                          {p.discountPrice && Number(p.discountPrice) > 0 && (
+                                            <div className="text-xs text-white/50 line-through">
+                                              {formatGBP(p.discountPrice)}
+                                            </div>
+                                          )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <div className="text-white/70">
+                                            {categories.find((c) => c.id == p.cat_id)?.name || "—"}
+                                          </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                          <label className="inline-flex items-center cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={p.status === 1}
+                                              onChange={() => handleToggleStatus(p)}
+                                              className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10 shadow-inner">
+                                              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition transform peer-checked:translate-x-5 shadow-sm" />
+                                            </div>
+                                          </label>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                          <div className="flex items-center gap-3 justify-center">
+                                            <motion.button
+                                              whileHover={{ scale: 1.1 }}
+                                              whileTap={{ scale: 0.9 }}
+                                              onClick={() => {
+                                                setForm({
+                                                  id: p.id,
+                                                  name: p.name,
+                                                  description: p.description,
+                                                  price: p.price,
+                                                  discountPrice: calculateDiscountPercent(
+                                                    p.price,
+                                                    p.discountPrice
+                                                  ),
+                                                  cat_id: p.cat_id,
+                                                  contains: p.contains || [],
+                                                  image: null,
+                                                  oldImage: p.image,
+                                                });
+                                                if (isMobile) {
+                                                  setShowModal(true);
+                                                  setModalSlideIn(false);
+                                                  setTimeout(() => setModalSlideIn(true), 20);
+                                                } else {
+                                                  setShowModal(true);
+                                                }
+                                              }}
+                                              className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded-lg border border-blue-500/30 transition-all"
+                                            >
+                                              <Edit size={16} />
+                                            </motion.button>
+                                            <motion.button
+                                              whileHover={{ scale: 1.1 }}
+                                              whileTap={{ scale: 0.9 }}
+                                              onClick={() => handleDelete(p.id)}
+                                              className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg border border-red-500/30 transition-all"
+                                            >
+                                              <Trash2 size={16} />
+                                            </motion.button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
 
-                                      <td className="px-6 py-4 text-center">
-                                        <div className="flex items-center justify-center gap-3">
-                                          <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={() => {
-                                              setForm({
-                                                id: p.id,
-                                                name: p.name,
-                                                description: p.description,
-                                                price: p.price,
-                                                discountPrice: calculateDiscountPercent(p.price, p.discountPrice),
-                                                cat_id: p.cat_id,
-                                                contains: p.contains || [],
-                                                image: null,
-                                                oldImage: p.image,
-                                              });
-                                              setShowModal(true);
-                                            }}
-                                            className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/40 rounded-lg border border-blue-500/30 transition shadow-sm"
-                                          >
-                                            <Edit size={16} />
-                                          </motion.button>
+                                    if (snapshot.isDragging) {
+                                      return createPortal(
+                                        <table
+                                          style={{
+                                            borderCollapse: "collapse",
+                                            width: drag.draggableProps.style.width || "100%",
+                                            zIndex: 10000,
+                                            position: "fixed",
+                                            pointerEvents: "none",
+                                          }}
+                                        >
+                                          <tbody>{rowContent}</tbody>
+                                        </table>,
+                                        document.body
+                                      );
+                                    }
 
-                                          <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={() => handleDelete(p.id)}
-                                            className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/40 rounded-lg border border-red-500/30 transition shadow-sm"
-                                          >
-                                            <Trash2 size={16} />
-                                          </motion.button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  )}
+                                    return rowContent;
+                                  }}
                                 </Draggable>
                               ))}
+
 
                               {provided.placeholder}
                             </tbody>

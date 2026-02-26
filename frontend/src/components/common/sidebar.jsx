@@ -70,7 +70,7 @@ export default function Sidebar({ open, onClose }) {
   const location = useLocation();
 
   useEffect(() => {
-    if (open) onClose?.();
+    if (open && window.innerWidth < 1024) onClose?.();
   }, [location.pathname]);
 
   const escHandler = useCallback(
@@ -173,9 +173,9 @@ export default function Sidebar({ open, onClose }) {
           fixed left-0 bottom-0 z-[60] lg:z-40 w-72
           bg-gradient-to-br from-[#1A4D3A] to-[#8B1538]
           shadow-2xl
-          transform transition-transform duration-300
+          transform transition-all duration-300 ease-in-out
           top-0 lg:top-16
-          ${open ? "translate-x-0 lg:-translate-x-full" : "-translate-x-full lg:translate-x-0"}
+          ${open ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* Mobile Sidebar Header (Logo + Close) */}

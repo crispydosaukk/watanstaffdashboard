@@ -1,5 +1,7 @@
 // src/pages/admin/Category.jsx
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
@@ -14,7 +16,7 @@ export default function Category() {
   const API_BASE = API ? API.replace(/\/api\/?$/i, "") : "";
   const token = localStorage.getItem("token");
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
@@ -507,7 +509,7 @@ export default function Category() {
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col pt-36 lg:pt-24 lg:pl-72">
+      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
           <div className="max-w-7xl mx-auto">
             {/* PAGE HEADER */}
@@ -612,106 +614,138 @@ export default function Category() {
                         >
                           {filteredCategories.map((item, index) => (
                             <Draggable
-                              key={item.id}
+                              key={String(item.id)}
                               draggableId={String(item.id)}
                               index={index}
                             >
-                              {(dragProvided) => (
-                                <tr
-                                  ref={dragProvided.innerRef}
-                                  {...dragProvided.draggableProps}
-                                  className={`${item.status === 0 ? "opacity-60" : ""
-                                    } hover:bg-white/5 transition-colors`}
-                                >
-                                  {/* DRAG HANDLE */}
-                                  <td
-                                    {...dragProvided.dragHandleProps}
-                                    className="px-6 py-4 cursor-grab text-white/30 hover:text-white/60"
+                              {(dragProvided, snapshot) => {
+                                const rowContent = (
+                                  <tr
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    className={`${item.status === 0 ? "opacity-60" : ""
+                                      } hover:bg-white/5 transition-colors ${snapshot.isDragging
+                                        ? "bg-white/20 backdrop-blur-xl border-y border-white/30 z-[9999]"
+                                        : ""
+                                      }`}
+                                    style={{
+                                      ...dragProvided.draggableProps.style,
+                                      backgroundColor: snapshot.isDragging
+                                        ? "rgba(255, 255, 255, 0.15)"
+                                        : undefined,
+                                      display: snapshot.isDragging ? "table" : "table-row",
+                                      tableLayout: "fixed",
+                                      width: snapshot.isDragging
+                                        ? dragProvided.draggableProps.style.width || "100%"
+                                        : "auto",
+                                    }}
                                   >
-                                    <GripVertical size={20} />
-                                  </td>
+                                    <td
+                                      {...dragProvided.dragHandleProps}
+                                      className="px-6 py-4 cursor-grab text-white/30 hover:text-white/60 w-10"
+                                    >
+                                      <GripVertical size={20} />
+                                    </td>
 
-                                  {/* IMAGE */}
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-14 w-14 rounded-lg overflow-hidden bg-white/10 border border-white/10 shadow-md">
-                                        {item.image ? (
-                                          <img
-                                            src={`${API_BASE}/uploads/${item.image}`}
-                                            className="h-full w-full object-cover"
-                                            alt={item.name}
-                                          />
-                                        ) : (
-                                          <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
-                                            No img
+                                    <td className="px-6 py-4">
+                                      <div className="flex items-center gap-4">
+                                        <div className="h-14 w-14 rounded-lg overflow-hidden bg-white/10 border border-white/10 shadow-md flex-shrink-0">
+                                          {item.image ? (
+                                            <img
+                                              src={`${API_BASE}/uploads/${item.image}`}
+                                              className="h-full w-full object-cover"
+                                              alt={item.name}
+                                            />
+                                          ) : (
+                                            <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
+                                              No img
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="text-sm min-w-0">
+                                          <div className="font-semibold text-white truncate">
+                                            {item.name}
                                           </div>
-                                        )}
-                                      </div>
-                                      <div className="text-sm">
-                                        <div className="font-semibold text-white">
-                                          {item.name}
-                                        </div>
-                                        <div className="text-white/40 text-xs">
-                                          ID: {item.id}
+                                          <div className="text-white/40 text-xs">
+                                            ID: {item.id}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  </td>
+                                    </td>
 
-                                  {/* NAME */}
-                                  <td className="px-6 py-4 text-white font-medium">{item.name}</td>
+                                    <td className="px-6 py-4 text-white font-medium truncate">
+                                      {item.name}
+                                    </td>
 
-                                  {/* STATUS SWITCH */}
-                                  <td className="px-6 py-4 text-center">
-                                    <label className="inline-flex items-center cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={item.status === 1}
-                                        onChange={() => handleToggleStatus(item)}
-                                        className="sr-only peer"
-                                      />
-                                      <div className="w-11 h-6 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10 shadow-inner">
-                                        <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition transform peer-checked:translate-x-5 shadow-sm" />
+                                    <td className="px-6 py-4 text-center">
+                                      <label className="inline-flex items-center cursor-pointer">
+                                        <input
+                                          type="checkbox"
+                                          checked={item.status === 1}
+                                          onChange={() => handleToggleStatus(item)}
+                                          className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10 shadow-inner">
+                                          <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition transform peer-checked:translate-x-5 shadow-sm" />
+                                        </div>
+                                      </label>
+                                    </td>
+
+                                    <td className="px-6 py-4 text-center">
+                                      <div className="flex items-center gap-3 justify-center">
+                                        <motion.button
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          onClick={() => {
+                                            if (confirm(`Add remaining products for "${item.name}"?`)) {
+                                              handleImportProducts(item.name, item.id);
+                                            }
+                                          }}
+                                          className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded-lg border border-blue-500/30 transition-all"
+                                          title="Import missing products"
+                                        >
+                                          <Upload size={16} />
+                                        </motion.button>
+                                        <motion.button
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          onClick={() => handleEdit(item)}
+                                          className="p-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 rounded-lg border border-emerald-500/30 transition-all"
+                                        >
+                                          <Pencil size={16} />
+                                        </motion.button>
+                                        <motion.button
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                          onClick={() => handleDelete(item.id)}
+                                          className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg border border-red-500/30 transition-all"
+                                        >
+                                          <Trash2 size={16} />
+                                        </motion.button>
                                       </div>
-                                    </label>
-                                  </td>
+                                    </td>
+                                  </tr>
+                                );
 
-                                  {/* ACTION BUTTONS */}
-                                  <td className="px-6 py-4 text-center">
-                                    <div className="flex items-center gap-3 justify-center">
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={() => {
-                                          if (confirm(`Add remaining products for "${item.name}"?`)) {
-                                            handleImportProducts(item.name, item.id);
-                                          }
-                                        }}
-                                        className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded-lg border border-blue-500/30 transition-all"
-                                        title="Import missing products"
-                                      >
-                                        <Upload size={16} />
-                                      </motion.button>
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={() => handleEdit(item)}
-                                        className="p-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 rounded-lg border border-emerald-500/30 transition-all"
-                                      >
-                                        <Pencil size={16} />
-                                      </motion.button>
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={() => handleDelete(item.id)}
-                                        className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg border border-red-500/30 transition-all"
-                                      >
-                                        <Trash2 size={16} />
-                                      </motion.button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
+                                if (snapshot.isDragging) {
+                                  return createPortal(
+                                    <table
+                                      style={{
+                                        borderCollapse: "collapse",
+                                        width: dragProvided.draggableProps.style.width || "100%",
+                                        zIndex: 10000,
+                                        position: "fixed",
+                                        pointerEvents: "none",
+                                      }}
+                                    >
+                                      <tbody>{rowContent}</tbody>
+                                    </table>,
+                                    document.body
+                                  );
+                                }
+
+                                return rowContent;
+                              }}
                             </Draggable>
                           ))}
 
@@ -734,12 +768,12 @@ export default function Category() {
         </main>
 
         <Footer />
-      </div>
+      </div >
 
       {/* ==========================
           ADD / EDIT MODAL
       ========================== */}
-      <AnimatePresence>
+      < AnimatePresence >
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
@@ -852,13 +886,14 @@ export default function Category() {
               </form>
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        )
+        }
+      </AnimatePresence >
 
       {/* ==========================
           GLOBAL SEARCH MODAL
       ========================== */}
-      <AnimatePresence>
+      < AnimatePresence >
         {showSearchModal && (
           <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 p-4">
             <motion.div
@@ -932,7 +967,7 @@ export default function Category() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence >
+    </div >
   );
 }

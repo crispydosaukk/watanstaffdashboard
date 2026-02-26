@@ -12,6 +12,7 @@ import Header from "../common/header.jsx";
 import Sidebar from "../common/sidebar.jsx";
 import Footer from "../common/footer.jsx";
 import ReadyInModal from "../common/ReadyInModal.jsx";
+import DateTimeRangeModal from "../common/DateTimeRangeModal.jsx";
 import api from "../../api.js";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -1072,7 +1073,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
 // --- Main Dashboard ---
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stats, setStats] = useState({
     total_bookings: 0,
     total_revenue: 0,
@@ -1102,6 +1103,7 @@ export default function Dashboard() {
   const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
   const [orderForReady, setOrderForReady] = useState(null);
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
+  const [isDateTimeFilterModalOpen, setIsDateTimeFilterModalOpen] = useState(false);
 
   // Restaurant Filter State (Super Admin)
   const [restaurants, setRestaurants] = useState([]);
@@ -1270,6 +1272,34 @@ export default function Dashboard() {
     }
   };
 
+  const handleApplyDateTimeFilters = (filters) => {
+    // Apply the filters: date range, customer IDs, and time range
+    const startDate = filters.startDate;
+    const endDate = filters.endDate;
+    const label = startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+
+    setDateRange({ start: startDate, end: endDate, label });
+
+    // Make API call with customer and time filters
+    const params = new URLSearchParams();
+    params.append('startDate', startDate);
+    params.append('endDate', endDate);
+    if (filters.customerIds) params.append('customerIds', filters.customerIds);
+    if (filters.startTime) params.append('startTime', filters.startTime);
+    if (filters.endTime) params.append('endTime', filters.endTime);
+    if (selectedRestaurant) params.append('restaurantId', selectedRestaurant);
+
+    setLoading(true);
+    api.get(`/dashboard-stats?${params.toString()}`)
+      .then(res => {
+        if (res.data.status === 1) {
+          setStats(res.data.data);
+        }
+      })
+      .catch(err => console.error("Failed to fetch filtered stats", err))
+      .finally(() => setLoading(false));
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(amount) || 0);
   };
@@ -1370,7 +1400,7 @@ export default function Dashboard() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className="pt-36 lg:pt-24 pb-12 px-4 sm:px-6 lg:pl-80 lg:pr-8">
+      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
         <div className="max-w-7xl mx-auto">
 
           {/* Header Section */}
@@ -1384,8 +1414,11 @@ export default function Dashboard() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Super Admin Buttons (Matches reference image style) */}
-              <button className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider">
-                <Calendar size={18} /> Today <ChevronDown size={14} />
+              <button
+                onClick={() => setIsDateTimeFilterModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider"
+              >
+                <Calendar size={18} /> {dateRange.label} <ChevronDown size={14} />
               </button>
               <button className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider">
                 <ArrowRight className="rotate-90" size={18} /> Export
@@ -1800,6 +1833,13 @@ export default function Dashboard() {
           }
         }}
         orderNumber={orderForReady}
+      />
+
+      {/* Date Time Range Filter Modal */}
+      <DateTimeRangeModal
+        isOpen={isDateTimeFilterModalOpen}
+        onClose={() => setIsDateTimeFilterModalOpen(false)}
+        onApplyFilters={handleApplyDateTimeFilters}
       />
 
     </div>
