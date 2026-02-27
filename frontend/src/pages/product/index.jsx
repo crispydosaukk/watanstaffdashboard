@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Plus, X, Edit, Trash2, Save, Upload, Filter,
-  GripVertical, DollarSign, Tag, Image as ImageIcon, AlertCircle
+  GripVertical, PoundSterling, Tag, Image as ImageIcon, AlertCircle
 } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
 
@@ -1007,7 +1007,7 @@ export default function ProductPage() {
                   <div>
                     <label className="text-sm font-medium text-white/80 mb-2 block">Price (£)</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                      <PoundSterling className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                       <input
                         type="number"
                         step="0.01"

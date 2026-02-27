@@ -6,7 +6,7 @@ import Footer from "../../components/common/footer.jsx";
 import api from "../../api.js";
 import ReadyInModal from "../../components/common/ReadyInModal.jsx";
 import {
-  Search, RefreshCw, Filter, Calendar, DollarSign, User, Truck,
+  Search, RefreshCw, Filter, Calendar, PoundSterling, User, Truck,
   MapPin, Phone, Car, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, CreditCard, Eye, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

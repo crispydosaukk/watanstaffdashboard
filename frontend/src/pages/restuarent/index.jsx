@@ -13,6 +13,26 @@ import { usePopup } from "../../context/PopupContext";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "" }) => (
+  <div className={`group ${className}`}>
+    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
+      {Icon && <Icon size={16} className="text-emerald-300" />}
+      {label}
+    </label>
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white placeholder-white/50 
+                 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 
+                 transition-all duration-200 hover:border-white/30 shadow-lg"
+      />
+    </div>
+  </div>
+);
+
 export default function Restuarent() {
   const { showPopup } = usePopup();
   const API = import.meta.env.VITE_API_URL;
@@ -239,26 +259,6 @@ export default function Restuarent() {
       setSaving(false);
     }
   }
-
-  const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "" }) => (
-    <div className={`group ${className}`}>
-      <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
-        {Icon && <Icon size={16} className="text-emerald-300" />}
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white placeholder-white/50 
-                   focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 
-                   transition-all duration-200 hover:border-white/30 shadow-lg"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900">

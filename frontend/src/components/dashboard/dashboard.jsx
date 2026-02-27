@@ -5,7 +5,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   ShoppingBag, Users, Store, UserPlus, ArrowUp, ArrowRight, CheckCircle, Clock, Eye, X,
-  Calendar, DollarSign, TrendingUp, CreditCard, ChevronDown, PoundSterling, Package,
+  Calendar, PoundSterling, TrendingUp, CreditCard, ChevronDown, Package,
   RotateCcw, AlertCircle, Box, Truck, XCircle, Plus, Phone
 } from "lucide-react";
 import Header from "../common/header.jsx";
@@ -1507,7 +1507,7 @@ export default function Dashboard() {
               title="Revenue"
               value={formatCurrency(todayRevenueTotal)}
               subtext={dateRange.label}
-              icon={DollarSign}
+              icon={PoundSterling}
               colorClass="bg-emerald-500/20 border border-emerald-400/30"
               delay={0.7}
               trend="0%"
