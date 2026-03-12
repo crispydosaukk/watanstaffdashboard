@@ -1,4 +1,39 @@
 import React, { useEffect, useState, useRef } from "react";
+
+// CustomDropdown component for glassy select
+function CustomDropdown({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const handleSelect = (v) => {
+    setOpen(false);
+    onChange({ target: { value: v } });
+  };
+  const selected = options.find(o => o.value === value);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="w-full px-4 py-3 bg-white/10 border-2 border-white/20 rounded-xl text-white font-semibold text-left focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 transition-all backdrop-blur-md"
+        onClick={() => setOpen(o => !o)}
+      >
+        {selected ? selected.label : "Select..."}
+        <span className="float-right">▼</span>
+      </button>
+      {open && (
+        <div className="absolute z-10 left-0 right-0 mt-2 bg-gray-900 border-2 border-white/20 rounded-xl shadow-2xl">
+          {options.map(opt => (
+            <div
+              key={opt.value}
+              className="px-4 py-3 cursor-pointer text-white font-semibold hover:bg-emerald-500/20 transition-all"
+              onClick={() => handleSelect(opt.value)}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
@@ -7,17 +42,19 @@ import api from "../../api.js";
 import {
   Store, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Linkedin,
   ParkingCircle, Upload, X, Clock, Plus, Trash2, Save, Image as ImageIcon,
-  CheckCircle2, AlertCircle, Calendar
+  CheckCircle2, AlertCircle, Calendar, Utensils, ChefHat, Pizza, Soup, Flame,
+  Truck, Bike, ShoppingCart, Globe
 } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "" }) => (
+const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "", required = false }) => (
   <div className={`group ${className}`}>
     <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
       {Icon && <Icon size={16} className="text-emerald-300" />}
       {label}
+      {required && <span className="text-white">*</span>}
     </label>
     <div className="relative">
       <input
@@ -54,7 +91,16 @@ export default function Restuarent() {
     longitude: "",
     photo: "",
     stripe_secret_key: "",
-    stripe_publishable_key: ""
+    stripe_publishable_key: "",
+    food_type: [],
+    is_halal: 0,
+    cuisine_type: [],
+    google_review_link: "",
+    website_url: "",
+    delivery_partner_1_url: "",
+    delivery_partner_2_url: "",
+    delivery_partner_3_url: "",
+    delivery_partner_4_url: ""
   });
 
   const [photoFile, setPhotoFile] = useState(null);
@@ -172,6 +218,15 @@ export default function Restuarent() {
       longitude: info.longitude || null,
       stripe_secret_key: info.stripe_secret_key || null,
       stripe_publishable_key: info.stripe_publishable_key || null,
+      food_type: Array.isArray(info.food_type) ? info.food_type.join(",") : "",
+      cuisine_type: Array.isArray(info.cuisine_type) ? info.cuisine_type.join(",") : "",
+      google_review_link: info.google_review_link || null,
+      website_url: info.website_url || null,
+      delivery_partner_1_url: info.delivery_partner_1_url || null,
+      delivery_partner_2_url: info.delivery_partner_2_url || null,
+      delivery_partner_3_url: info.delivery_partner_3_url || null,
+      delivery_partner_4_url: info.delivery_partner_4_url || null,
+      is_halal: info.is_halal,
       timings: timings.map((t) => ({
         day: t.day,
         opening_time: toSqlTime(t.start),
@@ -184,15 +239,23 @@ export default function Restuarent() {
   function apiToFrontend(restaurant) {
     if (!restaurant) return;
 
+    let foodTypeArr = [];
+    if (Array.isArray(restaurant.food_type)) {
+      foodTypeArr = restaurant.food_type;
+    } else if (typeof restaurant.food_type === "string" && restaurant.food_type.length > 0) {
+      foodTypeArr = restaurant.food_type.split(",").map(v => Number(v)).filter(v => !isNaN(v));
+    } else if (typeof restaurant.food_type === "number") {
+      foodTypeArr = [restaurant.food_type];
+    }
     setInfo({
       restaurant_name: restaurant.restaurant_name ?? "",
       address: restaurant.restaurant_address ?? "",
       phone: restaurant.restaurant_phonenumber ?? "",
       email: restaurant.restaurant_email ?? "",
       facebook: restaurant.restaurant_facebook ?? "",
-      twitter: restaurant.restaurant_twitter ?? "",
-      instagram: restaurant.restaurant_instagram ?? "",
-      linkedin: restaurant.restaurant_linkedin ?? "",
+      twitter: restaurant.twitter ?? "",
+      instagram: restaurant.instagram ?? "",
+      linkedin: restaurant.linkedin ?? "",
       parking_info: restaurant.parking_info ?? "",
       instore: !!restaurant.instore,
       kerbside: !!restaurant.kerbside,
@@ -200,7 +263,16 @@ export default function Restuarent() {
       longitude: restaurant.longitude ?? "",
       photo: restaurant.restaurant_photo ?? "",
       stripe_secret_key: restaurant.stripe_secret_key ?? "",
-      stripe_publishable_key: restaurant.stripe_publishable_key ?? ""
+      stripe_publishable_key: restaurant.stripe_publishable_key ?? "",
+      food_type: foodTypeArr,
+      cuisine_type: Array.isArray(restaurant.cuisine_type) ? restaurant.cuisine_type : (typeof restaurant.cuisine_type === "string" ? restaurant.cuisine_type.split(",").map(v => Number(v)).filter(v => !isNaN(v)) : []),
+      google_review_link: restaurant.google_review_link ?? "",
+      website_url: restaurant.website_url ?? "",
+      delivery_partner_1_url: restaurant.delivery_partner_1_url ?? "",
+      delivery_partner_2_url: restaurant.delivery_partner_2_url ?? "",
+      delivery_partner_3_url: restaurant.delivery_partner_3_url ?? "",
+      delivery_partner_4_url: restaurant.delivery_partner_4_url ?? "",
+      is_halal: restaurant.is_halal === true || restaurant.is_halal === 1 ? 1 : 0
     });
 
     if (restaurant.timings?.length) {
@@ -311,7 +383,148 @@ export default function Restuarent() {
                     value={info.restaurant_name}
                     onChange={onInfoChange("restaurant_name")}
                     placeholder="Enter restaurant name"
+                    required
                   />
+                  {/* Food Type Section with Heading and Icon */}
+                  <div className="group mb-2">
+                    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
+                      <Utensils size={16} className="text-emerald-300" />
+                      Food Type
+                      <span className="text-white">*</span>
+                    </label>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="flex flex-row gap-4 items-center">
+                        <input
+                          type="checkbox"
+                          id="veg-checkbox"
+                          checked={Array.isArray(info.food_type) ? info.food_type.includes(0) : info.food_type === 0}
+                          onChange={e => {
+                            setInfo(p => {
+                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                              if (e.target.checked) {
+                                if (!arr.includes(0)) arr.push(0);
+                              } else {
+                                arr = arr.filter(v => v !== 0);
+                              }
+                              return { ...p, food_type: arr };
+                            });
+                          }}
+                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
+                        />
+                        <label htmlFor="veg-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">Veg</label>
+                        <input
+                          type="checkbox"
+                          id="nonveg-checkbox"
+                          checked={Array.isArray(info.food_type) ? info.food_type.includes(1) : info.food_type === 1}
+                          onChange={e => {
+                            setInfo(p => {
+                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                              if (e.target.checked) {
+                                if (!arr.includes(1)) arr.push(1);
+                              } else {
+                                arr = arr.filter(v => v !== 1);
+                              }
+                              // Auto-select Halal if NonVeg checked
+                              return { ...p, food_type: arr, is_halal: e.target.checked ? 1 : 0 };
+                            });
+                          }}
+                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
+                        />
+                        <label htmlFor="nonveg-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">NonVeg</label>
+                        <input
+                          type="checkbox"
+                          id="jain-food-checkbox"
+                          checked={Array.isArray(info.food_type) ? info.food_type.includes(2) : info.food_type === 2}
+                          onChange={e => {
+                            setInfo(p => {
+                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                              if (e.target.checked) {
+                                if (!arr.includes(2)) arr.push(2);
+                              } else {
+                                arr = arr.filter(v => v !== 2);
+                              }
+                              return { ...p, food_type: arr };
+                            });
+                          }}
+                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
+                        />
+                        <label htmlFor="jain-food-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">Jain</label>
+                        {Array.isArray(info.food_type) && info.food_type.includes(1) && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="halal-checkbox"
+                              checked={info.is_halal === 1}
+                              onChange={e => setInfo(p => ({ ...p, is_halal: e.target.checked ? 1 : 0 }))}
+                              className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10"
+                            />
+                            <label htmlFor="halal-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer">Halal</label>
+                            <span className="text-white/70 text-xs">Is Halal?</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Cuisine Type Section */}
+                  <div className="group mb-2">
+                    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
+                      <ChefHat size={16} className="text-emerald-300" />
+                      Cuisine Type
+                      <span className="text-white">*</span>
+                    </label>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                        {[
+                          { id: 0, label: "Indian", icon: Flame },
+                          { id: 1, label: "Afghan", icon: ChefHat },
+                          { id: 2, label: "Pakistani", icon: ChefHat },
+                          { id: 3, label: "Chinese", icon: Soup },
+                          { id: 4, label: "Italian", icon: Pizza },
+                          { id: 5, label: "Thai", icon: Soup },
+                          { id: 6, label: "Mexican", icon: Flame }
+                        ].map((cuisine) => {
+                          const Icon = cuisine.icon;
+                          const isSelected = Array.isArray(info.cuisine_type) && info.cuisine_type.includes(cuisine.id);
+                          return (
+                            <div 
+                              key={cuisine.id}
+                              onClick={() => {
+                                setInfo(p => {
+                                  let arr = Array.isArray(p.cuisine_type) ? [...p.cuisine_type] : [];
+                                  if (arr.includes(cuisine.id)) {
+                                    arr = arr.filter(v => v !== cuisine.id);
+                                  } else {
+                                    arr.push(cuisine.id);
+                                  }
+                                  return { ...p, cuisine_type: arr };
+                                });
+                              }}
+                              className={`relative flex flex-col items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
+                                isSelected 
+                                ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]' 
+                                : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10 shadow-sm'
+                              }`}
+                            >
+                              <div className={`p-1.5 rounded-lg mb-2 transition-colors duration-300 ${isSelected ? 'bg-emerald-400 text-white' : 'bg-white/10 text-white/40 group-hover:text-white'}`}>
+                                <Icon size={18} />
+                              </div>
+                              <span className={`text-[10px] font-bold tracking-wide transition-colors duration-300 text-center ${isSelected ? 'text-white' : 'text-white/60'}`}>
+                                {cuisine.label}
+                              </span>
+                              {isSelected && (
+                                <div className="absolute top-1 right-1">
+                                  <div className="bg-emerald-500 rounded-full p-0.5 shadow-md">
+                                    <CheckCircle2 size={8} className="text-white" />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <InputField
@@ -321,6 +534,7 @@ export default function Restuarent() {
                       onChange={onInfoChange("phone")}
                       placeholder="+44 123 456 7890"
                       type="tel"
+                      required
                     />
                     <InputField
                       icon={Mail}
@@ -329,6 +543,7 @@ export default function Restuarent() {
                       onChange={onInfoChange("email")}
                       placeholder="contact@restaurant.com"
                       type="email"
+                      required
                     />
                   </div>
 
@@ -336,6 +551,7 @@ export default function Restuarent() {
                     <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
                       <MapPin size={16} className="text-emerald-300" />
                       Address & Location
+                      <span className="text-white">*</span>
                     </label>
                     <div className="space-y-4">
                       <div className="relative">
@@ -423,6 +639,74 @@ export default function Restuarent() {
                     onChange={onInfoChange("linkedin")}
                     placeholder="LinkedIn profile URL"
                   />
+                  <InputField
+                    icon={ImageIcon}
+                    label="Google Review Link"
+                    value={info.google_review_link}
+                    onChange={onInfoChange("google_review_link")}
+                    placeholder="Google Review URL"
+                  />
+                  <InputField
+                    icon={Store}
+                    label="Website URL"
+                    value={info.website_url}
+                    onChange={onInfoChange("website_url")}
+                    placeholder="https://your-restaurant.com"
+                  />
+                </div>
+              </div>
+
+              {/* Delivery Partners Card */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10 flex items-center gap-2">
+                  <Truck className="text-white" size={20} />
+                  <h2 className="text-xl font-bold text-white drop-shadow-lg">Delivery Partners</h2>
+                </div>
+
+                <div className="p-6 space-y-5 bg-white/5">
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-2">
+                    <p className="text-xs text-emerald-300 font-semibold flex items-center gap-2">
+                      <Store size={14} />
+                      Primary Delivery (Restaurant's Own)
+                    </p>
+                  </div>
+                  <InputField
+                    icon={Truck}
+                    label="Own Delivery Link"
+                    value={info.delivery_partner_1_url}
+                    onChange={onInfoChange("delivery_partner_1_url")}
+                    placeholder="Partner 1 URL (Restaurant Direct)"
+                  />
+                  
+                  <div className="pt-4 border-t border-white/10">
+                    <p className="text-xs text-white/50 font-semibold mb-4 flex items-center gap-2">
+                      <Globe size={14} />
+                      3rd Party Delivery Partners
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <InputField
+                        icon={Bike}
+                        label="Delivery Partner 2"
+                        value={info.delivery_partner_2_url}
+                        onChange={onInfoChange("delivery_partner_2_url")}
+                        placeholder="Partner 2 URL (e.g. UberEats)"
+                      />
+                      <InputField
+                        icon={Bike}
+                        label="Delivery Partner 3"
+                        value={info.delivery_partner_3_url}
+                        onChange={onInfoChange("delivery_partner_3_url")}
+                        placeholder="Partner 3 URL (e.g. Deliveroo)"
+                      />
+                      <InputField
+                        icon={ShoppingCart}
+                        label="Delivery Partner 4"
+                        value={info.delivery_partner_4_url}
+                        onChange={onInfoChange("delivery_partner_4_url")}
+                        placeholder="Partner 4 URL (e.g. JustEat)"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -438,12 +722,14 @@ export default function Restuarent() {
                     value={info.stripe_publishable_key}
                     onChange={onInfoChange("stripe_publishable_key")}
                     placeholder="pk_test_..."
+                    required
                   />
                   <InputField
                     label="Stripe Secret Key"
                     value={info.stripe_secret_key}
                     onChange={onInfoChange("stripe_secret_key")}
                     placeholder="sk_test_..."
+                    required
                   />
                 </div>
               </div>
@@ -451,7 +737,10 @@ export default function Restuarent() {
               {/* Service Options Card */}
               <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
                 <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg">Service Options</h2>
+                  <h2 className="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2">
+                    Service Options
+                    <span className="text-white">*</span>
+                  </h2>
                 </div>
 
                 <div className="p-6">

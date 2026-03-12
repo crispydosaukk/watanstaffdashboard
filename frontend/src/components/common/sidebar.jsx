@@ -92,6 +92,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "Customer Info", to: "/customerinfo", icon: iconCustomer(), perm: "customer_info" },
       { label: "Customer Details", to: "/customerdetails", icon: iconCustomerDetails(), perm: "customer_details" },
       { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
+      { label: "Restaurant Registration", to: "/restaurantregistration", icon: iconStorePlus(), perm: "restaurant_registration" },
       { label: "Order Management", to: "/orders", icon: iconOrders(), perm: "order_management" },
     ],
     []
@@ -399,6 +400,14 @@ function iconCustomerDetails() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function iconStorePlus() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9zm0-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4H3V5zm12 9h-6m3-3v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

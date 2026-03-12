@@ -3,7 +3,17 @@ import jwt from "jsonwebtoken";
 import {
   getRestaurantByUserId,
   upsertRestaurantForUser,
+  getRestaurants,
 } from "../../models/RestaurantModel.js";
+
+export async function index(req, res) {
+  try {
+    const restaurants = await getRestaurants();
+    return res.json({ success: true, data: restaurants });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+}
 
 function extractUserId(req) {
   const header =

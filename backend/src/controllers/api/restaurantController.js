@@ -94,6 +94,12 @@ export const getRestaurantById = async (req, res) => {
 
     const r = results[0];
 
+    let foodTypeArr = [];
+    if (typeof r.food_type === "string" && r.food_type.length > 0) {
+      foodTypeArr = r.food_type.split(",").map(v => Number(v)).filter(v => !isNaN(v));
+    } else if (typeof r.food_type === "number") {
+      foodTypeArr = [r.food_type];
+    }
     const restaurant = {
       id: r.id,
       userid: r.user_id,
@@ -105,6 +111,8 @@ export const getRestaurantById = async (req, res) => {
       kerbside: !!r.kerbside,
       latitude: r.latitude,
       longitude: r.longitude,
+      food_type: foodTypeArr,
+      is_halal: !!r.is_halal,
     };
 
     return res.json({ status: 1, data: [restaurant] });

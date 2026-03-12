@@ -102,7 +102,7 @@ export default function LoginPage() {
           <div className="hidden md:flex flex-col justify-center items-center w-1/2 px-6 py-10 bg-gradient-to-br from-[#e9faff] via-[#dff3ff] to-[#cfeaff] text-center">
             <h2 className="leading-tight font-extrabold">
               <span className="block text-lg text-emerald-700">Welcome to</span>
-              <span className="block text-2xl text-emerald-600">Crispy Dosa Admin</span>
+              <span className="block text-2xl text-emerald-600">ZingBite Admin</span>
             </h2>
             <img src="/login-side.png" className="w-72 mt-8 ml-8" style={{ animation:"floatUpDown 4s ease-in-out infinite" }} draggable="false" />
           </div>

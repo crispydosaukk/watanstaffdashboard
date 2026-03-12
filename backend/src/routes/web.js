@@ -40,6 +40,7 @@ import {
 import {
   show as getRestaurant,
   upsert as upsertRestaurant,
+  index as listRestaurants,
 } from "../controllers/admin/RestaurantController.js";
 
 import {
@@ -64,6 +65,14 @@ import {
   getSettings,
   saveSettings,
 } from "../controllers/admin/SettingsController.js";
+
+import {
+  store as saveMerchantProfile,
+  index as listMerchantProfiles,
+  updateStatus as updateMerchantStatus,
+  getMyProfile as getMyMerchantProfile,
+  updateMyProfile as updateMyMerchantProfile,
+} from "../controllers/admin/MerchantStoreProfileController.js";
 
 
 
@@ -91,6 +100,7 @@ router.put("/users/:id", updateUser);
 router.delete("/users/:id", deleteUser);
 
 /* RESTAURANT -- use upload.single to accept optional photo */
+router.get("/restaurants", auth, listRestaurants);
 router.get("/restaurant", auth, getRestaurant);
 router.post("/restaurant", auth, upload.single("photo"), upsertRestaurant);
 
@@ -131,5 +141,12 @@ router.get("/dashboard/restaurants", auth, getRestaurantsList);
 router.get("/dashboard-stats", auth, getDashboardStats);
 router.get("/dashboard/order-details/:order_number", auth, getOrderDetails);
 
+
+/* MERCHANT STORE PROFILES */
+router.get("/merchant-profiles", auth, listMerchantProfiles);
+router.post("/merchant-profiles", auth, saveMerchantProfile);
+router.put("/merchant-profile/update-status/:id", auth, updateMerchantStatus);
+router.get("/merchant-profile/me", auth, getMyMerchantProfile);
+router.put("/merchant-profile/my-update", auth, updateMyMerchantProfile);
 
 export default router;

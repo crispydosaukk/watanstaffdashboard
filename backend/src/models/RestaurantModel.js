@@ -1,5 +1,22 @@
-// backend/models/restaurantModel.js
 import pool from "../config/db.js";
+
+/**
+ * Get all restaurants
+ */
+export async function getRestaurants() {
+  const conn = await pool.getConnection();
+  try {
+    const [rows] = await conn.query(
+      `SELECT rd.*, u.full_name as owner_name, u.email as owner_email 
+       FROM restaurant_details rd 
+       JOIN users u ON rd.user_id = u.id 
+       ORDER BY rd.created_at DESC`
+    );
+    return rows;
+  } finally {
+    conn.release();
+  }
+}
 
 /**
  * Get restaurant (and timings) by user id
@@ -53,13 +70,14 @@ export async function getRestaurantByUserId(userId) {
  */
 async function insertRestaurant(conn, userId, payload) {
   try {
+    const foodTypeStr = Array.isArray(payload.food_type) ? payload.food_type.join(",") : payload.food_type ?? null;
     const [res] = await conn.query(
       `INSERT INTO restaurant_details
         (user_id, restaurant_name, restaurant_address, restaurant_phonenumber,
         restaurant_email, restaurant_facebook, restaurant_twitter, restaurant_instagram,
-        restaurant_linkedin, parking_info, instore, kerbside, latitude, longitude, restaurant_photo,
-        stripe_secret_key, stripe_publishable_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        restaurant_linkedin, google_review_link, website_url, delivery_partner_1_url, delivery_partner_2_url, delivery_partner_3_url, delivery_partner_4_url, parking_info, instore, kerbside, latitude, longitude, restaurant_photo,
+        stripe_secret_key, stripe_publishable_key, food_type, is_halal, cuisine_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         payload.restaurant_name ?? null,
@@ -70,6 +88,12 @@ async function insertRestaurant(conn, userId, payload) {
         payload.restaurant_twitter ?? null,
         payload.restaurant_instagram ?? null,
         payload.restaurant_linkedin ?? null,
+        payload.google_review_link ?? null,
+        payload.website_url ?? null,
+        payload.delivery_partner_1_url ?? null,
+        payload.delivery_partner_2_url ?? null,
+        payload.delivery_partner_3_url ?? null,
+        payload.delivery_partner_4_url ?? null,
         payload.parking_info ?? null,
         payload.instore ?? 0,
         payload.kerbside ?? 0,
@@ -78,6 +102,9 @@ async function insertRestaurant(conn, userId, payload) {
         payload.restaurant_photo ?? null,
         payload.stripe_secret_key ?? null,
         payload.stripe_publishable_key ?? null,
+        foodTypeStr,
+        payload.is_halal ?? 0,
+        Array.isArray(payload.cuisine_type) ? payload.cuisine_type.join(",") : payload.cuisine_type ?? null,
       ]
     );
     return res.insertId;
@@ -88,6 +115,7 @@ async function insertRestaurant(conn, userId, payload) {
 
 async function updateRestaurant(conn, restaurantId, payload) {
   try {
+    const foodTypeStr = Array.isArray(payload.food_type) ? payload.food_type.join(",") : payload.food_type ?? null;
     const fieldsMap = {
       restaurant_name: payload.restaurant_name ?? null,
       restaurant_address: payload.restaurant_address ?? null,
@@ -97,6 +125,12 @@ async function updateRestaurant(conn, restaurantId, payload) {
       restaurant_twitter: payload.restaurant_twitter ?? null,
       restaurant_instagram: payload.restaurant_instagram ?? null,
       restaurant_linkedin: payload.restaurant_linkedin ?? null,
+      google_review_link: payload.google_review_link ?? null,
+      website_url: payload.website_url ?? null,
+      delivery_partner_1_url: payload.delivery_partner_1_url ?? null,
+      delivery_partner_2_url: payload.delivery_partner_2_url ?? null,
+      delivery_partner_3_url: payload.delivery_partner_3_url ?? null,
+      delivery_partner_4_url: payload.delivery_partner_4_url ?? null,
       parking_info: payload.parking_info ?? null,
       instore: payload.instore ?? 0,
       kerbside: payload.kerbside ?? 0,
@@ -104,6 +138,9 @@ async function updateRestaurant(conn, restaurantId, payload) {
       longitude: payload.longitude ?? null,
       stripe_secret_key: payload.stripe_secret_key ?? null,
       stripe_publishable_key: payload.stripe_publishable_key ?? null,
+      food_type: foodTypeStr,
+      is_halal: payload.is_halal ?? 0,
+      cuisine_type: Array.isArray(payload.cuisine_type) ? payload.cuisine_type.join(",") : payload.cuisine_type ?? null,
     };
 
     // Only update photo if explicitly provided

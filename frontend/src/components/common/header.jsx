@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Navigation } from "lucide-react";
+import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api.js";
 import ReadyInModal from "./ReadyInModal.jsx";
@@ -277,15 +277,20 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   const [scrolled, setScrolled] = useState(false);
 
   // Location States
-  const [locationName, setLocationName] = useState("Locating...");
+  const [locationName, setLocationName] = useState("");
   const [coords, setCoords] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [newOrderToast, setNewOrderToast] = useState(null); // For toaster
   const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
   const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
+  const [generalNotifications, setGeneralNotifications] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const storedUserId = localStorage.getItem("userid") || user.id;
+  const isSuperAdmin = String(user.role_title || "").toLowerCase() === "super admin";
 
   // Generate Google Maps API Key
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const [locationRequired, setLocationRequired] = useState(true); // New state for location requirement
 
   // Logout
   const logout = () => {
@@ -319,7 +324,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
   // Fetch Location Logic
   const getCurrentLocation = () => {
-    setLocationName("Locating...");
+    setLocationName("");
     setCoords(null);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -343,15 +348,8 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
               const sublocality = addressComponents.find(c => c.types.includes("sublocality"))?.long_name;
               const adminArea = addressComponents.find(c => c.types.includes("administrative_area_level_1"))?.short_name;
 
-              let displayLoc = "Unknown Location";
-              if (sublocality && locality) {
-                displayLoc = `${sublocality}, ${locality}`;
-              } else if (locality) {
-                displayLoc = `${locality}, ${adminArea || ''}`;
-              } else if (data.results[0].formatted_address) {
-                displayLoc = data.results[0].formatted_address.split(',')[0];
-              }
-
+              // Always use the full formatted address for maximum accuracy
+              let displayLoc = data.results[0].formatted_address || "Location not found";
               setLocationName(displayLoc);
             } else {
               setLocationName("Location not found");
@@ -425,7 +423,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
           // Toast
           setNewOrderToast(latestOrder);
-          setTimeout(() => setNewOrderToast(null), 6000); // Auto close toast after 6s
+          // No auto-close: popup stays until action
         }
         return newOrders;
       });
@@ -434,11 +432,61 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
     }
   };
 
+  const fetchGeneralNotifications = async () => {
+    if (!token || !isSuperAdmin) return;
+    try {
+      const uId = storedUserId;
+      const res = await api.get(`/mobile/notifications?user_type=admin&user_id=${uId}`);
+      if (res.data.status !== 1) return;
+      
+      const newNotifs = res.data.data.filter(n => !n.is_read);
+      
+      setGeneralNotifications(prev => {
+        // If we have more unread notifs than before, or a newer max ID
+        const hasNew = newNotifs.length > prev.length || (newNotifs.length > 0 && Math.max(...newNotifs.map(n => n.id)) > (prev.length > 0 ? Math.max(...prev.map(n => n.id)) : 0));
+
+        if (hasNew) {
+           const audio = new Audio("/message.mp3");
+           audio.play().catch(e => {});
+
+           // Trigger popup for new registration just like orders
+           const latest = newNotifs[0];
+           if (latest) {
+              setNewOrderToast({
+                ...latest,
+                isRegistration: true,
+                items: [], // Registration doesn't have items
+                order_total: 0
+              });
+           }
+        }
+        return newNotifs;
+      });
+    } catch (err) {
+      console.error("General notifications fetch failed:", err);
+    }
+  };
+
   useEffect(() => {
     fetchNewOrders();
-    const interval = setInterval(fetchNewOrders, 10000);
+    fetchGeneralNotifications();
+    const interval = setInterval(() => {
+      fetchNewOrders();
+      fetchGeneralNotifications();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleRegistrationStatusUpdate = async (notif, status) => {
+    try {
+      const profileId = notif.order_number.replace('#ZBR-', '');
+      await api.put(`/merchant-profile/update-status/${profileId}`, { status });
+      setNewOrderToast(null);
+      fetchGeneralNotifications();
+    } catch { 
+      alert("Failed to update merchant status"); 
+    }
+  };
 
   const handleAccept = (order) => {
     setSelectedOrderForReady(order);
@@ -455,6 +503,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
       });
       setIsReadyModalOpen(false);
       setSelectedOrderForReady(null);
+      setNewOrderToast(null); // Close popup after action
       fetchNewOrders();
     } catch { alert("Failed to accept order"); }
   };
@@ -462,6 +511,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   const handleReject = async (order) => {
     try {
       await api.post("/mobile/orders/update-status", { order_number: order.order_number, status: 2 });
+      setNewOrderToast(null); // Close popup after action
       fetchNewOrders();
     } catch { alert("Failed to reject order"); }
   };
@@ -501,7 +551,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
             <div className="hidden lg:flex items-center gap-2 sm:gap-3">
               <img
                 src="/Crispy-Dosalogo.png"
-                alt="Crispy Dosa"
+                alt="ZingBite"
                 className={`h-12 sm:h-14 w-auto transition-all duration-300 drop-shadow-md ${scrolled ? "scale-90" : "scale-100"}`}
               />
             </div>
@@ -511,7 +561,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
           <div className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
             <img
               src="/Crispy-Dosalogo.png"
-              alt="Crispy Dosa"
+              alt="ZingBite"
               className="h-10 w-auto drop-shadow-md"
             />
           </div>
@@ -520,11 +570,12 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
             {/* Location Badge - Clickable */}
             <button
               onClick={() => setIsLocationModalOpen(true)}
-              className="flex items-center gap-2 text-white/90 bg-white/10 backdrop-blur-md py-2.5 px-4 rounded-xl border border-white/10 text-sm font-medium shadow-sm min-w-[140px] max-w-[240px] transition-all hover:bg-white/20 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="flex items-center gap-4 text-white bg-gradient-to-r from-emerald-700/30 to-emerald-400/10 py-3 px-14 rounded-2xl border border-emerald-400/30 shadow-lg min-w-[340px] max-w-[600px] transition-all hover:bg-emerald-500/10 hover:scale-[1.03] active:scale-95 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+              style={{ width: '440px', fontWeight: 600, fontSize: '1.15rem', letterSpacing: '0.02em' }}
             >
-              <MapPin size={16} className="text-emerald-400 shrink-0" />
-              <span className="truncate">{locationName}</span>
-              <ChevronDown size={14} className="text-white/40 ml-auto shrink-0" />
+              <MapPin size={28} className="text-emerald-400 drop-shadow-md" />
+              <span className="truncate text-white" style={{fontSize: '1.15rem'}}>{locationName}</span>
+              <ChevronDown size={20} className="text-white/60 ml-auto" />
             </button>
           </div>
 
@@ -541,9 +592,9 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   }`}
               >
                 <Bell size={20} />
-                {orders.length > 0 && (
+                {(orders.length + generalNotifications.length) > 0 && (
                   <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full border-2 border-[#1a1c23] shadow-lg animate-in zoom-in">
-                    {orders.length}
+                    {orders.length + generalNotifications.length}
                   </span>
                 )}
               </button>
@@ -554,7 +605,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-white/10 flex justify-between items-center bg-white/5">
                     <h3 className="font-semibold text-white text-sm sm:text-base">Notifications</h3>
                     <div className="flex items-center gap-2">
-                      {orders.length > 0 && <span className="text-xs font-medium px-2 py-1 bg-rose-500/20 text-rose-300 rounded-full border border-rose-500/30">{orders.length} New</span>}
+                      {(orders.length + generalNotifications.length) > 0 && <span className="text-xs font-medium px-2 py-1 bg-rose-500/20 text-rose-300 rounded-full border border-rose-500/30">{orders.length + generalNotifications.length} New</span>}
                       <button
                         onClick={() => setShowNotifications(false)}
                         className="sm:hidden p-1 hover:bg-white/10 text-white rounded-lg"
@@ -565,15 +616,41 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   </div>
 
                   <div className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    {orders.length === 0 ? (
+                    {orders.length === 0 && generalNotifications.length === 0 ? (
                       <div className="p-6 sm:p-8 text-center flex flex-col items-center text-white/40">
                         <Bell size={40} className="mb-3 text-white/20" strokeWidth={1} />
-                        <p className="text-sm">No new orders</p>
+                        <p className="text-sm">No new notifications</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/5">
+                        {/* General Notifications (Registrations etc) */}
+                        {generalNotifications.map((notif) => (
+                          <div key={`notif-${notif.id}`} className="p-4 sm:p-5 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => navigate('/restaurantregistration')}>
+                             <div className="flex justify-between items-start mb-1">
+                                <p className="font-bold text-white text-sm sm:text-base">{notif.title}</p>
+                                <p className="text-[10px] text-white/40 uppercase font-medium">Just now</p>
+                             </div>
+                             <p className="text-xs text-white/70 leading-relaxed mb-3">{notif.body}</p>
+                             <div className="flex items-center gap-3">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleRegistrationStatusUpdate(notif, 1); }}
+                                  className="flex-1 flex items-center justify-center py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleRegistrationStatusUpdate(notif, 2); }}
+                                  className="flex-1 flex items-center justify-center py-1.5 bg-white/5 border border-white/10 text-white/60 hover:text-rose-400 hover:bg-rose-500/10 text-[10px] font-medium rounded-lg transition-all"
+                                >
+                                  Reject
+                                </button>
+                             </div>
+                          </div>
+                        ))}
+
+                        {/* Order Notifications */}
                         {orders.map((order) => (
-                          <div key={order.order_number} className="p-4 sm:p-5 hover:bg-white/5 transition-colors">
+                          <div key={`order-${order.order_number}`} className="p-4 sm:p-5 hover:bg-white/5 transition-colors">
                             <div className="flex justify-between items-start mb-3">
                               <div>
                                 <p className="font-bold text-white text-sm sm:text-base mb-1">Order #{order.order_number}</p>
@@ -657,7 +734,16 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                 </div>
                 <div className="text-left hidden sm:block">
                   <p className="text-sm font-semibold leading-none text-white">Admin</p>
-                  <p className="text-[10px] mt-1 font-medium tracking-wide text-white/60">SUPER ADMIN</p>
+                  {(() => {
+                    let user = null;
+                    try {
+                      user = JSON.parse(localStorage.getItem("user"));
+                    } catch {}
+                    if (user && user.role_title === "Super Admin") {
+                      return <p className="text-[10px] mt-1 font-medium tracking-wide text-white/60">SUPER ADMIN</p>;
+                    }
+                    return null;
+                  })()}
                 </div>
                 <ChevronDown size={14} className="hidden sm:block text-white/60" />
               </button>
@@ -736,9 +822,11 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start font-sans">
                       <div>
-                        <h4 className="text-white font-bold text-base tracking-tight leading-tight">Incoming Order!</h4>
+                        <h4 className="text-white font-bold text-base tracking-tight leading-tight">
+                          {newOrderToast.isRegistration ? "New Registration!" : "Incoming Order!"}
+                        </h4>
                         <p className="text-emerald-400 text-xs font-bold leading-none mt-1 uppercase tracking-widest flex items-center gap-1">
-                          #{newOrderToast.order_number}
+                          {newOrderToast.isRegistration ? newOrderToast.order_number : `#${newOrderToast.order_number}`}
                         </p>
                       </div>
                       <button
@@ -750,27 +838,56 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                     </div>
 
                     <div className="mt-3 space-y-1 max-h-24 overflow-y-auto pr-2 custom-scrollbar">
-                      {newOrderToast.items.map((item, i) => (
-                        <p key={i} className="text-white/80 text-sm font-medium line-clamp-1">
-                          <span className="text-emerald-400 mr-1.5">{item.quantity}x</span> {item.name}
+                      {newOrderToast.isRegistration ? (
+                        <p className="text-white/80 text-sm font-medium leading-relaxed">
+                          {newOrderToast.body}
                         </p>
-                      ))}
+                      ) : (
+                        newOrderToast.items.map((item, i) => (
+                          <p key={i} className="text-white/80 text-sm font-medium line-clamp-1">
+                            <span className="text-emerald-400 mr-1.5">{item.quantity}x</span> {item.name}
+                          </p>
+                        ))
+                      )}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Amount Paid</span>
-                        <span className="text-lg font-black text-white">£{Number(newOrderToast.order_total).toFixed(2)}</span>
+                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">
+                          {newOrderToast.isRegistration ? "Action" : "Amount Paid"}
+                        </span>
+                        <span className="text-lg font-black text-white">
+                          {newOrderToast.isRegistration ? "Review" : `£${Number(newOrderToast.order_total).toFixed(2)}`}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => {
-                          setShowNotifications(true);
-                          setNewOrderToast(null);
-                        }}
-                        className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/20 transform active:scale-95 transition-all"
-                      >
-                        View Details
-                      </button>
+                      <div className="flex gap-2">
+                        {newOrderToast.isRegistration ? (
+                          <>
+                            <button
+                              onClick={() => handleRegistrationStatusUpdate(newOrderToast, 1)}
+                              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg transition-all"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleRegistrationStatusUpdate(newOrderToast, 2)}
+                              className="px-4 py-2 bg-white/10 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition-all"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setShowNotifications(true);
+                              setNewOrderToast(null);
+                            }}
+                            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/20 transform active:scale-95 transition-all"
+                          >
+                            View Details
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
