@@ -6,7 +6,7 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Trash2, GripVertical, Search, Plus, X, Upload, Save, Check } from "lucide-react";
+import { Pencil, Trash2, GripVertical, Search, Plus, X, Upload, Save, Check, RefreshCw, Store, Zap } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { usePopup } from "../../context/PopupContext";
 
@@ -38,6 +38,17 @@ export default function Category() {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
+
+  // INTEGRATE MODAL STATE (SUPER ADMIN)
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const isSuperAdmin = userData.role_title === "Super Admin" || userData.role_id === 6;
+  const [showIntegrateModal, setShowIntegrateModal] = useState(false);
+  const [integrateSearch, setIntegrateSearch] = useState("");
+  const [integrateResults, setIntegrateResults] = useState([]);
+  const [targetRestaurantId, setTargetRestaurantId] = useState("");
+  const [selectedSourceCat, setSelectedSourceCat] = useState(null);
+  const [restaurants, setRestaurants] = useState([]);
+  const [integrating, setIntegrating] = useState(false);
 
   // =============================
   // FETCH ALL CATEGORIES (SORT SAFE)
@@ -88,6 +99,77 @@ export default function Category() {
     }, 300);
     return () => clearTimeout(t);
   }, [globalSearchQuery, showSearchModal, API, token]);
+
+  // =============================
+  // ADMIN CATEGORY SEARCH
+  // =============================
+  useEffect(() => {
+    if (!showIntegrateModal || !integrateSearch.trim()) {
+      setIntegrateResults([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      fetch(`${API}/category/admin-search-global?q=${encodeURIComponent(integrateSearch)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => setIntegrateResults(Array.isArray(data) ? data : []))
+        .catch(err => console.error(err));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [integrateSearch, showIntegrateModal, API, token]);
+
+  // =============================
+  // FETCH RESTAURANTS FOR INTEGRATE
+  // =============================
+  useEffect(() => {
+    if (showIntegrateModal && isSuperAdmin) {
+      fetch(`${API}/restaurants`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => setRestaurants(data.data || []))
+      .catch(err => console.error(err));
+    }
+  }, [showIntegrateModal, isSuperAdmin, API, token]);
+
+  const handleIntegrate = async () => {
+    if (!selectedSourceCat || !targetRestaurantId) {
+      showPopup({ title: "Incomplete", message: "Please select a category and target restaurant.", type: "error" });
+      return;
+    }
+
+    setIntegrating(true);
+    try {
+      const res = await fetch(`${API}/category/integrate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sourceCategoryId: selectedSourceCat.id,
+          targetUserId: targetRestaurantId
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showPopup({ title: "Success", message: data.message, type: "success" });
+        setShowIntegrateModal(false);
+        setSelectedSourceCat(null);
+        setTargetRestaurantId("");
+        setIntegrateSearch("");
+      } else {
+        showPopup({ title: "Integration Failed", message: data.message, type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      showPopup({ title: "Error", message: "Integrations server error", type: "error" });
+    } finally {
+      setIntegrating(false);
+    }
+  };
 
   // =============================
   // IMPORT PRODUCTS HELPER
@@ -555,13 +637,24 @@ export default function Category() {
                   </div>
 
 
+                  {/* SUPER ADMIN INTEGRATE BUTTON */}
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => setShowIntegrateModal(true)}
+                      className="bg-indigo-600/80 hover:bg-indigo-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(79,70,229,0.3)]"
+                    >
+                      <Zap size={18} />
+                      Integrate
+                    </button>
+                  )}
+
                   {/* GLOBAL SEARCH BUTTON */}
                   <button
                     onClick={() => setShowSearchModal(true)}
-                    className="bg-blue-600/80 hover:bg-blue-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all"
+                    className="bg-blue-600/80 hover:bg-blue-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(37,99,235,0.3)]"
                   >
                     <Search size={18} />
-                    Search & Add
+                    Global Search
                   </button>
 
                   {/* ADD BUTTON */}
@@ -569,9 +662,10 @@ export default function Category() {
                     onClick={() => {
                       setIsEdit(false);
                       setForm({ id: null, name: "", image: null, oldImage: "" });
+                      setPreviewUrl("");
                       setShowModal(true);
                     }}
-                    className="bg-emerald-600/80 hover:bg-emerald-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all"
+                    className="bg-emerald-600/80 hover:bg-emerald-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(5,150,105,0.3)]"
                   >
                     <Plus size={18} />
                     Add Category
@@ -967,7 +1061,138 @@ export default function Category() {
             </motion.div>
           </div>
         )}
-      </AnimatePresence >
-    </div >
+      </AnimatePresence>
+
+      {/* INTEGRATE MODAL (SUPER ADMIN ONLY) */}
+      <AnimatePresence>
+        {showIntegrateModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowIntegrateModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            ></motion.div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative w-full max-w-2xl bg-[#0F172A] border border-white/20 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-8"
+            >
+              <div className="px-8 py-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
+                    <Zap className="text-indigo-400" size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">Integrate <span className="text-indigo-400 not-italic">Category</span></h2>
+                    <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-1">Super Admin Deployment Engine</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowIntegrateModal(false)}
+                  className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 text-white transition-all active:scale-90"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                {/* SOURCE SEARCH */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 flex items-center gap-2">
+                    <Search size={14} /> Step 1: Search Source Category
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="e.g. Pizza, Burger, Indian..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all uppercase"
+                      value={integrateSearch}
+                      onChange={(e) => setIntegrateSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {integrateResults.length > 0 && !selectedSourceCat && (
+                    <div className="grid grid-cols-1 gap-3 mt-4">
+                      {integrateResults.map(res => (
+                        <div
+                          key={res.id}
+                          onClick={() => setSelectedSourceCat(res)}
+                          className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl cursor-pointer group transition-all"
+                        >
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="h-10 w-10 rounded-lg overflow-hidden bg-black/20 border border-white/10 flex-shrink-0">
+                              {res.image ? <img src={`${API_BASE}/uploads/${res.image}`} className="w-full h-full object-cover" /> : <div className="text-[8px] flex items-center justify-center h-full">N/A</div>}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white uppercase truncate">{res.name}</div>
+                              <div className="text-[9px] text-indigo-400 font-bold flex items-center gap-1 uppercase truncate">
+                                <Store size={10} /> {res.restaurant_name || "Merchant Store"}
+                              </div>
+                            </div>
+                          </div>
+                          <Check size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedSourceCat && (
+                    <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-4">
+                        <Check className="text-indigo-400" size={20} />
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Selected Source</p>
+                          <p className="text-white font-bold uppercase">{selectedSourceCat.name} <span className="text-white/40 text-[10px] ml-2 italic lowercase font-normal">from {selectedSourceCat.restaurant_name}</span></p>
+                        </div>
+                      </div>
+                      <button onClick={() => setSelectedSourceCat(null)} className="text-[10px] font-black uppercase text-rose-400 hover:text-rose-300">Change</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* TARGET RESTAURANT */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 flex items-center gap-2">
+                    <Store size={14} /> Step 2: Target Merchant Restaurant
+                  </label>
+                  <select
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all appearance-none"
+                    value={targetRestaurantId}
+                    onChange={(e) => setTargetRestaurantId(e.target.value)}
+                  >
+                    <option value="" className="bg-[#0F172A]">SELECT TARGET RESTAURANT...</option>
+                    {restaurants.map(r => (
+                      <option key={r.user_id} value={r.user_id} className="bg-[#0F172A]">
+                        {r.restaurant_name} — ({r.owner_name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-8 border-t border-white/10 bg-white/5 flex gap-4">
+                <button
+                  onClick={() => setShowIntegrateModal(false)}
+                  className="flex-1 py-4 rounded-2xl border border-white/10 text-white/60 font-black uppercase tracking-widest text-[11px] hover:bg-white/5 hover:text-white transition-all"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleIntegrate}
+                  disabled={integrating}
+                  className="flex-[2] py-4 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 shadow-[0_10px_30px_rgba(99,102,241,0.3)]"
+                >
+                  {integrating ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
+                  {integrating ? "DEPLOYING..." : "DEPLOY & INTEGRATE"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

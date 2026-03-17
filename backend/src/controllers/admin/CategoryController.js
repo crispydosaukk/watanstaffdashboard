@@ -229,3 +229,127 @@ export const searchGlobalCategories = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// ===========================================
+// ADMIN SEARCH GLOBAL CATEGORIES (FOR SUPER ADMIN INTEGRATE)
+// ===========================================
+export const adminSearchGlobalCategories = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+
+    const [rows] = await pool.query(
+      `SELECT 
+         c.id,
+         c.category_name AS name,
+         c.category_image AS image,
+         c.user_id,
+         rd.restaurant_name
+       FROM categories c
+       LEFT JOIN restaurant_details rd ON c.user_id = rd.user_id
+       WHERE c.category_name LIKE ?
+       LIMIT 50`,
+      [`%${q}%`]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("adminSearchGlobalCategories error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ===========================================
+// INTEGRATE CATEGORY (CLONE FROM ONE RESTAURANT TO ANOTHER)
+// ===========================================
+export const integrateCategory = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const { sourceCategoryId, targetUserId } = req.body;
+
+    if (!sourceCategoryId || !targetUserId)
+      return res.status(400).json({ message: "Missing sourceCategoryId or targetUserId" });
+
+    await conn.beginTransaction();
+
+    // 1. Get source category
+    const [[sourceCat]] = await conn.query(
+      "SELECT * FROM categories WHERE id = ?",
+      [sourceCategoryId]
+    );
+
+    if (!sourceCat) {
+      await conn.rollback();
+      return res.status(404).json({ message: "Source category not found" });
+    }
+
+    // 2. Check if the target restaurant already has this category name
+    const [[existingCat]] = await conn.query(
+      "SELECT id FROM categories WHERE user_id = ? AND LOWER(category_name) = LOWER(?)",
+      [targetUserId, sourceCat.category_name]
+    );
+
+    if (existingCat) {
+      await conn.rollback();
+      return res.status(409).json({ message: "This restaurant already has this category" });
+    }
+
+    // 3. Create the category for the target restaurant
+    const [[maxOrderCat]] = await conn.query(
+      "SELECT IFNULL(MAX(sort_order), 0) AS maxOrder FROM categories WHERE user_id = ?",
+      [targetUserId]
+    );
+    const newCatOrder = maxOrderCat.maxOrder + 1;
+
+    const [catResult] = await conn.query(
+      "INSERT INTO categories (user_id, category_name, category_image, status, sort_order) VALUES (?, ?, ?, ?, ?)",
+      [targetUserId, sourceCat.category_name, sourceCat.category_image, sourceCat.status, newCatOrder]
+    );
+    const newCatId = catResult.insertId;
+
+    // 4. Get all products from the source category
+    const [sourceProducts] = await conn.query(
+      "SELECT * FROM products WHERE cat_id = ?",
+      [sourceCategoryId]
+    );
+
+    if (sourceProducts.length > 0) {
+      // 5. Get max sort order for products in target
+      const [[maxOrderProd]] = await conn.query(
+        "SELECT IFNULL(MAX(sort_order), 0) AS maxOrder FROM products WHERE user_id = ?",
+        [targetUserId]
+      );
+      let nextProdOrder = maxOrderProd.maxOrder + 1;
+
+      for (const prod of sourceProducts) {
+        await conn.query(
+          `INSERT INTO products 
+           (user_id, cat_id, product_name, product_image, product_desc, contains,
+            product_price, product_discount_price, status, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            targetUserId,
+            newCatId,
+            prod.product_name,
+            prod.product_image,
+            prod.product_desc,
+            prod.contains,
+            prod.product_price,
+            prod.product_discount_price,
+            prod.status,
+            nextProdOrder++
+          ]
+        );
+      }
+    }
+
+    await conn.commit();
+    res.json({ message: "Category and products integrated successfully", newCatId });
+  } catch (err) {
+    await conn.rollback();
+    console.error("integrateCategory error:", err);
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    conn.release();
+  }
+};

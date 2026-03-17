@@ -49,7 +49,9 @@ import {
   removeCategory,
   updateCategory,
   reorderCategories,
-  searchGlobalCategories
+  searchGlobalCategories,
+  adminSearchGlobalCategories,
+  integrateCategory
 } from "../controllers/admin/CategoryController.js";
 
 import {
@@ -115,6 +117,8 @@ router.post("/restaurant", auth, upload.single("photo"), upsertRestaurant);
 /* CATEGORY */
 router.put("/category/reorder", auth, reorderCategories);
 router.get("/category/search-global", auth, searchGlobalCategories);
+router.get("/category/admin-search-global", auth, adminSearchGlobalCategories);
+router.post("/category/integrate", auth, integrateCategory);
 router.get("/category", auth, getCategories);
 router.post("/category", auth, upload.single("image"), addCategory);
 router.put("/category/:id", auth, upload.single("image"), updateCategory);

@@ -7,7 +7,7 @@ export async function getRestaurants() {
   const conn = await pool.getConnection();
   try {
     const [rows] = await conn.query(
-      `SELECT rd.*, u.full_name as owner_name, u.email as owner_email 
+      `SELECT rd.*, u.name as owner_name, u.email as owner_email 
        FROM restaurant_details rd 
        JOIN users u ON rd.user_id = u.id 
        ORDER BY rd.created_at DESC`
