@@ -325,7 +325,7 @@ export default function CustomerInfo() {
                 <div className="mb-6">
                   <h5 className="text-lg font-bold text-white mb-4 drop-shadow">Additional Details</h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {selectedCustomer.preferred_restaurant && (
+                    {/* {selectedCustomer.preferred_restaurant && (
                       <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
                         <MapPin size={20} className="text-emerald-300" />
                         <div>
@@ -333,7 +333,7 @@ export default function CustomerInfo() {
                           <p className="text-base font-semibold text-white">{selectedCustomer.preferred_restaurant}</p>
                         </div>
                       </div>
-                    )}
+                    )} */}
                     {selectedCustomer.date_of_birth && (
                       <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
                         <Calendar size={20} className="text-emerald-300" />

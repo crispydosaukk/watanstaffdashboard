@@ -15,6 +15,7 @@ import CustomerDetails from "./pages/customerdetails/index.jsx";
 import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
 import OffersPage from "./pages/offers/index.jsx";
 import { PopupProvider } from "./context/PopupContext";
+import { getSafePath } from "./utils/perm";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -116,7 +117,7 @@ export default function App() {
             path="/"
             element={
               localStorage.getItem("token") ? (
-                <Navigate to="/dashboard" replace />
+                <Navigate to={getSafePath()} replace />
               ) : (
                 <Navigate to="/login" replace />
               )

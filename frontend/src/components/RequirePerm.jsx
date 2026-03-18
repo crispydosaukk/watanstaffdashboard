@@ -1,8 +1,11 @@
 // frontend/src/components/RequirePerm.jsx
 import { Navigate } from "react-router-dom";
-import { can } from "../utils/perm";
+import { can, getSafePath } from "../utils/perm";
 
 export default function RequirePerm({ perm, children }) {
-  if (!can(perm)) return <Navigate to="/dashboard" replace />;
+  if (!can(perm)) {
+    return <Navigate to={getSafePath()} replace />;
+  }
   return children;
 }
+

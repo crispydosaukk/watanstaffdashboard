@@ -465,7 +465,7 @@ export default function Restuarent() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Cuisine Type Section */}
                   <div className="group mb-2">
                     <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
@@ -488,7 +488,7 @@ export default function Restuarent() {
                           const Icon = cuisine.icon;
                           const isSelected = Array.isArray(info.cuisine_type) && info.cuisine_type.includes(cuisine.id);
                           return (
-                            <div 
+                            <div
                               key={cuisine.id}
                               onClick={() => {
                                 setInfo(p => {
@@ -501,11 +501,10 @@ export default function Restuarent() {
                                   return { ...p, cuisine_type: arr };
                                 });
                               }}
-                              className={`relative flex flex-col items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                                isSelected 
-                                ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]' 
+                              className={`relative flex flex-col items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${isSelected
+                                ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]'
                                 : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10 shadow-sm'
-                              }`}
+                                }`}
                             >
                               <div className={`p-1.5 rounded-lg mb-2 transition-colors duration-300 ${isSelected ? 'bg-emerald-400 text-white' : 'bg-white/10 text-white/40 group-hover:text-white'}`}>
                                 <Icon size={18} />
@@ -678,7 +677,7 @@ export default function Restuarent() {
                     onChange={onInfoChange("delivery_partner_1_url")}
                     placeholder="Partner 1 URL (Restaurant Direct)"
                   />
-                  
+
                   <div className="pt-4 border-t border-white/10">
                     <p className="text-xs text-white/50 font-semibold mb-4 flex items-center gap-2">
                       <Globe size={14} />
@@ -687,21 +686,21 @@ export default function Restuarent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <InputField
                         icon={Bike}
-                        label="Delivery Partner 2"
+                        label="Delivery Partner 2 (UberEats)"
                         value={info.delivery_partner_2_url}
                         onChange={onInfoChange("delivery_partner_2_url")}
                         placeholder="Partner 2 URL (e.g. UberEats)"
                       />
                       <InputField
                         icon={Bike}
-                        label="Delivery Partner 3"
+                        label="Delivery Partner 3 (Deliveroo)"
                         value={info.delivery_partner_3_url}
                         onChange={onInfoChange("delivery_partner_3_url")}
                         placeholder="Partner 3 URL (e.g. Deliveroo)"
                       />
                       <InputField
                         icon={ShoppingCart}
-                        label="Delivery Partner 4"
+                        label="Delivery Partner 4 (JustEat)"
                         value={info.delivery_partner_4_url}
                         onChange={onInfoChange("delivery_partner_4_url")}
                         placeholder="Partner 4 URL (e.g. JustEat)"

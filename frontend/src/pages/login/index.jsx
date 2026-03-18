@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { FiLogIn } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
+import { getSafePath } from "../../utils/perm";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ export default function LoginPage() {
       localStorage.setItem("perms", JSON.stringify(data.permissions || []));
       remember ? localStorage.setItem("remember", "1") : localStorage.removeItem("remember");
 
-      navigate("/dashboard", { replace: true });
+      navigate(getSafePath(), { replace: true });
     } catch (error) {
       setErr(error?.response?.data?.message || "Invalid email or password");
     } finally {
