@@ -1,12 +1,11 @@
-// src/pages/admin/Category.jsx
+// src/pages/category/index.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Trash2, GripVertical, Search, Plus, X, Upload, Save, Check, RefreshCw, Store, Zap } from "lucide-react";
+import { Pencil, Trash2, GripVertical, Search, Plus, X, Upload, Save, Check, RefreshCw, Store, Zap, ChevronRight, Globe, Image as ImageIcon, Info, Loader2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { usePopup } from "../../context/PopupContext";
 
@@ -127,9 +126,9 @@ export default function Category() {
       fetch(`${API}/restaurants`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(res => res.json())
-      .then(data => setRestaurants(data.data || []))
-      .catch(err => console.error(err));
+        .then(res => res.json())
+        .then(data => setRestaurants(data.data || []))
+        .catch(err => console.error(err));
     }
   }, [showIntegrateModal, isSuperAdmin, API, token]);
 
@@ -171,9 +170,6 @@ export default function Category() {
     }
   };
 
-  // =============================
-  // IMPORT PRODUCTS HELPER
-  // =============================
   const handleImportProducts = async (categoryName, targetCategoryId) => {
     try {
       const res = await fetch(`${API}/products/import-global`, {
@@ -204,11 +200,7 @@ export default function Category() {
     }
   };
 
-  // =============================
-  // ADD GLOBAL CATEGORY
-  // =============================
   const handleAddGlobalCategory = async (cat) => {
-    // Check if it already exists in the user's list
     const existingCat = categories.find(
       (c) => c.name.trim().toLowerCase() === cat.name.trim().toLowerCase()
     );
@@ -216,7 +208,7 @@ export default function Category() {
     if (existingCat) {
       showPopup({
         title: "Duplicate Category",
-        message: `Category "${cat.name}" already exists. Do you want to check and add any remaining products for it?`,
+        message: `Category "${cat.name}" already exists. Check for new products?`,
         type: "confirm",
         onConfirm: async () => {
           await handleImportProducts(cat.name, existingCat.id);
@@ -228,7 +220,7 @@ export default function Category() {
     }
 
     showPopup({
-      title: "Add Global Category?",
+      title: "Add Category?",
       message: `Add "${cat.name}" and its products to your list?`,
       type: "confirm",
       onConfirm: async () => {
@@ -256,10 +248,9 @@ export default function Category() {
           setShowSearchModal(false);
           setGlobalSearchQuery("");
 
-          // ASK TO ADD PRODUCTS for NEWly added
           showPopup({
             title: "Category Added",
-            message: `Category "${cat.name}" added. Do you want to add all related products to it?`,
+            message: `Category "${cat.name}" added. Import related products now?`,
             type: "confirm",
             onConfirm: async () => {
               await handleImportProducts(cat.name, newData.id);
@@ -273,13 +264,9 @@ export default function Category() {
     });
   };
 
-  // =============================
-  // FILTERED LIST
-  // =============================
   const filteredCategories = useMemo(() => {
     if (!debouncedQuery) return categories;
     const q = debouncedQuery;
-
     return categories.filter((c) => {
       if (!c) return false;
       if (c.name?.toLowerCase().includes(q)) return true;
@@ -288,9 +275,6 @@ export default function Category() {
     });
   }, [categories, debouncedQuery]);
 
-  // =============================
-  // IMAGE PREVIEW
-  // =============================
   useEffect(() => {
     if (form.image instanceof File) {
       const url = URL.createObjectURL(form.image);
@@ -300,21 +284,15 @@ export default function Category() {
     setPreviewUrl("");
   }, [form.image]);
 
-  // =============================
-  // SAVE / UPDATE CATEGORY
-  // =============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const nameTrim = form.name.trim();
-    if (!nameTrim) return showPopup({ title: "Input Required", message: "Please enter a category name", type: "warning" });
+    if (!nameTrim) return showPopup({ title: "Required", message: "Enter a category name", type: "warning" });
 
     const exists = categories.some(
-      (c) =>
-        c.id !== form.id &&
-        c.name.trim().toLowerCase() === nameTrim.toLowerCase()
+      (c) => c.id !== form.id && c.name.trim().toLowerCase() === nameTrim.toLowerCase()
     );
-    if (exists) return showPopup({ title: "Duplicate Name", message: "Category name already exists", type: "warning" });
+    if (exists) return showPopup({ title: "Duplicate", message: "Name already exists", type: "warning" });
 
     const fd = new FormData();
     fd.append("name", nameTrim);
@@ -322,85 +300,53 @@ export default function Category() {
 
     try {
       let res;
-
       if (!isEdit) {
-        // CREATE
         res = await fetch(`${API}/category`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-
         const newData = await res.json();
+        setCategories((prev) => [...prev, newData].sort((a, b) => a.sort_order - b.sort_order));
 
-        setCategories((prev) =>
-          [...prev, newData].sort((a, b) => a.sort_order - b.sort_order)
-        );
-
-        // ASK TO ADD PRODUCTS (New Category)
         showPopup({
-          title: "Category Added",
-          message: `Category "${nameTrim}" added. Do you want to add all related products to it?`,
+          title: "Added",
+          message: `Category "${nameTrim}" added. Import products?`,
           type: "confirm",
-          onConfirm: async () => {
-            await handleImportProducts(nameTrim, newData.id);
-          }
+          onConfirm: async () => { await handleImportProducts(nameTrim, newData.id); }
         });
       } else {
-        // UPDATE
         res = await fetch(`${API}/category/${form.id}`, {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
         });
-
         const updated = await res.json();
-
-        setCategories((prev) =>
-          prev
-            .map((c) =>
-              c.id === form.id
-                ? { ...c, ...updated } // includes sort_order
-                : c
-            )
-            .sort((a, b) => a.sort_order - b.sort_order)
-        );
-        showPopup({ title: "Success", message: "Category updated successfully", type: "success" });
+        setCategories((prev) => prev.map((c) => c.id === form.id ? { ...c, ...updated } : c).sort((a, b) => a.sort_order - b.sort_order));
+        showPopup({ title: "Success", message: "Updated successfully", type: "success" });
       }
 
-      // RESET
       setShowModal(false);
       setIsEdit(false);
       setForm({ id: null, name: "", image: null, oldImage: "" });
       setPreviewUrl("");
     } catch (err) {
       console.error("Save error:", err);
-      showPopup({ title: "Error", message: "Something went wrong.", type: "error" });
+      showPopup({ title: "Error", message: "Internal server error", type: "error" });
     }
   };
 
-  // =============================
-  // EDIT CATEGORY
-  // =============================
   const handleEdit = (item) => {
     setIsEdit(true);
-    setForm({
-      id: item.id,
-      name: item.name,
-      image: null,
-      oldImage: item.image || "",
-    });
+    setForm({ id: item.id, name: item.name, image: null, oldImage: item.image || "" });
     setPreviewUrl("");
     setShowModal(true);
   };
 
-  // =============================
-  // DELETE CATEGORY
-  // =============================
   const handleDelete = async (id) => {
     showPopup({
-      title: "Delete Category?",
-      message: "This will permanently remove the category. Are you sure?",
+      title: "Delete?",
+      message: "This node and its contents will be permanently purged. Proceed?",
       type: "confirm",
       onConfirm: async () => {
         try {
@@ -408,174 +354,66 @@ export default function Category() {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
-
           setCategories((prev) => prev.filter((c) => c.id !== id));
-          showPopup({ title: "Deleted", message: "Category has been removed.", type: "success" });
+          showPopup({ title: "Deleted", message: "Category node purged.", type: "success" });
         } catch (e) {
-          console.error("Delete error:", e);
-          showPopup({ title: "Error", message: "Failed to delete category.", type: "error" });
+          showPopup({ title: "Error", message: "Purge failed", type: "error" });
         }
       }
     });
   };
 
-  // =============================
-  // STATUS TOGGLE
-  // =============================
   const handleToggleStatus = async (cat) => {
     const newStatus = cat.status === 1 ? 0 : 1;
-
-    setCategories((prev) =>
-      prev.map((c) =>
-        c.id === cat.id ? { ...c, status: newStatus } : c
-      )
-    );
-
+    setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, status: newStatus } : c));
     try {
       await fetch(`${API}/category/${cat.id}`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ name: cat.name, status: newStatus }),
       });
-    } catch (err) {
-      console.error("Status update failed");
-    }
+    } catch (err) { }
   };
 
-  // =============================
-  // DRAG & DROP SAVE ORDER
-  // =============================
   const saveOrder = async (newList) => {
-    const payload = newList.map((item, index) => ({
-      id: item.id,
-      sort_order: index + 1,
-    }));
-
+    const payload = newList.map((item, index) => ({ id: item.id, sort_order: index + 1 }));
     try {
       await fetch(`${API}/category/reorder`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ order: payload }),
       });
-
-      // 🔥 IMPORTANT: RELOAD FROM SERVER
-      fetch(`${API}/category`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) =>
-          setCategories(
-            [...data].sort((a, b) => a.sort_order - b.sort_order)
-          )
-        );
-
-    } catch (err) {
-      console.error("Reorder save failed:", err);
-    }
+    } catch (err) { }
   };
 
-  // =============================
-  // DRAG END FUNCTION
-  // =============================
   const onDragEnd = (result) => {
     if (!result.destination) return;
-
     const items = Array.from(categories);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
-
-    // Assign new sort_order
-    const updated = items.map((cat, index) => ({
-      ...cat,
-      sort_order: index + 1,
-    }));
-
+    const updated = items.map((cat, index) => ({ ...cat, sort_order: index + 1 }));
     setCategories(updated);
     saveOrder(updated);
   };
-  // =============================
-  // MOBILE CATEGORY CARD
-  // =============================
+
   const CategoryCard = ({ item }) => {
     const imgUrl = item.image ? `${API_BASE}/uploads/${item.image}` : null;
-
+    const status = item.status === 1;
     return (
-      <div
-        className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 shadow-lg ${item.status === 0 ? "opacity-70" : ""
-          }`}
-      >
-        <div className="flex items-start gap-3">
-          {/* IMAGE */}
-          <div className="h-16 w-16 rounded-lg overflow-hidden bg-white/5 border border-white/10">
-            {imgUrl ? (
-              <img
-                src={imgUrl}
-                alt={item.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="text-xs text-white/40 p-2 text-center flex items-center justify-center h-full">
-                No image
-              </div>
-            )}
+      <div className={`bg-white/[0.03] backdrop-blur-md border ${status ? 'border-white/[0.08]' : 'border-rose-500/20 opacity-60'} rounded-[1.5rem] p-5 shadow-2xl transition-all`}>
+        <div className="flex items-start gap-4">
+          <div className="h-20 w-20 rounded-2xl overflow-hidden bg-white/5 border border-white/10 shrink-0">
+            {imgUrl ? <img src={imgUrl} className="h-full w-full object-cover" alt="" /> : <div className="h-full w-full flex items-center justify-center text-[8px] font-black uppercase text-white/20">NO IMAGE</div>}
           </div>
-
-          {/* DETAILS */}
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-white">{item.name}</div>
-            <div className="text-xs text-white/50">ID: {item.id}</div>
-
-            {/* ACTIONS */}
-            <div className="flex items-center gap-4 mt-3">
-              {/* TOGGLE */}
-              <label className="inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={item.status === 1}
-                  onChange={() => handleToggleStatus(item)}
-                  className="sr-only peer"
-                />
-                <div className="w-10 h-5 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10">
-                  <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transform transition peer-checked:translate-x-5" />
-                </div>
-              </label>
-
-              {/* EDIT */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  if (confirm(`Add remaining products for "${item.name}"?`)) {
-                    handleImportProducts(item.name, item.id);
-                  }
-                }}
-                className="text-blue-400 hover:text-blue-300 transition-colors"
-                title="Import products"
-              >
-                <Upload size={18} />
-              </motion.button>
-
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleEdit(item)}
-                className="text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                <Pencil size={18} />
-              </motion.button>
-
-              {/* DELETE */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleDelete(item.id)}
-                className="text-red-400 hover:text-red-300 transition-colors"
-              >
-                <Trash2 size={18} />
-              </motion.button>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-black text-white tracking-tight uppercase truncate">{item.name}</h4>
+            <div className="text-[9px] font-black text-white/30 tracking-[0.2em] mt-1">ID: {item.id}</div>
+            <div className="flex items-center gap-3 mt-4">
+              <button onClick={() => handleToggleStatus(item)} className={`px-3 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all ${status ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/30'}`}>
+                {status ? "ACTIVE" : "INACTIVE"}
+              </button>
+              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400"><Pencil size={14} /></button>
+              <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
             </div>
           </div>
         </div>
@@ -583,611 +421,312 @@ export default function Category() {
     );
   };
 
-  // =============================
-  // RETURN JSX (FULL UI)
-  // =============================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900 font-sans">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
-          <div className="max-w-7xl mx-auto">
-            {/* PAGE HEADER */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="mb-8"
-            >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                  <h2 className="font-bold text-white text-3xl drop-shadow-lg">
-                    Categories
-                  </h2>
-                  <p className="text-white/80 mt-1 max-w-lg text-base shadow-sm">
-                    Manage categories — drag to reorder, toggle visibility, edit or delete.
-                  </p>
+      <div className="flex flex-1 pt-16 min-h-0 relative">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        <div className={`flex-1 flex flex-col pt-16 lg:pt-20 min-w-0 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "pl-0"}`}>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden pt-4 lg:pt-8 pb-12 transition-all duration-300 ease-in-out">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 py-6 sm:py-8">
+
+              {/* Page Header Area */}
+              <div className="mb-8 space-y-8 -mt-12 sm:-mt-16">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
+                    <Zap className="text-yellow-400" size={24} />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase leading-none">Categories</h1>
+                    <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">Manage menu categories and sorting</p>
+                  </div>
                 </div>
 
-                {/* SEARCH + ADD */}
-                <div className="flex flex-col md:flex-row gap-3">
-                  {/* SEARCH */}
-                  <div className="relative">
+                <div className="flex flex-wrap items-center gap-4 p-3 bg-[#0b1a3d]/40 backdrop-blur-xl border border-white/[0.08] rounded-[2rem] shadow-inner">
+                  <div className="relative group flex-1 min-w-[200px]">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={16} />
                     <input
-                      className="pl-10 pr-10 py-3 border-2 border-white/10 rounded-xl w-full md:w-64 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/20 bg-white/10 backdrop-blur-md text-white placeholder-white/50 shadow-xl transition-all"
-                      placeholder="Search category or ID..."
+                      placeholder="SEARCH CATEGORIES..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-4 py-3 text-[10px] font-black uppercase tracking-widest text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all"
                     />
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50"
-                      size={18}
-                    />
-
-                    {searchQuery !== "" && (
-                      <button
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-                        onClick={() => setSearchQuery("")}
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
                   </div>
 
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+                    {isSuperAdmin && (
+                      <button onClick={() => setShowIntegrateModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                        <Zap size={14} /> Integrate
+                      </button>
+                    )}
 
-                  {/* SUPER ADMIN INTEGRATE BUTTON */}
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => setShowIntegrateModal(true)}
-                      className="bg-indigo-600/80 hover:bg-indigo-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(79,70,229,0.3)]"
-                    >
-                      <Zap size={18} />
-                      Integrate
+                    <button onClick={() => setShowSearchModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                      <Globe size={14} /> Global Search
                     </button>
-                  )}
 
-                  {/* GLOBAL SEARCH BUTTON */}
-                  <button
-                    onClick={() => setShowSearchModal(true)}
-                    className="bg-blue-600/80 hover:bg-blue-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(37,99,235,0.3)]"
-                  >
-                    <Search size={18} />
-                    Global Search
-                  </button>
-
-                  {/* ADD BUTTON */}
-                  <button
-                    onClick={() => {
-                      setIsEdit(false);
-                      setForm({ id: null, name: "", image: null, oldImage: "" });
-                      setPreviewUrl("");
-                      setShowModal(true);
-                    }}
-                    className="bg-emerald-600/80 hover:bg-emerald-600 hover:-translate-y-0.5 transform backdrop-blur-md text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-lg border border-white/20 flex items-center gap-2 transition-all shadow-[0_4px_15px_rgba(5,150,105,0.3)]"
-                  >
-                    <Plus size={18} />
-                    Add Category
-                  </button>
+                    <button
+                      onClick={() => { setIsEdit(false); setForm({ id: null, name: "", image: null, oldImage: "" }); setShowModal(true); }}
+                      className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[9px] rounded-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
+                    >
+                      <Plus size={16} /> New Category
+                    </button>
+                  </div>
                 </div>
               </div>
-            </motion.div>
 
-            {/* ===========================
-                CATEGORY LIST WRAPPER
-            ============================ */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <h3 className="text-lg font-bold text-white drop-shadow">All Categories</h3>
-                <span className="text-sm px-3 py-1 bg-white/10 rounded-full text-white/80 border border-white/10">
-                  {filteredCategories.length} total
-                </span>
-              </div>
+              {/* Content Area */}
+              <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden mb-12">
+                <div className="px-8 py-6 border-b border-white/[0.08] bg-white/5 flex justify-between items-center sm:px-10">
+                  <h3 className="text-[11px] font-black text-white tracking-[0.3em] uppercase flex items-center gap-3">
+                    <GripVertical size={16} className="text-yellow-400" /> Category List
+                  </h3>
+                  <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+                    {filteredCategories.length} Categories Active
+                  </div>
+                </div>
 
-              {/* DESKTOP TABLE WITH DRAG-DROP */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-white/10">
-                  <thead className="bg-white/5 text-white/80 uppercase text-xs font-bold tracking-wider">
-                    <tr>
-                      <th className="px-6 py-4 w-10"></th>
-                      <th className="px-6 py-4 text-left">Image</th>
-                      <th className="px-6 py-4 text-left">Name</th>
-                      <th className="px-6 py-4 text-center">Status</th>
-                      <th className="px-6 py-4 text-center">Actions</th>
-                    </tr>
-                  </thead>
-
-                  <DragDropContext onDragEnd={onDragEnd}>
-                    <Droppable droppableId="categoryTable">
-                      {(provided) => (
-                        <tbody
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="divide-y divide-white/5"
-                        >
-                          {filteredCategories.map((item, index) => (
-                            <Draggable
-                              key={String(item.id)}
-                              draggableId={String(item.id)}
-                              index={index}
-                            >
-                              {(dragProvided, snapshot) => {
-                                const rowContent = (
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-[#0b1a3d]/60 text-white/40 text-[10px] uppercase font-black tracking-widest">
+                      <tr>
+                        <th className="px-8 py-5 w-16"></th>
+                        <th className="px-8 py-5">Image</th>
+                        <th className="px-8 py-5">Category Name</th>
+                        <th className="px-8 py-5 text-center">Status</th>
+                        <th className="px-8 py-5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="categoryTable">
+                        {(provided) => (
+                          <tbody {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-white/[0.05]">
+                            {filteredCategories.map((item, index) => (
+                              <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
+                                {(dragProvided, snapshot) => (
                                   <tr
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
-                                    className={`${item.status === 0 ? "opacity-60" : ""
-                                      } hover:bg-white/5 transition-colors ${snapshot.isDragging
-                                        ? "bg-white/20 backdrop-blur-xl border-y border-white/30 z-[9999]"
-                                        : ""
-                                      }`}
-                                    style={{
-                                      ...dragProvided.draggableProps.style,
-                                      backgroundColor: snapshot.isDragging
-                                        ? "rgba(255, 255, 255, 0.15)"
-                                        : undefined,
-                                      display: snapshot.isDragging ? "table" : "table-row",
-                                      tableLayout: "fixed",
-                                      width: snapshot.isDragging
-                                        ? dragProvided.draggableProps.style.width || "100%"
-                                        : "auto",
-                                    }}
+                                    className={`${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl !table" : ""}`}
+                                    style={{ ...dragProvided.draggableProps.style }}
                                   >
-                                    <td
-                                      {...dragProvided.dragHandleProps}
-                                      className="px-6 py-4 cursor-grab text-white/30 hover:text-white/60 w-10"
-                                    >
+                                    <td {...dragProvided.dragHandleProps} className="px-8 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors">
                                       <GripVertical size={20} />
                                     </td>
-
-                                    <td className="px-6 py-4">
-                                      <div className="flex items-center gap-4">
-                                        <div className="h-14 w-14 rounded-lg overflow-hidden bg-white/10 border border-white/10 shadow-md flex-shrink-0">
-                                          {item.image ? (
-                                            <img
-                                              src={`${API_BASE}/uploads/${item.image}`}
-                                              className="h-full w-full object-cover"
-                                              alt={item.name}
-                                            />
-                                          ) : (
-                                            <div className="h-full w-full flex items-center justify-center text-xs text-white/30">
-                                              No img
-                                            </div>
-                                          )}
-                                        </div>
-                                        <div className="text-sm min-w-0">
-                                          <div className="font-semibold text-white truncate">
-                                            {item.name}
-                                          </div>
-                                          <div className="text-white/40 text-xs">
-                                            ID: {item.id}
-                                          </div>
-                                        </div>
+                                    <td className="px-8 py-5">
+                                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group">
+                                        {item.image ? (
+                                          <img src={`${API_BASE}/uploads/${item.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">NO IMAGE</div>
+                                        )}
                                       </div>
                                     </td>
-
-                                    <td className="px-6 py-4 text-white font-medium truncate">
-                                      {item.name}
+                                    <td className="px-8 py-5">
+                                      <div className="min-w-0">
+                                        <div className="text-sm font-black text-white tracking-tight uppercase leading-tight truncate max-w-xs">{item.name}</div>
+                                        <div className="text-[9px] font-black text-white/30 tracking-[0.2em] mt-1 leading-none uppercase">ID: {item.id}</div>
+                                      </div>
                                     </td>
-
-                                    <td className="px-6 py-4 text-center">
-                                      <label className="inline-flex items-center cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={item.status === 1}
-                                          onChange={() => handleToggleStatus(item)}
-                                          className="sr-only peer"
-                                        />
-                                        <div className="w-11 h-6 bg-white/20 rounded-full peer-checked:bg-emerald-500 relative transition-colors border border-white/10 shadow-inner">
-                                          <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition transform peer-checked:translate-x-5 shadow-sm" />
-                                        </div>
-                                      </label>
+                                    <td className="px-8 py-5 text-center">
+                                      <button
+                                        onClick={() => handleToggleStatus(item)}
+                                        className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${item.status === 1 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}
+                                      >
+                                        {item.status === 1 ? "ACTIVE" : "INACTIVE"}
+                                      </button>
                                     </td>
-
-                                    <td className="px-6 py-4 text-center">
-                                      <div className="flex items-center gap-3 justify-center">
-                                        <motion.button
-                                          whileHover={{ scale: 1.1 }}
-                                          whileTap={{ scale: 0.9 }}
-                                          onClick={() => {
-                                            if (confirm(`Add remaining products for "${item.name}"?`)) {
-                                              handleImportProducts(item.name, item.id);
-                                            }
-                                          }}
-                                          className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded-lg border border-blue-500/30 transition-all"
-                                          title="Import missing products"
-                                        >
-                                          <Upload size={16} />
-                                        </motion.button>
-                                        <motion.button
-                                          whileHover={{ scale: 1.1 }}
-                                          whileTap={{ scale: 0.9 }}
-                                          onClick={() => handleEdit(item)}
-                                          className="p-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 rounded-lg border border-emerald-500/30 transition-all"
-                                        >
-                                          <Pencil size={16} />
-                                        </motion.button>
-                                        <motion.button
-                                          whileHover={{ scale: 1.1 }}
-                                          whileTap={{ scale: 0.9 }}
-                                          onClick={() => handleDelete(item.id)}
-                                          className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg border border-red-500/30 transition-all"
-                                        >
-                                          <Trash2 size={16} />
-                                        </motion.button>
+                                    <td className="px-8 py-5">
+                                      <div className="flex items-center justify-end gap-3">
+                                        <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
+                                        <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
+                                        <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
                                       </div>
                                     </td>
                                   </tr>
-                                );
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </tbody>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  </table>
+                </div>
 
-                                if (snapshot.isDragging) {
-                                  return createPortal(
-                                    <table
-                                      style={{
-                                        borderCollapse: "collapse",
-                                        width: dragProvided.draggableProps.style.width || "100%",
-                                        zIndex: 10000,
-                                        position: "fixed",
-                                        pointerEvents: "none",
-                                      }}
-                                    >
-                                      <tbody>{rowContent}</tbody>
-                                    </table>,
-                                    document.body
-                                  );
-                                }
-
-                                return rowContent;
-                              }}
-                            </Draggable>
-                          ))}
-
-                          {provided.placeholder}
-                        </tbody>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
-                </table>
-              </div>
-
-              {/* MOBILE VIEW */}
-              <div className="md:hidden p-4 space-y-4">
-                {filteredCategories.map((item) => (
-                  <CategoryCard key={item.id} item={item} />
-                ))}
+                <div className="md:hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
+                  {filteredCategories.map((item) => (
+                    <CategoryCard key={item.id} item={item} />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </main>
+          </main>
+          <Footer />
+        </div>
+      </div>
 
-        <Footer />
-      </div >
-
-      {/* ==========================
-          ADD / EDIT MODAL
-      ========================== */}
-      < AnimatePresence >
+      <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => {
-                setShowModal(false);
-                setIsEdit(false);
-                setForm({ id: null, name: "", image: null, oldImage: "" });
-              }}
-            />
-
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-                <h3 className="font-bold text-xl text-white">
-                  {isEdit ? "Edit Category" : "Add Category"}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-white/50 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {/* NAME */}
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center">
                 <div>
-                  <label className="text-sm font-medium text-white/80 block mb-2">Category Name</label>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">{isEdit ? "Edit Category" : "Add Category"}</h2>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Category Details</p>
+                </div>
+                <button onClick={() => setShowModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
+              </div>
+              <form onSubmit={handleSubmit} className="p-8 space-y-8">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Category Name</label>
                   <input
                     type="text"
                     value={form.name}
-                    onChange={(e) =>
-                      setForm({ ...form, name: e.target.value })
-                    }
-                    required
-                    placeholder="e.g. Appetizers"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+                    onChange={e => setForm({ ...form, name: e.target.value })}
+                    placeholder="Enter category name..."
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm font-black text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all shadow-xl"
                   />
                 </div>
-
-                {/* IMAGE */}
                 <div>
-                  <label className="text-sm font-medium text-white/80 block mb-2">Image</label>
-                  <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          className="h-full w-full object-cover"
-                          alt="Preview"
-                        />
-                      ) : form.oldImage ? (
-                        <img
-                          src={`${API_BASE}/uploads/${form.oldImage}`}
-                          className="h-full w-full object-cover"
-                          alt="Current"
-                        />
-                      ) : (
-                        <span className="text-xs text-white/30">No Image</span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            image: e.target.files ? e.target.files[0] : null,
-                          })
-                        }
-                        className="block w-full text-sm text-white/60
-                          file:mr-4 file:py-2 file:px-4
-                          file:rounded-xl file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-white/10 file:text-white
-                          hover:file:bg-white/20
-                          cursor-pointer"
-                      />
-                      <p className="mt-1 text-xs text-white/40">Expected format: JPG, PNG</p>
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Category Image</label>
+                  <div
+                    onClick={() => document.getElementById('imageUp').click()}
+                    className="aspect-video bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
+                  >
+                    <input type="file" id="imageUp" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
+                    {previewUrl || form.oldImage ? (
+                      <img src={previewUrl || `${API_BASE}/uploads/${form.oldImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                    ) : (
+                      <>
+                        <Plus size={32} className="text-white/10 group-hover:text-yellow-400 transition-colors" />
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-2">Upload Image</span>
+                      </>
+                    )}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Overwrite Media</span>
                     </div>
                   </div>
                 </div>
-
-                {/* ACTIONS */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/10 transition-colors"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5"
-                  >
-                    {isEdit ? "Update Category" : "Save Category"}
+                <div className="pt-4">
+                  <button type="submit" className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10">
+                    {isEdit ? "UPDATE CATEGORY" : "SAVE CATEGORY"}
                   </button>
                 </div>
               </form>
             </motion.div>
           </div>
-        )
-        }
-      </AnimatePresence >
+        )}
 
-      {/* ==========================
-          GLOBAL SEARCH MODAL
-      ========================== */}
-      < AnimatePresence >
         {showSearchModal && (
-          <div className="fixed inset-0 z-[60] flex items-start justify-center pt-20 p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowSearchModal(false)}
-            />
-            <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
-              className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl rounded-2xl shadow-2xl p-6 border border-white/20 overflow-hidden"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-xl text-white">Search to Add</h3>
-                <button
-                  onClick={() => setShowSearchModal(false)}
-                  className="text-white/50 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSearchModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh]">
+              <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-yellow-500/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Global Category Search</h2>
+                </div>
+                <button onClick={() => setShowSearchModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
-
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" size={18} />
-                <input
-                  autoFocus
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                  placeholder="Search available categories..."
-                  value={globalSearchQuery}
-                  onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                />
+              <div className="p-8 shrink-0">
+                <div className="relative group">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={18} />
+                  <input
+                    autoFocus
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-14 pr-6 py-4 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all shadow-xl"
+                    placeholder="SEARCH GLOBAL CATEGORIES..."
+                    value={globalSearchQuery}
+                    onChange={e => setGlobalSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-
-              <div className="mt-4 max-h-[50vh] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {globalSearchResults.length === 0 && globalSearchQuery && (
-                  <div className="text-center text-white/50 py-8">
-                    No matching categories found.
+              <div className="flex-1 overflow-y-auto p-8 pt-0 space-y-4 custom-scrollbar">
+                {globalSearchResults.map((cat, i) => (
+                  <div key={i} className="flex justify-between items-center p-5 bg-white/[0.03] border border-white/[0.08] rounded-2xl hover:bg-white/[0.06] transition-all group/res">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-black/20 flex-shrink-0">
+                        {cat.image ? <img src={`${API_BASE}/uploads/${cat.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/20">IMAGE</div>}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-black text-white uppercase tracking-tight truncate">{cat.name}</div>
+                        <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-0.5">{cat.restaurant_name}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => handleAddGlobalCategory(cat)} className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 rounded-xl shadow-lg border border-white/20 hover:scale-105 transition-all transform active:scale-95"><Plus size={20} /></button>
                   </div>
-                )}
-
-                {globalSearchResults.map((game, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleAddGlobalCategory(game)}
-                    className="w-full flex items-center gap-4 p-3 hover:bg-white/10 border border-transparent hover:border-white/10 rounded-xl transition-all text-left group"
-                  >
-                    <div className="h-12 w-12 bg-white/5 rounded-lg overflow-hidden flex-shrink-0 border border-white/10">
-                      {game.image ? (
-                        <img
-                          src={`${API_BASE}/uploads/${game.image}`}
-                          className="h-full w-full object-cover"
-                          alt=""
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-xs text-white/30">?</div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white group-hover:text-blue-300 transition">{game.name}</div>
-                      <div className="text-xs text-white/40">Click to add</div>
-                    </div>
-                    <div className="text-blue-300 opacity-0 group-hover:opacity-100 transition">
-                      <Plus size={18} />
-                    </div>
-                  </button>
                 ))}
               </div>
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
 
-      {/* INTEGRATE MODAL (SUPER ADMIN ONLY) */}
-      <AnimatePresence>
         {showIntegrateModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowIntegrateModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            ></motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 30 }}
-              className="relative w-full max-w-2xl bg-[#0F172A] border border-white/20 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-8"
-            >
-              <div className="px-8 py-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowIntegrateModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-4xl w-full flex flex-col max-h-[85vh]">
+              <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-500/20 rounded-2xl border border-indigo-500/30">
-                    <Zap className="text-indigo-400" size={24} />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">Integrate <span className="text-indigo-400 not-italic">Category</span></h2>
-                    <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-1">Super Admin Deployment Engine</p>
-                  </div>
+                  <div className="p-2 bg-yellow-500/10 rounded-xl"><Zap size={20} className="text-yellow-400" /></div>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Restaurant Integration</h2>
                 </div>
-                <button
-                  onClick={() => setShowIntegrateModal(false)}
-                  className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 text-white transition-all active:scale-90"
-                >
-                  <X size={20} />
-                </button>
+                <button onClick={() => setShowIntegrateModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
-
-              <div className="p-8 space-y-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
-                {/* SOURCE SEARCH */}
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 flex items-center gap-2">
-                    <Search size={14} /> Step 1: Search Source Category
-                  </label>
-                  <div className="relative">
+              <div className="flex flex-col md:flex-row h-full overflow-hidden">
+                <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-b md:border-b-0 md:border-r border-white/[0.08]">
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Source Category</label>
+                  <div className="relative group mb-6">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={16} />
                     <input
-                      type="text"
-                      placeholder="e.g. Pizza, Burger, Indian..."
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all uppercase"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/40 transition-all"
+                      placeholder="SCAN ALL CATEGORIES..."
                       value={integrateSearch}
-                      onChange={(e) => setIntegrateSearch(e.target.value)}
+                      onChange={e => setIntegrateSearch(e.target.value)}
                     />
                   </div>
-
-                  {integrateResults.length > 0 && !selectedSourceCat && (
-                    <div className="grid grid-cols-1 gap-3 mt-4">
-                      {integrateResults.map(res => (
-                        <div
-                          key={res.id}
-                          onClick={() => setSelectedSourceCat(res)}
-                          className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl cursor-pointer group transition-all"
-                        >
-                          <div className="flex items-center gap-4 min-w-0">
-                            <div className="h-10 w-10 rounded-lg overflow-hidden bg-black/20 border border-white/10 flex-shrink-0">
-                              {res.image ? <img src={`${API_BASE}/uploads/${res.image}`} className="w-full h-full object-cover" /> : <div className="text-[8px] flex items-center justify-center h-full">N/A</div>}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-sm font-bold text-white uppercase truncate">{res.name}</div>
-                              <div className="text-[9px] text-indigo-400 font-bold flex items-center gap-1 uppercase truncate">
-                                <Store size={10} /> {res.restaurant_name || "Merchant Store"}
-                              </div>
-                            </div>
-                          </div>
-                          <Check size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <div className="space-y-3">
+                    {integrateResults.map((cat, i) => (
+                      <div key={i} onClick={() => setSelectedSourceCat(cat)} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${selectedSourceCat?.id === cat.id ? 'bg-yellow-500/20 border-yellow-500/50 shadow-lg' : 'bg-white/5 border-white/[0.05] hover:border-white/20'}`}>
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-black/20 shrink-0">
+                          {cat.image ? <img src={`${API_BASE}/uploads/${cat.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/10">VOID</div>}
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedSourceCat && (
-                    <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-                      <div className="flex items-center gap-4">
-                        <Check className="text-indigo-400" size={20} />
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Selected Source</p>
-                          <p className="text-white font-bold uppercase">{selectedSourceCat.name} <span className="text-white/40 text-[10px] ml-2 italic lowercase font-normal">from {selectedSourceCat.restaurant_name}</span></p>
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-white uppercase tracking-tight truncate">{cat.name}</div>
+                          <div className="text-[8px] font-black text-white/20 uppercase tracking-widest">{cat.restaurant_name}</div>
                         </div>
+                        {selectedSourceCat?.id === cat.id && <Check size={16} className="text-yellow-400 ml-auto" />}
                       </div>
-                      <button onClick={() => setSelectedSourceCat(null)} className="text-[10px] font-black uppercase text-rose-400 hover:text-rose-300">Change</button>
-                    </div>
-                  )}
-                </div>
-
-                {/* TARGET RESTAURANT */}
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-400 flex items-center gap-2">
-                    <Store size={14} /> Step 2: Target Merchant Restaurant
-                  </label>
-                  <select
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all appearance-none"
-                    value={targetRestaurantId}
-                    onChange={(e) => setTargetRestaurantId(e.target.value)}
-                  >
-                    <option value="" className="bg-[#0F172A]">SELECT TARGET RESTAURANT...</option>
-                    {restaurants.map(r => (
-                      <option key={r.user_id} value={r.user_id} className="bg-[#0F172A]">
-                        {r.restaurant_name} — ({r.owner_name})
-                      </option>
                     ))}
-                  </select>
+                  </div>
                 </div>
-              </div>
-
-              <div className="p-8 border-t border-white/10 bg-white/5 flex gap-4">
-                <button
-                  onClick={() => setShowIntegrateModal(false)}
-                  className="flex-1 py-4 rounded-2xl border border-white/10 text-white/60 font-black uppercase tracking-widest text-[11px] hover:bg-white/5 hover:text-white transition-all"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={handleIntegrate}
-                  disabled={integrating}
-                  className="flex-[2] py-4 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg transition-all flex items-center justify-center gap-3 active:scale-95 shadow-[0_10px_30px_rgba(99,102,241,0.3)]"
-                >
-                  {integrating ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
-                  {integrating ? "DEPLOYING..." : "DEPLOY & INTEGRATE"}
-                </button>
+                <div className="flex-1 p-8 bg-white/[0.01] flex flex-col">
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Target Restaurant</label>
+                  <select
+                    value={targetRestaurantId}
+                    onChange={e => setTargetRestaurantId(e.target.value)}
+                    className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500/20 mb-8"
+                  >
+                    <option value="">SELECT DESTINATION...</option>
+                    {restaurants.map(r => <option key={r.id} value={r.id}>{r.restaurant_name.toUpperCase()}</option>)}
+                  </select>
+                  <div className="mt-auto p-6 bg-white/[0.03] border border-white/[0.05] rounded-2xl">
+                    <div className="flex justify-between items-center mb-6">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Status</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400">READY</span>
+                    </div>
+                    <button
+                      disabled={integrating}
+                      onClick={handleIntegrate}
+                      className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-xs rounded-xl shadow-2xl transition-all transform active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 border border-white/10"
+                    >
+                      {integrating ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
+                      {integrating ? "Processing..." : "Start Integration"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

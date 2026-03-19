@@ -91,11 +91,11 @@ export default function AccessManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] font-sans">
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+      <div className={`flex-1 -mt-12 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
 
           <motion.div
@@ -104,41 +104,41 @@ export default function AccessManagement() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
           >
             <div>
-              <h2 className="text-3xl font-bold text-white drop-shadow-lg flex items-center gap-3">
-                <Shield className="text-emerald-400" size={32} />
-                Permissions
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
+                <Shield className="text-[#00f2ff]" size={36} />
+                PERMISSIONS
               </h2>
-              <p className="mt-2 text-white/70">Manage system access levels and capabilities.</p>
+              <p className="mt-2 text-white/50 text-base font-medium">Manage system access levels and capabilities.</p>
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
                 onClick={() => setOpenModal(true)}
-                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600/80 hover:bg-emerald-600 backdrop-blur-md text-white rounded-xl font-bold shadow-lg border border-white/20 transition-all hover:-translate-y-0.5"
+                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-2xl font-black shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 uppercase tracking-wider text-sm"
               >
-                <Plus size={20} />
+                <Plus size={20} strokeWidth={3} />
                 Create Permission
               </button>
             </div>
           </motion.div>
 
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-[#0b1a3d]/60 backdrop-blur-xl border border-white/[0.08] rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col">
             {/* Toolbar */}
-            <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/5">
+            <div className="p-6 border-b border-white/[0.08] flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/[0.02]">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20} />
                   <input
                     type="text"
                     placeholder="Search permissions..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-2xl pl-12 pr-6 py-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-[#00f2ff]/50 transition-all font-medium"
                   />
                 </div>
               </div>
-              <div className="text-white/50 text-sm font-medium">
-                {filtered.length} entries
+              <div className="text-white/40 text-sm font-black uppercase tracking-widest">
+                {filtered.length} Permissions Found
               </div>
             </div>
 
@@ -146,18 +146,18 @@ export default function AccessManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10 text-white/70 text-xs uppercase tracking-wider">
-                    <th className="px-6 py-4 font-bold w-20">#</th>
-                    <th className="px-6 py-4 font-bold">Permission Title</th>
-                    <th className="px-6 py-4 font-bold">Created At</th>
-                    <th className="px-6 py-4 font-bold text-right">Actions</th>
+                  <tr className="bg-white/[0.02] border-b border-white/[0.08] text-white/40 text-xs uppercase font-black tracking-[0.2em]">
+                    <th className="px-8 py-6 w-20">#</th>
+                    <th className="px-8 py-6">Permission Title</th>
+                    <th className="px-8 py-6">Created At</th>
+                    <th className="px-8 py-6 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-white/90">
+                <tbody className="divide-y divide-white/[0.04] text-white/90">
                   {loading ? (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/50">Loading permissions...</td></tr>
+                    <tr><td colSpan={4} className="px-8 py-16 text-center text-white/30 font-bold text-lg">Loading permissions...</td></tr>
                   ) : filtered.length === 0 ? (
-                    <tr><td colSpan={4} className="px-6 py-8 text-center text-white/50">No permissions found</td></tr>
+                    <tr><td colSpan={4} className="px-8 py-16 text-center text-white/30 font-bold text-lg">No permissions found</td></tr>
                   ) : (
                     filtered.map((p, idx) => (
                       <motion.tr
@@ -165,28 +165,28 @@ export default function AccessManagement() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: idx * 0.05 }}
                         key={p.id}
-                        className="hover:bg-white/5 transition-colors"
+                        className="hover:bg-white/[0.02] transition-colors group"
                       >
-                        <td className="px-6 py-4 text-white/50">{idx + 1}</td>
-                        <td className="px-6 py-4 font-medium">{p.title}</td>
-                        <td className="px-6 py-4 text-white/60 text-sm">
-                          {p.created_at ? new Date(p.created_at).toLocaleDateString() : "-"}
+                        <td className="px-8 py-6 text-white/30 font-black">{idx + 1}</td>
+                        <td className="px-8 py-6 font-bold text-white group-hover:text-[#00f2ff] transition-colors uppercase tracking-wide">{p.title}</td>
+                        <td className="px-8 py-6 text-white/40 font-medium tracking-wide">
+                          {p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex items-center justify-end gap-3">
                             <button
                               onClick={() => openEdit(p)}
-                              className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors border border-blue-500/30"
+                              className="p-3 bg-[#00f2ff]/10 text-[#00f2ff] hover:bg-[#00f2ff] hover:text-[#071428] rounded-xl transition-all border border-[#00f2ff]/20 shadow-lg shadow-[#00f2ff]/5"
                               title="Edit"
                             >
-                              <Edit size={16} />
+                              <Edit size={18} strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => handleDelete(p.id)}
-                              className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors border border-red-500/30"
+                              className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-500/5"
                               title="Delete"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} strokeWidth={2.5} />
                             </button>
                           </div>
                         </td>
@@ -198,22 +198,26 @@ export default function AccessManagement() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-white/10 bg-white/5 text-white/50 text-sm flex justify-between items-center">
-              <span>Showing {filtered.length} entries</span>
+            <div className="p-6 border-t border-white/[0.08] bg-white/[0.02] flex justify-between items-center">
+              <span className="text-white/40 text-sm font-black uppercase tracking-widest">Showing {filtered.length} entries</span>
               {/* Pagination Placeholders */}
-              <div className="flex gap-1">
-                <button className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-50" disabled>&laquo;</button>
-                <button className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">1</button>
-                <button className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-50" disabled>&raquo;</button>
+              <div className="flex gap-2">
+                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/20 border border-white/[0.1] disabled:opacity-30 cursor-not-allowed" disabled>&laquo;</button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#00f2ff] text-[#071428] font-black border border-[#00f2ff]/20 shadow-lg shadow-[#00f2ff]/20">1</button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/20 border border-white/[0.1] disabled:opacity-30 cursor-not-allowed" disabled>&raquo;</button>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="mt-4 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200 flex items-center gap-2 animate-pulse">
-              <div className="w-2 h-2 rounded-full bg-red-400" />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 p-5 bg-red-500/10 border border-red-500/20 rounded-[1.5rem] text-red-400 font-bold flex items-center gap-3"
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
               {error}
-            </div>
+            </motion.div>
           )}
         </main>
 
@@ -252,14 +256,12 @@ export default function AccessManagement() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
-                  <button onClick={() => setOpenModal(false)} className="px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/10 transition-colors">
-                    Cancel
-                  </button>
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
+                  <button onClick={() => setOpenModal(false)} className="px-6 py-3 rounded-xl text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all">Cancel</button>
                   <button
                     onClick={handleCreate}
                     disabled={submitting}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg border border-white/10 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                    className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                   >
                     {submitting ? "Creating..." : "Create Permission"}
                   </button>
@@ -301,14 +303,12 @@ export default function AccessManagement() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
-                  <button onClick={() => setEditOpen(false)} className="px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/10 transition-colors">
-                    Cancel
-                  </button>
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
+                  <button onClick={() => setEditOpen(false)} className="px-6 py-3 rounded-xl text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all">Cancel</button>
                   <button
                     onClick={handleEditSave}
                     disabled={submitting}
-                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg border border-white/10 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                    className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </button>

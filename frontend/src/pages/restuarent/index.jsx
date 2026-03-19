@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // CustomDropdown component for glassy select
 function CustomDropdown({ value, onChange, options }) {
@@ -12,18 +13,18 @@ function CustomDropdown({ value, onChange, options }) {
     <div className="relative">
       <button
         type="button"
-        className="w-full px-4 py-3 bg-white/10 border-2 border-white/20 rounded-xl text-white font-semibold text-left focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 transition-all backdrop-blur-md"
+        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold text-left focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm backdrop-blur-md"
         onClick={() => setOpen(o => !o)}
       >
         {selected ? selected.label : "Select..."}
-        <span className="float-right">▼</span>
+        <span className="float-right opacity-40">▼</span>
       </button>
       {open && (
-        <div className="absolute z-10 left-0 right-0 mt-2 bg-gray-900 border-2 border-white/20 rounded-xl shadow-2xl">
+        <div className="absolute z-50 left-0 right-0 mt-2 bg-[#0b1a3d] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden">
           {options.map(opt => (
             <div
               key={opt.value}
-              className="px-4 py-3 cursor-pointer text-white font-semibold hover:bg-emerald-500/20 transition-all"
+              className="px-5 py-3 cursor-pointer text-white font-bold hover:bg-yellow-500/10 transition-all text-sm"
               onClick={() => handleSelect(opt.value)}
             >
               {opt.label}
@@ -43,28 +44,26 @@ import {
   Store, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Linkedin,
   ParkingCircle, Upload, X, Clock, Plus, Trash2, Save, Image as ImageIcon,
   CheckCircle2, AlertCircle, Calendar, Utensils, ChefHat, Pizza, Soup, Flame,
-  Truck, Bike, ShoppingCart, Globe, Drumstick
+  Truck, Bike, ShoppingCart, Globe, Drumstick, Loader2, Shield
 } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "", required = false }) => (
-  <div className={`group ${className}`}>
-    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
-      {Icon && <Icon size={16} className="text-emerald-300" />}
-      {label}
-      {required && <span className="text-white">*</span>}
+const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "", required = false, id }) => (
+  <div className={`space-y-2 group ${className}`}>
+    <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+      {Icon && <Icon size={12} className="text-yellow-500" />}
+      {label} {required && <span className="text-rose-500">*</span>}
     </label>
     <div className="relative">
       <input
+        id={id}
         type={type}
         value={value || ""}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white placeholder-white/50 
-                 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 
-                 transition-all duration-200 hover:border-white/30 shadow-lg"
+        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
       />
     </div>
   </div>
@@ -342,25 +341,29 @@ export default function Restuarent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30">
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
+      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
         <div className="max-w-7xl mx-auto">
 
           {/* Page Header */}
-          <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
             <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20">
-                <Store className="text-white" size={28} />
+              <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
+                <Store className="text-yellow-500" size={28} />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white drop-shadow-lg">Restaurant Profile</h1>
-                <p className="text-white/90 mt-1 text-base drop-shadow">Manage your restaurant information and operating hours</p>
+              <div className="min-w-0">
+                <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase">Restaurant Profile</h1>
+                <p className="text-white/60 mt-1 text-[10px] font-black uppercase tracking-[0.2em]">Manage your restaurant information and operating hours</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -368,15 +371,22 @@ export default function Restuarent() {
             <div className="lg:col-span-2 space-y-6">
 
               {/* Basic Information Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2">
-                    <Store size={20} />
-                    Basic Information
-                  </h2>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                      <Store size={22} className="text-yellow-500" />
+                      Basic Information
+                    </h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Core details of your establishment</p>
+                  </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-white/5 backdrop-blur-sm">
+                <div className="p-8 space-y-8">
                   <InputField
                     icon={Store}
                     label="Restaurant Name"
@@ -385,81 +395,86 @@ export default function Restuarent() {
                     placeholder="Enter restaurant name"
                     required
                   />
-                  {/* Food Type Section with Heading and Icon */}
-                  <div className="group mb-2">
-                    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
-                      <Utensils size={16} className="text-emerald-300" />
-                      Food Type
-                      <span className="text-white">*</span>
+                  {/* Food Type Section */}
+                  <div className="space-y-3 group">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                      <Utensils size={12} className="text-yellow-500" />
+                      Food Type <span className="text-rose-500">*</span>
                     </label>
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                      <div className="flex flex-row gap-4 items-center">
-                        <input
-                          type="checkbox"
-                          id="veg-checkbox"
-                          checked={Array.isArray(info.food_type) ? info.food_type.includes(0) : info.food_type === 0}
-                          onChange={e => {
-                            setInfo(p => {
-                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                              if (e.target.checked) {
-                                if (!arr.includes(0)) arr.push(0);
-                              } else {
-                                arr = arr.filter(v => v !== 0);
-                              }
-                              return { ...p, food_type: arr };
-                            });
-                          }}
-                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
-                        />
-                        <label htmlFor="veg-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">Veg</label>
-                        <input
-                          type="checkbox"
-                          id="nonveg-checkbox"
-                          checked={Array.isArray(info.food_type) ? info.food_type.includes(1) : info.food_type === 1}
-                          onChange={e => {
-                            setInfo(p => {
-                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                              if (e.target.checked) {
-                                if (!arr.includes(1)) arr.push(1);
-                              } else {
-                                arr = arr.filter(v => v !== 1);
-                              }
-                              // Auto-select Halal if NonVeg checked
-                              return { ...p, food_type: arr, is_halal: e.target.checked ? 1 : 0 };
-                            });
-                          }}
-                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
-                        />
-                        <label htmlFor="nonveg-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">NonVeg</label>
-                        <input
-                          type="checkbox"
-                          id="jain-food-checkbox"
-                          checked={Array.isArray(info.food_type) ? info.food_type.includes(2) : info.food_type === 2}
-                          onChange={e => {
-                            setInfo(p => {
-                              let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                              if (e.target.checked) {
-                                if (!arr.includes(2)) arr.push(2);
-                              } else {
-                                arr = arr.filter(v => v !== 2);
-                              }
-                              return { ...p, food_type: arr };
-                            });
-                          }}
-                          className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10 ml-2"
-                        />
-                        <label htmlFor="jain-food-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer ml-1">Jain</label>
+                    <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
+                      <div className="flex flex-wrap gap-8 items-center justify-around">
+                        <div className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            id="veg-checkbox"
+                            checked={Array.isArray(info.food_type) ? info.food_type.includes(0) : info.food_type === 0}
+                            onChange={e => {
+                              setInfo(p => {
+                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                if (e.target.checked) {
+                                  if (!arr.includes(0)) arr.push(0);
+                                } else {
+                                  arr = arr.filter(v => v !== 0);
+                                }
+                                return { ...p, food_type: arr };
+                              });
+                            }}
+                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                          />
+                          <label htmlFor="veg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Veg</label>
+                        </div>
+                        <div className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            id="nonveg-checkbox"
+                            checked={Array.isArray(info.food_type) ? info.food_type.includes(1) : info.food_type === 1}
+                            onChange={e => {
+                              setInfo(p => {
+                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                if (e.target.checked) {
+                                  if (!arr.includes(1)) arr.push(1);
+                                } else {
+                                  arr = arr.filter(v => v !== 1);
+                                }
+                                return { ...p, food_type: arr, is_halal: e.target.checked ? 1 : 0 };
+                              });
+                            }}
+                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                          />
+                          <label htmlFor="nonveg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Non-Veg</label>
+                        </div>
+                        <div className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            id="jain-food-checkbox"
+                            checked={Array.isArray(info.food_type) ? info.food_type.includes(2) : info.food_type === 2}
+                            onChange={e => {
+                              setInfo(p => {
+                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                if (e.target.checked) {
+                                  if (!arr.includes(2)) arr.push(2);
+                                } else {
+                                  arr = arr.filter(v => v !== 2);
+                                }
+                                return { ...p, food_type: arr };
+                              });
+                            }}
+                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                          />
+                          <label htmlFor="jain-food-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Jain</label>
+                        </div>
                         {Array.isArray(info.food_type) && info.food_type.includes(1) && (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id="halal-checkbox"
-                              checked={info.is_halal === 1}
-                              onChange={e => setInfo(p => ({ ...p, is_halal: e.target.checked ? 1 : 0 }))}
-                              className="w-5 h-5 accent-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10"
-                            />
-                            <label htmlFor="halal-checkbox" className="text-sm font-semibold text-white/90 cursor-pointer">Halal</label>
-                            <span className="text-white/70 text-xs">Is Halal?</span>
+                          <div className="flex items-center gap-4 pl-8 border-l border-white/10">
+                            <div className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                id="halal-checkbox"
+                                checked={info.is_halal === 1}
+                                onChange={e => setInfo(p => ({ ...p, is_halal: e.target.checked ? 1 : 0 }))}
+                                className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                              />
+                              <label htmlFor="halal-checkbox" className="text-sm font-black uppercase tracking-widest text-yellow-400 cursor-pointer">Halal Certified</label>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -467,14 +482,13 @@ export default function Restuarent() {
                   </div>
 
                   {/* Cuisine Type Section */}
-                  <div className="group mb-2">
-                    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
-                      <ChefHat size={16} className="text-emerald-300" />
-                      Cuisine Type
-                      <span className="text-white">*</span>
+                  <div className="space-y-3 group">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                      <ChefHat size={12} className="text-yellow-400" />
+                      Cuisine Topology <span className="text-rose-500">*</span>
                     </label>
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+                    <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
                         {[
                           { id: 0, label: "Indian", icon: Flame },
                           { id: 1, label: "Afghan", icon: ChefHat },
@@ -501,21 +515,21 @@ export default function Restuarent() {
                                   return { ...p, cuisine_type: arr };
                                 });
                               }}
-                              className={`relative flex flex-col items-center justify-center p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${isSelected
-                                ? 'bg-emerald-500/20 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.2)]'
-                                : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10 shadow-sm'
+                              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 transform hover:scale-[1.05] cursor-pointer ${isSelected
+                                ? 'bg-yellow-500/10 border-yellow-500/30'
+                                : 'bg-white/[0.02] border-white/5 hover:border-white/20'
                                 }`}
                             >
-                              <div className={`p-1.5 rounded-lg mb-2 transition-colors duration-300 ${isSelected ? 'bg-emerald-400 text-white' : 'bg-white/10 text-white/40 group-hover:text-white'}`}>
+                              <div className={`p-2 rounded-xl mb-2 transition-colors duration-300 ${isSelected ? 'bg-yellow-500 text-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-white/40'}`}>
                                 <Icon size={18} />
                               </div>
-                              <span className={`text-[10px] font-bold tracking-wide transition-colors duration-300 text-center ${isSelected ? 'text-white' : 'text-white/60'}`}>
+                              <span className={`text-[9px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${isSelected ? 'text-white' : 'text-white/40'}`}>
                                 {cuisine.label}
                               </span>
                               {isSelected && (
-                                <div className="absolute top-1 right-1">
-                                  <div className="bg-emerald-500 rounded-full p-0.5 shadow-md">
-                                    <CheckCircle2 size={8} className="text-white" />
+                                <div className="absolute top-2 right-2">
+                                  <div className="bg-yellow-500 rounded-full p-0.5">
+                                    <CheckCircle2 size={10} className="text-slate-900" />
                                   </div>
                                 </div>
                               )}
@@ -526,10 +540,10 @@ export default function Restuarent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <InputField
                       icon={Phone}
-                      label="Phone Number"
+                      label="Operator Phone"
                       value={info.phone}
                       onChange={onInfoChange("phone")}
                       placeholder="+44 123 456 7890"
@@ -538,7 +552,7 @@ export default function Restuarent() {
                     />
                     <InputField
                       icon={Mail}
-                      label="Email Address"
+                      label="Business Email"
                       value={info.email}
                       onChange={onInfoChange("email")}
                       placeholder="contact@restaurant.com"
@@ -547,266 +561,300 @@ export default function Restuarent() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-white/90 mb-2 flex items-center gap-2 drop-shadow">
-                      <MapPin size={16} className="text-emerald-300" />
-                      Address & Location
-                      <span className="text-white">*</span>
-                    </label>
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-500 shrink-0">Geolocation</h3>
+                      <div className="h-px w-full bg-gradient-to-r from-yellow-500/20 to-transparent"></div>
+                    </div>
                     <div className="space-y-4">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          id="restaurant_address_autocomplete"
-                          value={info.address}
-                          onChange={onInfoChange("address")}
-                          placeholder="Search for restaurant address..."
-                          className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-xl text-white placeholder-white/50 
-                                   focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 
-                                   transition-all duration-200 hover:border-white/30 shadow-lg"
-                        />
-                        <div className="mt-2 flex gap-4">
-                          <div className="flex-1">
-                            <label className="block text-[10px] uppercase tracking-wider text-white/50 mb-1 font-bold">Latitude</label>
-                            <input
-                              type="text"
-                              value={info.latitude}
-                              readOnly
-                              placeholder="0.000000"
-                              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 text-sm font-mono focus:outline-none cursor-default"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-[10px] uppercase tracking-wider text-white/50 mb-1 font-bold">Longitude</label>
-                            <input
-                              type="text"
-                              value={info.longitude}
-                              readOnly
-                              placeholder="0.000000"
-                              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/70 text-sm font-mono focus:outline-none cursor-default"
-                            />
-                          </div>
+                      <div className="space-y-2 group">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                          <MapPin size={12} className="text-yellow-500" /> Physical Address <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            id="restaurant_address_autocomplete"
+                            value={info.address}
+                            onChange={onInfoChange("address")}
+                            placeholder="Search Google Maps for address..."
+                            className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
+                          />
                         </div>
-                        <p className="text-[10px] text-white/40 mt-1 italic">
-                          * Start typing address to select from Google suggestions. Coordinates will update automatically.
-                        </p>
                       </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Latitude</label>
+                          <input
+                            type="text"
+                            value={info.latitude}
+                            readOnly
+                            placeholder="0.000000"
+                            className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Longitude</label>
+                          <input
+                            type="text"
+                            value={info.longitude}
+                            readOnly
+                            placeholder="0.000000"
+                            className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-1 italic text-center">
+                        * Coordinates are synchronized during address selection
+                      </p>
                     </div>
                   </div>
 
                   <InputField
                     icon={ParkingCircle}
-                    label="Parking Information"
+                    label="Logistics & Parking"
                     value={info.parking_info}
                     onChange={onInfoChange("parking_info")}
-                    placeholder="e.g., Free parking available, Valet service"
+                    placeholder="Describe parking availability for patrons"
                   />
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Social Media Links Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg">Social Media</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10">
+                  <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                    <Twitter size={22} className="text-yellow-400" />
+                    Social Presence
+                  </h2>
+                  <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Digital connectivity channels</p>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                   <InputField
                     icon={Facebook}
                     label="Facebook"
                     value={info.facebook}
                     onChange={onInfoChange("facebook")}
-                    placeholder="Facebook profile URL"
+                    placeholder="Profile URL"
                   />
                   <InputField
                     icon={Instagram}
                     label="Instagram"
                     value={info.instagram}
                     onChange={onInfoChange("instagram")}
-                    placeholder="Instagram profile URL"
+                    placeholder="Profile URL"
                   />
                   <InputField
                     icon={Twitter}
-                    label="Twitter"
+                    label="Twitter (X)"
                     value={info.twitter}
                     onChange={onInfoChange("twitter")}
-                    placeholder="Twitter profile URL"
+                    placeholder="Profile URL"
                   />
                   <InputField
                     icon={Linkedin}
                     label="LinkedIn"
                     value={info.linkedin}
                     onChange={onInfoChange("linkedin")}
-                    placeholder="LinkedIn profile URL"
+                    placeholder="Profile URL"
                   />
                   <InputField
                     icon={ImageIcon}
-                    label="Google Review Link"
+                    label="Google Reviews"
                     value={info.google_review_link}
                     onChange={onInfoChange("google_review_link")}
-                    placeholder="Google Review URL"
+                    placeholder="Review Page URL"
                   />
                   <InputField
-                    icon={Store}
-                    label="Website URL"
+                    icon={Globe}
+                    label="Official Website"
                     value={info.website_url}
                     onChange={onInfoChange("website_url")}
-                    placeholder="https://your-restaurant.com"
+                    placeholder="https://your-domain.com"
                   />
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Delivery Partners Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10 flex items-center gap-2">
-                  <Truck className="text-white" size={20} />
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg">Delivery Partners</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                  <Truck size={22} className="text-yellow-400" />
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Logistics Partners</h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Delivery infrastructure integration</p>
+                  </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-white/5">
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mb-2">
-                    <p className="text-xs text-emerald-300 font-semibold flex items-center gap-2">
-                      <Store size={14} />
-                      Primary Delivery (Restaurant's Own)
+                <div className="p-8 space-y-8">
+                  <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl flex items-center gap-4">
+                    <div className="p-2 bg-yellow-500/10 rounded-xl">
+                      <Store size={18} className="text-yellow-400" />
+                    </div>
+                    <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest">
+                      Primary Infrastructure (Restaurant Exclusive)
                     </p>
                   </div>
+
                   <InputField
                     icon={Truck}
-                    label="Own Delivery Link"
+                    label="Internal Fulfillment Link"
                     value={info.delivery_partner_1_url}
                     onChange={onInfoChange("delivery_partner_1_url")}
-                    placeholder="Partner 1 URL (Restaurant Direct)"
+                    placeholder="Direct ordering URL"
                   />
 
-                  <div className="pt-4 border-t border-white/10">
-                    <p className="text-xs text-white/50 font-semibold mb-4 flex items-center gap-2">
-                      <Globe size={14} />
-                      3rd Party Delivery Partners
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="pt-8 border-t border-white/[0.08]">
+                    <div className="flex items-center gap-4 mb-6">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 shrink-0">3rd Party Aggregators</h3>
+                      <div className="h-px w-full bg-gradient-to-r from-white/10 to-transparent"></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <InputField
                         icon={Bike}
-                        label="Delivery Partner 2 (UberEats)"
+                        label="UberEats Integration"
                         value={info.delivery_partner_2_url}
                         onChange={onInfoChange("delivery_partner_2_url")}
-                        placeholder="Partner 2 URL (e.g. UberEats)"
+                        placeholder="Partner URL"
                       />
                       <InputField
                         icon={Bike}
-                        label="Delivery Partner 3 (Deliveroo)"
+                        label="Deliveroo Integration"
                         value={info.delivery_partner_3_url}
                         onChange={onInfoChange("delivery_partner_3_url")}
-                        placeholder="Partner 3 URL (e.g. Deliveroo)"
+                        placeholder="Partner URL"
                       />
                       <InputField
                         icon={ShoppingCart}
-                        label="Delivery Partner 4 (JustEat)"
+                        label="JustEat Integration"
                         value={info.delivery_partner_4_url}
                         onChange={onInfoChange("delivery_partner_4_url")}
-                        placeholder="Partner 4 URL (e.g. JustEat)"
+                        placeholder="Partner URL"
                       />
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Stripe Details Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg">Stripe Payments</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                  <Shield size={22} className="text-yellow-400" />
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Stripe Infrastructure</h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Direct settlement protocol</p>
+                  </div>
                 </div>
 
-                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                   <InputField
-                    label="Stripe Publishable Key"
+                    label="Publishable Topology Key"
                     value={info.stripe_publishable_key}
                     onChange={onInfoChange("stripe_publishable_key")}
                     placeholder="pk_test_..."
                     required
                   />
                   <InputField
-                    label="Stripe Secret Key"
+                    label="Secret Authentication Key"
                     value={info.stripe_secret_key}
                     onChange={onInfoChange("stripe_secret_key")}
                     placeholder="sk_test_..."
                     required
                   />
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Service Options Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2">
-                    Service Options
-                    <span className="text-white">*</span>
-                  </h2>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                  <ShoppingCart size={22} className="text-yellow-400" />
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Fulfillment Modes</h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Service availability protocols</p>
+                  </div>
                 </div>
 
-                <div className="p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className={`relative flex items-center p-4 rounded-xl border-2 cursor-pointer hover:shadow-lg transition-all duration-200 group ${info.instore
-                      ? 'bg-emerald-500/20 border-emerald-400/50'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                <div className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.instore
+                      ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
+                      : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
                       }`}>
                       <input
                         type="checkbox"
                         checked={info.instore}
                         onChange={(e) => setInfo((p) => ({ ...p, instore: e.target.checked }))}
-                        className="w-5 h-5 text-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10"
+                        className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
                       />
-                      <div className="ml-3 flex-1">
-                        <span className="block text-sm font-bold text-white">In-Store Pickup</span>
-                        <span className="text-xs text-white/50">Customers can pick up orders inside</span>
+                      <div className="ml-5 flex-1">
+                        <span className="block text-sm font-black uppercase tracking-widest text-white">In-Store Fulfillment</span>
+                        <span className="text-[10px] font-bold text-white/40 mt-1 block">Patron internal collection protocol</span>
                       </div>
-                      {info.instore && <CheckCircle2 className="text-emerald-400" size={20} />}
+                      {info.instore && <CheckCircle2 className="text-yellow-400" size={24} />}
                     </label>
 
-                    <label className={`relative flex items-center p-4 rounded-xl border-2 cursor-pointer hover:shadow-lg transition-all duration-200 group ${info.kerbside
-                      ? 'bg-emerald-500/20 border-emerald-400/50'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.kerbside
+                      ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
+                      : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
                       }`}>
                       <input
                         type="checkbox"
                         checked={info.kerbside}
                         onChange={(e) => setInfo((p) => ({ ...p, kerbside: e.target.checked }))}
-                        className="w-5 h-5 text-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10"
+                        className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
                       />
-                      <div className="ml-3 flex-1">
-                        <span className="block text-sm font-bold text-white">Kerbside Pickup</span>
-                        <span className="text-xs text-white/50">Curbside delivery available</span>
+                      <div className="ml-5 flex-1">
+                        <span className="block text-sm font-black uppercase tracking-widest text-white">Kerbside Distribution</span>
+                        <span className="text-[10px] font-bold text-white/40 mt-1 block">External vehicle-side handoff</span>
                       </div>
-                      {info.kerbside && <CheckCircle2 className="text-emerald-400" size={20} />}
+                      {info.kerbside && <CheckCircle2 className="text-yellow-400" size={24} />}
                     </label>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Right Sidebar */}
             <div className="space-y-6">
 
               {/* Photo Upload Card */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden sticky top-24">
-                <div className="bg-white/10 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                  <h2 className="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2">
-                    <ImageIcon size={20} />
-                    Restaurant Photo
-                  </h2>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden sticky top-24"
+              >
+                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                  <ImageIcon size={22} className="text-yellow-400" />
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Visual Identity</h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Primary establishment imagery</p>
+                  </div>
                 </div>
 
-                <div className="p-6">
-                  <div className="relative group">
-                    <div className="aspect-[4/3] bg-white/5 rounded-xl overflow-hidden border-2 border-dashed border-white/20 group-hover:border-emerald-400/50 transition-all duration-200">
+                <div className="p-8">
+                  <div className="relative group/photo">
+                    <div className="aspect-[4/3] bg-white/[0.03] rounded-3xl overflow-hidden border-2 border-dashed border-white/10 group-hover/photo:border-yellow-500/30 transition-all duration-300">
                       {photoPreview ? (
                         <div className="relative w-full h-full">
                           <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
                             <button
                               onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                              className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transform hover:scale-110 transition-all"
+                              className="p-4 bg-rose-500 text-white rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
                             >
-                              <X size={20} />
+                              <X size={24} />
                             </button>
                           </div>
                         </div>
@@ -821,19 +869,19 @@ export default function Restuarent() {
                               e.target.src = "";
                             }}
                           />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
                             <button
                               onClick={() => fileInputRef.current.click()}
-                              className="p-3 bg-gradient-to-r from-[#5f6eea] to-[#7b5cf5] hover:from-[#7b5cf5] hover:to-[#ec4899] text-white rounded-full shadow-lg transform hover:scale-110 transition-all"
+                              className="p-4 bg-yellow-500 text-slate-900 rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
                             >
-                              <Upload size={20} />
+                              <Upload size={24} />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                          <ImageIcon size={48} strokeWidth={1.5} className="mb-3" />
-                          <span className="text-sm font-medium">No image uploaded</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
+                          <ImageIcon size={56} strokeWidth={1} className="mb-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">No Visual Assets</span>
                         </div>
                       )}
                     </div>
@@ -849,77 +897,93 @@ export default function Restuarent() {
 
                   <button
                     onClick={() => fileInputRef.current.click()}
-                    className="mt-4 w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+                    className="mt-6 w-full py-4 px-6 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/[0.08] transition-all flex items-center justify-center gap-3 group/btn"
                   >
-                    <Upload size={18} />
-                    {photoFile || info.photo ? "Change Photo" : "Upload Photo"}
+                    <Upload size={18} className="text-yellow-400 group-hover/btn:scale-110 transition-transform" />
+                    {photoFile || info.photo ? "Modify Imagery" : "Upload Identity"}
                   </button>
 
                   {photoFile && (
                     <button
                       onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                      className="mt-2 w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-200 font-medium rounded-xl border border-red-500/30 transition-all duration-200 flex items-center justify-center gap-2"
+                      className="mt-3 w-full py-3 px-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-black uppercase tracking-widest text-[9px] rounded-xl border border-rose-500/20 transition-all flex items-center justify-center gap-2"
                     >
-                      <X size={16} />
-                      Remove New Photo
+                      <X size={14} />
+                      Discard Modification
                     </button>
                   )}
                 </div>
 
                 {/* Save Button */}
-                <div className="p-6 pt-0">
+                <div className="p-8 pt-0">
                   <button
                     onClick={saveAll}
                     disabled={saving}
-                    className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:scale-100 transition-all duration-200 flex items-center justify-center gap-2"
+                    className="w-full py-5 px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 disabled:opacity-50 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
                   >
-                    <Save size={20} />
-                    {saving ? "Saving..." : "Save All Changes"}
+                    {saving ? (
+                      <>
+                        <Loader2 className="animate-spin" size={20} />
+                        Synchronizing...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={20} className="font-black" />
+                        Synchronize Profile
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
 
           {/* Operating Hours Section */}
-          <div className="mt-8 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-            <div className="bg-white/10 backdrop-blur-md px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/10">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Calendar size={24} />
-                Operating Hours
-              </h2>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+          >
+            <div className="bg-white/5 px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10">
+              <div>
+                <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                  <Calendar size={22} className="text-yellow-400" />
+                  Chronological Availability
+                </h2>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Weekly operational schedule configuration</p>
+              </div>
               <button
                 onClick={handleAddManual}
                 disabled={timings.length >= 7}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 disabled:bg-white/10 text-white font-semibold rounded-lg backdrop-blur-sm transition-all duration-200 flex items-center gap-2 justify-center sm:justify-start disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
               >
-                <Plus size={18} />
-                Add Day
+                <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                Initialize Day
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="space-y-3">
-                {timings.map((t, index) => (
+            <div className="p-8">
+              <div className="space-y-4">
+                {timings.map((t) => (
                   <div
                     key={t.id}
-                    className={`group relative border-2 rounded-xl p-4 transition-all duration-200 ${t.is_active
-                      ? 'bg-white/10 border-emerald-400/30 hover:bg-white/15 shadow-md'
-                      : 'bg-white/5 border-white/10 opacity-60 hover:opacity-100'
+                    className={`group relative border rounded-[1.5rem] p-6 transition-all duration-300 ${t.is_active
+                      ? 'bg-white/[0.03] border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
+                      : 'bg-white/[0.01] border-white/5 opacity-50 grayscale hover:grayscale-0 hover:opacity-100'
                       }`}
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
 
                       {/* Day Selector */}
-                      <div className="sm:col-span-3">
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Day</label>
+                      <div className="md:col-span-3 space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Operational Day</label>
                         <select
                           value={t.day}
                           onChange={(e) => changeDay(t.id, e.target.value)}
-                          className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white font-medium focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all [&>option]:text-black"
+                          className="w-full px-4 py-3 bg-[#0b1a3d] border border-white/10 rounded-xl text-white font-black uppercase text-[10px] tracking-widest focus:outline-none focus:border-yellow-500 transition-all cursor-pointer appearance-none"
                         >
                           {WEEKDAYS.map((d) => (
-                            <option key={d} value={d} disabled={isWeekdayPresent(d) && t.day !== d}>
+                            <option key={d} value={d} disabled={isWeekdayPresent(d) && t.day !== d} className="bg-[#0b1a3d]">
                               {d}
                             </option>
                           ))}
@@ -927,51 +991,51 @@ export default function Restuarent() {
                       </div>
 
                       {/* Start Time */}
-                      <div className="sm:col-span-3">
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Opening Time</label>
+                      <div className="md:col-span-3 space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Start</label>
                         <div className="relative">
-                          <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                          <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-400/50" />
                           <input
                             type="time"
                             value={t.start}
                             onChange={(e) => updateTiming(t.id, { start: e.target.value })}
-                            className="w-full pl-10 pr-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white font-medium focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all [color-scheme:dark]"
+                            className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
                           />
                         </div>
                       </div>
 
                       {/* End Time */}
-                      <div className="sm:col-span-3">
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Closing Time</label>
+                      <div className="md:col-span-3 space-y-2">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Termination</label>
                         <div className="relative">
-                          <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
+                          <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/50" />
                           <input
                             type="time"
                             value={t.end}
                             onChange={(e) => updateTiming(t.id, { end: e.target.value })}
-                            className="w-full pl-10 pr-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white font-medium focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all [color-scheme:dark]"
+                            className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
                           />
                         </div>
                       </div>
 
                       {/* Active Toggle & Remove */}
-                      <div className="sm:col-span-3 flex items-center justify-between sm:justify-end gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer group/toggle">
+                      <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-6">
+                        <label className="flex items-center gap-3 cursor-pointer group/toggle">
                           <input
                             type="checkbox"
                             checked={!!t.is_active}
                             onChange={(e) => updateTiming(t.id, { is_active: e.target.checked })}
-                            className="w-5 h-5 text-emerald-500 border-white/30 rounded focus:ring-emerald-500 focus:ring-2 bg-white/10"
+                            className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
                           />
-                          <span className="text-sm font-semibold text-white/90 group-hover/toggle:text-emerald-400 transition-colors">
-                            {t.is_active ? 'Active' : 'Closed'}
+                          <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${t.is_active ? 'text-yellow-400' : 'text-white/30'}`}>
+                            {t.is_active ? 'Online' : 'Offline'}
                           </span>
                         </label>
 
                         <button
                           onClick={() => removeTiming(t.id)}
-                          className="p-2 text-red-300 hover:bg-red-500/20 rounded-lg transition-all duration-200 hover:scale-110"
-                          title="Remove this day"
+                          className="p-3 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all hover:scale-110 shadow-lg border border-rose-500/10"
+                          title="Purge sequence"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -980,21 +1044,21 @@ export default function Restuarent() {
 
                     {/* Active Indicator */}
                     {t.is_active && (
-                      <div className="absolute top-2 right-2 w-2 h-2 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                      <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
                     )}
                   </div>
                 ))}
               </div>
 
               {timings.length === 0 && (
-                <div className="text-center py-12 text-gray-400">
-                  <AlertCircle size={48} className="mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">No operating hours set</p>
-                  <p className="text-sm mt-1">Click "Add Day" to add your first operating hour</p>
+                <div className="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
+                  <Clock size={48} strokeWidth={1} className="mx-auto mb-4 text-white/20" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">Temporal schedule unidentified</p>
+                  <p className="text-[11px] font-bold text-yellow-400/40 mt-2">Initialize a daily sequence to configure availability</p>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </main>

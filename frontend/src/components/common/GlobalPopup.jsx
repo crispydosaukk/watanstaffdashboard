@@ -5,27 +5,27 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X, HelpCircle } from "lucide
 const GlobalPopup = ({ isOpen, onClose, title, message, type = "success", onConfirm }) => {
 
     const icons = {
-        success: <CheckCircle className="text-emerald-400" size={40} />,
+        success: <CheckCircle className="text-yellow-400" size={40} />,
         error: <XCircle className="text-rose-400" size={40} />,
         warning: <AlertTriangle className="text-amber-400" size={40} />,
-        info: <Info className="text-blue-400" size={40} />,
-        confirm: <HelpCircle className="text-blue-400" size={40} />,
+        info: <Info className="text-yellow-400" size={40} />,
+        confirm: <HelpCircle className="text-yellow-400" size={40} />,
     };
 
     const bgs = {
-        success: "bg-emerald-500/10 border-emerald-500/20",
+        success: "bg-yellow-500/10 border-yellow-500/20",
         error: "bg-rose-500/10 border-rose-500/20",
         warning: "bg-amber-500/10 border-amber-500/20",
-        info: "bg-blue-500/10 border-blue-500/20",
-        confirm: "bg-blue-500/10 border-blue-500/20",
+        info: "bg-yellow-500/10 border-yellow-500/20",
+        confirm: "bg-yellow-500/10 border-yellow-500/20",
     };
 
     const buttonBgs = {
-        success: "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/40",
-        error: "bg-rose-600 hover:bg-rose-500 shadow-rose-900/40",
-        warning: "bg-amber-600 hover:bg-amber-500 shadow-amber-900/40",
-        info: "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40",
-        confirm: "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40",
+        success: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
+        error: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
+        warning: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
+        info: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
+        confirm: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
     };
 
     return (
@@ -47,7 +47,7 @@ const GlobalPopup = ({ isOpen, onClose, title, message, type = "success", onConf
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: 40 }}
                         transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                        className="relative w-full max-w-sm bg-zinc-900/95 border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-sm bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl overflow-hidden"
                     >
                         {/* Status Icon Area */}
                         <div className={`pt-10 pb-6 flex justify-center`}>
@@ -86,7 +86,7 @@ const GlobalPopup = ({ isOpen, onClose, title, message, type = "success", onConf
                                     if (onConfirm) onConfirm();
                                     onClose();
                                 }}
-                                className={`${type === 'confirm' ? 'flex-1' : 'w-full'} py-4 text-white font-black rounded-2xl shadow-lg transition-all active:scale-[0.97] flex items-center justify-center gap-2 ${buttonBgs[type]}`}
+                                className={`${type === 'confirm' ? 'flex-1' : 'w-full'} py-4 font-black rounded-2xl shadow-lg transition-all active:scale-[0.97] flex items-center justify-center gap-2 ${buttonBgs[type]}`}
                             >
                                 {type === "success" ? "Great!" : type === 'confirm' ? 'Confirm' : "Understood"}
                             </button>

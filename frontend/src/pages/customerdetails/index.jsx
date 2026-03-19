@@ -64,11 +64,11 @@ const CustomerDetails = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900">
-            <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
+        <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30">
+            <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
             <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            <div className={`flex-1 flex flex-col min-h-screen pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+            <div className={`flex-1 flex flex-col min-h-screen pt-20 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
                 <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
                     <div className="max-w-7xl mx-auto">
 
@@ -79,60 +79,60 @@ const CustomerDetails = () => {
                             transition={{ duration: 0.4 }}
                             className="mb-8"
                         >
-                            <div className="flex items-center justify-between gap-4 mb-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20">
-                                        <UserCheck className="text-white" size={28} />
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                                    <div className="p-2.5 sm:p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08] flex-shrink-0">
+                                        <UserCheck className="text-yellow-400" size={24} />
                                     </div>
-                                    <div>
-                                        <h1 className="text-3xl font-bold text-white drop-shadow-lg">Customer Details</h1>
-                                        <p className="text-white/90 mt-1 text-base drop-shadow">View customers who have ordered from you</p>
+                                    <div className="min-w-0">
+                                        <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Customer Details</h1>
+                                        <p className="text-white/60 mt-1 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] whitespace-nowrap overflow-hidden text-ellipsis">View customers who have ordered from you</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={fetchCustomers}
                                     disabled={loading}
-                                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-xl text-white font-semibold rounded-xl border border-white/20 shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-50 text-base"
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-xl text-white font-black uppercase tracking-widest text-[11px] rounded-xl border border-white/[0.08] shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                                    <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                                     Refresh
                                 </button>
                             </div>
 
                             {/* Stats Cards - Glassmorphism */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-2xl hover:bg-white/15 transition-all duration-300">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl transition-all duration-300">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-white/80">Total Customers</p>
-                                            <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg">{stats.total}</p>
+                                            <p className="text-[11px] font-black uppercase tracking-wider text-white">Total Customers</p>
+                                            <p className="text-3xl font-black text-white mt-1 drop-shadow-lg tracking-tight">{stats.total}</p>
                                         </div>
-                                        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                                            <Users className="text-white" size={24} />
+                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                            <Users className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-2xl hover:bg-white/15 transition-all duration-300">
+                                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl transition-all duration-300">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-white/80">Active Orders</p>
-                                            <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg">{stats.active}</p>
+                                            <p className="text-[11px] font-black uppercase tracking-wider text-white">Active Orders</p>
+                                            <p className="text-3xl font-black text-white mt-1 drop-shadow-lg tracking-tight">{stats.active}</p>
                                         </div>
-                                        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                                            <TrendingUp className="text-white" size={24} />
+                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                            <TrendingUp className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-5 border border-white/20 shadow-2xl hover:bg-white/15 transition-all duration-300">
+                                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl transition-all duration-300">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-medium text-white/80">Total Orders</p>
-                                            <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg">{stats.totalOrders}</p>
+                                            <p className="text-[11px] font-black uppercase tracking-wider text-white">Total Orders</p>
+                                            <p className="text-3xl font-black text-white mt-1 drop-shadow-lg tracking-tight">{stats.totalOrders}</p>
                                         </div>
-                                        <div className="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                                            <ShoppingBag className="text-white" size={24} />
+                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                            <ShoppingBag className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
                                 </div>
@@ -141,18 +141,18 @@ const CustomerDetails = () => {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="mb-4 bg-red-500/20 backdrop-blur-md text-red-100 p-4 rounded-xl border border-red-400/30 flex items-center gap-2 text-base shadow-lg">
-                                <span className="font-medium">{error}</span>
+                            <div className="mb-6 bg-red-500/10 backdrop-blur-md text-red-200 p-4 rounded-xl border border-red-500/20 flex items-center gap-2 text-sm shadow-lg font-black uppercase tracking-widest">
+                                <span className="font-black">{error}</span>
                             </div>
                         )}
 
                         {/* Table Container - Glassmorphism */}
-                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                        <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08] overflow-hidden">
 
                             {/* Table Header */}
-                            <div className="bg-white/5 backdrop-blur-md px-6 py-4 border-b border-white/10">
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2 drop-shadow-lg">
-                                    <Users size={20} />
+                            <div className="px-6 py-5 flex items-center justify-between border-b border-white/[0.08] bg-white/5">
+                                <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2 uppercase">
+                                    <Users size={20} className="text-yellow-400" />
                                     Customer List ({customers.length})
                                 </h2>
                             </div>
@@ -160,32 +160,32 @@ const CustomerDetails = () => {
                             {/* Desktop Table View */}
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-white/10">
-                                    <thead className="bg-white/5 backdrop-blur-md">
+                                    <thead className="bg-[#0b1a3d]/40">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-white/80 uppercase tracking-wider">#</th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Customer</th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-white/80 uppercase tracking-wider">Contact</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-white/80 uppercase tracking-wider">Live Orders</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-white/80 uppercase tracking-wider">Total Orders</th>
-                                            <th className="px-6 py-4 text-center text-xs font-bold text-white/80 uppercase tracking-wider">Actions</th>
+                                            <th className="px-6 py-4 text-left text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">#</th>
+                                            <th className="px-6 py-4 text-left text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">Customer</th>
+                                            <th className="px-6 py-4 text-left text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">Contact</th>
+                                            <th className="px-6 py-4 text-center text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">Live Orders</th>
+                                            <th className="px-6 py-4 text-center text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">Total Orders</th>
+                                            <th className="px-6 py-4 text-center text-[11px] font-black text-white/80 uppercase tracking-[0.2em] border-b border-white/[0.08]">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="6" className="px-6 py-12 text-center">
+                                                <td colSpan="6" className="px-6 py-20 text-center">
                                                     <div className="flex flex-col items-center justify-center text-white">
-                                                        <Loader2 className="animate-spin text-4xl mb-3" />
-                                                        <span className="text-white/80 font-medium text-base">Loading customers...</span>
+                                                        <Loader2 className="animate-spin text-yellow-400 mb-4" size={40} />
+                                                        <span className="text-white font-black uppercase tracking-widest text-xs">Loading customers...</span>
                                                     </div>
                                                 </td>
                                             </tr>
                                         ) : customers.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="px-6 py-12 text-center">
-                                                    <Users size={48} className="mx-auto text-white/30 mb-3" />
-                                                    <p className="text-white/70 font-medium text-base">No customers found</p>
-                                                    <p className="text-sm text-white/50 mt-1">Customers will appear here once they place orders</p>
+                                                <td colSpan="6" className="px-6 py-20 text-center">
+                                                    <Users size={64} className="mx-auto text-white/10 mb-4" />
+                                                    <p className="text-white font-black uppercase tracking-widest text-xs">No customers found</p>
+                                                    <p className="text-[10px] text-white/40 mt-1 uppercase font-black tracking-widest">Customers will appear here once they place orders</p>
                                                 </td>
                                             </tr>
                                         ) : (
@@ -197,54 +197,54 @@ const CustomerDetails = () => {
                                                     transition={{ delay: idx * 0.02 }}
                                                     className="hover:bg-white/5 transition-colors duration-200"
                                                 >
-                                                    <td className="px-6 py-4 text-base text-white/90 font-medium">
+                                                    <td className="px-6 py-4 text-sm font-black text-white/40">
                                                         #{customer.id}
                                                     </td>
 
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-base shadow-lg">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-blue-500 flex items-center justify-center text-white font-black text-base shadow-lg">
                                                                 {getInitials(customer.full_name)}
                                                             </div>
                                                             <div>
-                                                                <p className="text-base font-semibold text-white">{customer.full_name || "-"}</p>
+                                                                <p className="text-base font-black text-white tracking-tight">{customer.full_name || "-"}</p>
                                                             </div>
                                                         </div>
                                                     </td>
 
                                                     <td className="px-6 py-4">
-                                                        <div className="flex flex-col gap-1">
+                                                        <div className="flex flex-col gap-1.5">
                                                             {customer.email && (
-                                                                <div className="flex items-center gap-2 text-base text-white/90">
-                                                                    <Mail size={14} className="text-emerald-300" />
+                                                                <div className="flex items-center gap-2 text-sm text-white/80 font-bold tracking-tight">
+                                                                    <Mail size={14} className="text-yellow-400" />
                                                                     <span>{customer.email}</span>
                                                                 </div>
                                                             )}
                                                             {customer.mobile_number && (
-                                                                <div className="flex items-center gap-2 text-base text-white/90">
-                                                                    <Phone size={14} className="text-emerald-300" />
+                                                                <div className="flex items-center gap-2 text-sm text-white/80 font-bold tracking-tight">
+                                                                    <Phone size={14} className="text-yellow-400" />
                                                                     <span>{customer.mobile_number}</span>
                                                                 </div>
                                                             )}
                                                             {!customer.email && !customer.mobile_number && (
-                                                                <span className="text-white/50 text-base">-</span>
+                                                                <span className="text-white/20 text-sm font-black tracking-widest">-</span>
                                                             )}
                                                         </div>
                                                     </td>
 
                                                     <td className="px-6 py-4 text-center">
                                                         {Number(customer.live_orders) > 0 ? (
-                                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 animate-pulse backdrop-blur-md">
+                                                            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse backdrop-blur-md">
                                                                 <TrendingUp size={12} />
                                                                 {customer.live_orders} Active
                                                             </span>
                                                         ) : (
-                                                            <span className="text-white/50 text-base">-</span>
+                                                            <span className="text-white/20 text-sm font-black tracking-widest">-</span>
                                                         )}
                                                     </td>
 
                                                     <td className="px-6 py-4 text-center">
-                                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-base font-bold bg-teal-500/30 text-teal-200 border border-teal-400/30 backdrop-blur-md">
+                                                        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border border-blue-500/20 backdrop-blur-md">
                                                             <ShoppingBag size={14} />
                                                             {customer.total_orders || 0}
                                                         </span>
@@ -253,9 +253,9 @@ const CustomerDetails = () => {
                                                     <td className="px-6 py-4 text-center">
                                                         <button
                                                             onClick={() => openCustomerDetails(customer)}
-                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold rounded-xl border border-white/20 transition-all duration-200 text-base shadow-lg"
+                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[11px] rounded-xl shadow-lg transition-all duration-200"
                                                         >
-                                                            <Eye size={16} />
+                                                            <Eye size={14} />
                                                             View
                                                         </button>
                                                     </td>
@@ -268,15 +268,15 @@ const CustomerDetails = () => {
 
                             {/* Pagination */}
                             {!loading && customers.length > customersPerPage && (
-                                <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between bg-white/5 backdrop-blur-md">
-                                    <div className="text-base text-white/80">
-                                        Showing {indexOfFirstCustomer + 1} to {Math.min(indexOfLastCustomer, customers.length)} of {customers.length} customers
+                                <div className="px-6 py-5 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between bg-white/5 backdrop-blur-md gap-4">
+                                    <div className="text-[11px] font-black uppercase tracking-widest text-white/40 text-center sm:text-left">
+                                        Showing <span className="text-white">{indexOfFirstCustomer + 1}</span> to <span className="text-white">{Math.min(indexOfLastCustomer, customers.length)}</span> of <span className="text-white">{customers.length}</span> customers
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                             disabled={currentPage === 1}
-                                            className="px-3 py-1.5 text-base font-medium text-white bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors backdrop-blur-md"
+                                            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-white bg-white/5 border border-white/[0.08] rounded-xl hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all backdrop-blur-md"
                                         >
                                             Previous
                                         </button>
@@ -286,9 +286,9 @@ const CustomerDetails = () => {
                                                 <button
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
-                                                    className={`px-3 py-1.5 text-base font-medium rounded-xl transition-colors backdrop-blur-md ${currentPage === page
-                                                        ? 'bg-white/30 text-white border border-white/40'
-                                                        : 'text-white/80 bg-white/10 border border-white/20 hover:bg-white/20'
+                                                    className={`w-9 h-9 flex items-center justify-center text-[11px] font-black rounded-xl transition-all backdrop-blur-md ${currentPage === page
+                                                        ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/20'
+                                                        : 'text-white/40 bg-white/5 border border-white/[0.08] hover:bg-white/10 hover:text-white'
                                                         }`}
                                                 >
                                                     {page}
@@ -299,7 +299,7 @@ const CustomerDetails = () => {
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                             disabled={currentPage === totalPages}
-                                            className="px-3 py-1.5 text-base font-medium text-white bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors backdrop-blur-md"
+                                            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-white bg-white/5 border border-white/[0.08] rounded-xl hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all backdrop-blur-md"
                                         >
                                             Next
                                         </button>
@@ -327,51 +327,55 @@ const CustomerDetails = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                            className="bg-[#0b1a3d] border border-white/[0.08] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
                         >
                             {/* Modal Header */}
-                            <div className="bg-white/10 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-white/10">
-                                <h3 className="text-xl font-bold text-white drop-shadow-lg">Customer Details</h3>
+                            <div className="bg-white/5 backdrop-blur-md px-6 py-5 flex items-center justify-between sticky top-0 z-10 border-b border-white/[0.08]">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Customer Details</h3>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors border border-white/20"
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-colors border border-white/[0.08]"
                                 >
                                     <X size={20} className="text-white" />
                                 </button>
                             </div>
 
                             {/* Modal Content */}
-                            <div className="p-6">
+                            <div className="p-8">
                                 {/* Customer Header */}
-                                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/10">
-                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                                <div className="flex items-center gap-5 mb-8 pb-8 border-b border-white/[0.08]">
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-blue-500 flex items-center justify-center text-white font-black text-3xl shadow-xl">
                                         {getInitials(selectedCustomer.full_name)}
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-bold text-white drop-shadow-lg">{selectedCustomer.full_name}</h4>
-                                        <p className="text-base text-white/70">Customer ID: #{selectedCustomer.id}</p>
+                                        <h4 className="text-2xl font-black text-white tracking-tight">{selectedCustomer.full_name}</h4>
+                                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30 mt-1">Customer ID: #{selectedCustomer.id}</p>
                                     </div>
                                 </div>
 
                                 {/* Contact Information */}
-                                <div className="mb-6">
-                                    <h5 className="text-lg font-bold text-white mb-4 drop-shadow">Contact Information</h5>
+                                <div className="mb-8">
+                                    <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50 mb-5">Contact Information</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {selectedCustomer.mobile_number && (
-                                            <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                                                <Phone size={20} className="text-emerald-300" />
+                                            <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/[0.08]">
+                                                <div className="p-3 bg-yellow-500/10 rounded-xl">
+                                                    <Phone size={20} className="text-yellow-400" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-sm text-white/60">Phone</p>
-                                                    <p className="text-base font-semibold text-white">{selectedCustomer.mobile_number}</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-wider text-white/20">Phone</p>
+                                                    <p className="text-base font-bold text-white tracking-tight">{selectedCustomer.mobile_number}</p>
                                                 </div>
                                             </div>
                                         )}
                                         {selectedCustomer.email && (
-                                            <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                                                <Mail size={20} className="text-emerald-300" />
+                                            <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/[0.08]">
+                                                <div className="p-3 bg-yellow-500/10 rounded-xl">
+                                                    <Mail size={20} className="text-yellow-400" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-sm text-white/60">Email</p>
-                                                    <p className="text-base font-semibold text-white">{selectedCustomer.email}</p>
+                                                    <p className="text-[10px] font-black uppercase tracking-wider text-white/20">Email</p>
+                                                    <p className="text-base font-bold text-white tracking-tight">{selectedCustomer.email}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -379,38 +383,38 @@ const CustomerDetails = () => {
                                 </div>
 
                                 {/* Order Statistics */}
-                                <div className="mb-6">
-                                    <h5 className="text-lg font-bold text-white mb-4 drop-shadow">Order Statistics</h5>
+                                <div className="mb-8">
+                                    <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50 mb-5">Order Statistics</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <div className="p-4 bg-emerald-500/20 backdrop-blur-md rounded-xl border border-emerald-400/30">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <TrendingUp size={20} className="text-emerald-300" />
-                                                <p className="text-sm font-medium text-emerald-200">Live Orders</p>
+                                        <div className="p-5 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <TrendingUp size={18} className="text-yellow-400" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-yellow-400/70">Live</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-white drop-shadow-lg">{Number(selectedCustomer.live_orders || 0)}</p>
+                                            <p className="text-2xl font-black text-white tracking-tight">{Number(selectedCustomer.live_orders || 0)}</p>
                                         </div>
-                                        <div className="p-4 bg-teal-500/20 backdrop-blur-md rounded-xl border border-teal-400/30">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <CheckCircle size={20} className="text-teal-300" />
-                                                <p className="text-sm font-medium text-teal-200">Completed</p>
+                                        <div className="p-5 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <CheckCircle size={18} className="text-blue-400" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-400/70">Completed</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-white drop-shadow-lg">{Number(selectedCustomer.completed_orders || 0)}</p>
+                                            <p className="text-2xl font-black text-white tracking-tight">{Number(selectedCustomer.completed_orders || 0)}</p>
                                         </div>
-                                        <div className="p-4 bg-amber-500/20 backdrop-blur-md rounded-xl border border-amber-400/30">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <ShoppingBag size={20} className="text-amber-300" />
-                                                <p className="text-sm font-medium text-amber-200">Total Orders</p>
+                                        <div className="p-5 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <ShoppingBag size={18} className="text-yellow-500" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Total</p>
                                             </div>
-                                            <p className="text-2xl font-bold text-white drop-shadow-lg">{Number(selectedCustomer.total_orders || 0)}</p>
+                                            <p className="text-2xl font-black text-white tracking-tight">{Number(selectedCustomer.total_orders || 0)}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Account Info */}
-                                <div className="pt-4 border-t border-white/10">
-                                    <div className="flex items-center justify-between text-base text-white/70">
-                                        <span>Last Seen:</span>
-                                        <span className="font-semibold text-white">
+                                <div className="pt-6 border-t border-white/[0.08]">
+                                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-[0.2em] text-white/20">
+                                        <span>Last Seen</span>
+                                        <span className="text-white/40">
                                             {selectedCustomer.last_seen ? new Date(selectedCustomer.last_seen).toLocaleDateString('en-GB') : "N/A"}
                                         </span>
                                     </div>

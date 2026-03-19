@@ -9,17 +9,16 @@ const Item = ({ to = "#", icon, label }) => (
     to={to}
     end
     className={({ isActive }) =>
-      `
-      flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium tracking-wide
-      transition-all duration-200 border border-transparent
-      ${isActive
-        ? "bg-white/25 text-white shadow-lg backdrop-blur-md scale-[1.03]"
-        : "text-[#f7c7ce] hover:bg-white/10 hover:text-white"
-      }
-      `
+      `flex items-center gap-3 px-4 py-2.5 rounded-xl text-[15px] font-medium tracking-wide
+      transition-all duration-200 group relative
+      ${
+        isActive
+          ? "bg-yellow-400/15 text-yellow-300 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-yellow-400"
+          : "text-white/85 hover:bg-white/8 hover:text-white"
+      }`
     }
   >
-    <span className="h-5 w-5 text-current">{icon}</span>
+    <span className="h-[18px] w-[18px] text-current shrink-0">{icon}</span>
     <span className="truncate">{label}</span>
   </NavLink>
 );
@@ -35,23 +34,21 @@ function Group({ label, icon, children, defaultOpen = false, hidden = false, ope
   if (hidden) return null;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="
-          w-full flex items-center justify-between px-3 py-2.5 rounded-xl
-          text-[15px] font-semibold text-[#f7c7ce] hover:bg-white/10
-          border border-white/10 backdrop-blur-md transition-all
-        "
+        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl
+          text-[15px] font-medium text-white/85 hover:bg-white/8 hover:text-white
+          transition-all duration-200"
         aria-expanded={open}
       >
         <span className="flex items-center gap-3 truncate">
-          <span className="h-5 w-5 text-current">{icon}</span>
+          <span className="h-[18px] w-[18px] text-current shrink-0">{icon}</span>
           <span className="truncate">{label}</span>
         </span>
         <svg
-          className={`h-4 w-4 text-[#f7c7ce] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 text-white/30 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -59,7 +56,7 @@ function Group({ label, icon, children, defaultOpen = false, hidden = false, ope
         </svg>
       </button>
 
-      {open && <div className="pl-9 pr-2 py-1 space-y-1 animate-fadeIn">{children}</div>}
+      {open && <div className="pl-9 pr-2 py-1 space-y-0.5 animate-fadeIn">{children}</div>}
     </div>
   );
 }
@@ -158,10 +155,11 @@ export default function Sidebar({ open, onClose }) {
   return (
     <>
       <style>{`
-        .animate-fadeIn { animation: fadeIn 240ms ease both; }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(-6px) } to { opacity:1; transform: translateY(0) } }
-        .sidebar-scroll::-webkit-scrollbar { width: 6px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 999px; }
+        .animate-fadeIn { animation: fadeIn 200ms ease both; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(-4px) } to { opacity:1; transform: translateY(0) } }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 999px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
       `}</style>
 
       <div
@@ -172,21 +170,19 @@ export default function Sidebar({ open, onClose }) {
 
       <aside
         className={`
-          fixed left-0 bottom-0 z-[60] lg:z-40 w-72
-          bg-gradient-to-br from-[#1A4D3A] to-[#8B1538]
-          shadow-2xl
+          fixed left-0 bottom-0 z-[60] lg:z-40 w-[288px]
+          flex flex-col shadow-2xl
           transform transition-all duration-300 ease-in-out
           top-0 lg:top-16
           ${open ? "translate-x-0" : "-translate-x-full"}
         `}
+        style={{ background: 'linear-gradient(180deg, #071428 0%, #0d1f45 55%, #071428 100%)' }}
       >
         {/* Mobile Sidebar Header (Logo + Close) */}
-        <div className="flex lg:hidden items-center justify-between px-4 pb-4 pt-14 border-b border-white/15">
-          <div className="flex items-center gap-2">
-            <img src="/zingbitelogo.png" alt="Logo" className="h-16 w-auto object-contain" />
-          </div>
-          <button onClick={onClose} className="p-2 text-white/70 hover:text-white bg-white/10 rounded-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="flex lg:hidden items-center justify-between px-4 pb-3 pt-10 border-b border-white/10">
+          <img src="/zingbitelogo.png" alt="Logo" className="h-20 w-auto object-contain" />
+          <button onClick={onClose} className="p-2 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -194,23 +190,26 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-white/15">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search..."
-            className="
-              w-full text-sm rounded-xl px-4 py-2.5
-              bg-white/15 backdrop-blur-md
-              border border-white/20
-              text-[#f7c7ce] placeholder:text-white/60
-              focus:outline-none
-            "
-          />
+        <div className="px-3 py-3 border-b border-white/[0.06]">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search menu..."
+              className="w-full text-[13px] rounded-xl pl-9 pr-4 py-2.5
+                bg-white/5 border border-white/[0.08]
+                text-white/80 placeholder:text-white/25
+                focus:outline-none focus:border-yellow-500/40 focus:bg-white/8
+                transition-all duration-200"
+            />
+          </div>
         </div>
 
-        <nav className="p-4 space-y-3 overflow-y-auto h-[calc(100%-220px)] sidebar-scroll">
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto sidebar-scroll">
           {visibleMenu.map((m) => (
             <Item key={m.label} to={m.to} label={m.label} icon={m.icon} />
           ))}
@@ -239,14 +238,15 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/15 bg-white/10 backdrop-blur-md">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-11 w-11 rounded-full bg-white/25 flex items-center justify-center text-[#f7c7ce] font-semibold">
+        <div className="px-3 py-3 border-t border-white/[0.06]" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-3 px-1 mb-3">
+            <div className="h-9 w-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/15"
+              style={{ background: 'linear-gradient(135deg, #f97316, #fb923c)' }}>
               {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
             </div>
-            <div>
-              <div className="text-sm font-semibold text-white">{user?.name || "Admin"}</div>
-              <div className="text-xs text-white/70">{user?.email || "admin@crispy.dosa"}</div>
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-white/90 truncate">{user?.name || "Admin"}</div>
+              <div className="text-[11px] text-white/40 truncate">{user?.email || "admin@crispy.dosa"}</div>
             </div>
           </div>
 
@@ -262,8 +262,14 @@ export default function Sidebar({ open, onClose }) {
                 }
               });
             }}
-            className="w-full bg-white/25 hover:bg-white/35 text-white py-2 rounded-xl font-semibold transition"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 border border-white/10 text-white/70 hover:text-white hover:border-white/20"
+            style={{ background: 'rgba(255,255,255,0.06)' }}
           >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
             Logout
           </button>
         </div>

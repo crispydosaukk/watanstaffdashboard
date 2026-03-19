@@ -37,22 +37,22 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-md bg-zinc-900/90 border border-white/10 rounded-3xl shadow-2xl overflow-hidden"
+                        className="relative w-full max-w-md bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                        <div className="p-6 border-b border-white/[0.08] bg-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                                <div className="p-2.5 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                                     <Clock size={20} />
                                 </div>
-                                <div>
-                                    <h3 className="text-white font-bold text-lg">Preparation Time</h3>
-                                    <p className="text-white/40 text-xs uppercase tracking-widest font-bold">Order #{orderNumber}</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-white font-black text-lg uppercase tracking-tight">Preparation Time</h3>
+                                    <p className="text-white/40 text-[9px] uppercase tracking-[0.2em] font-black">Transmission ID: #{orderNumber}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-colors"
+                                className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/40 hover:text-white transition-all shadow-inner"
                                 id="close_ready_modal"
                             >
                                 <X size={20} />
@@ -62,7 +62,7 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                         {/* Body */}
                         <div className="p-8">
                             <div className="mb-8">
-                                <label className="block text-white/60 text-sm font-medium mb-3">Ready in how many minutes?</label>
+                                <label className="block text-white/40 text-[10px] font-black uppercase tracking-widest mb-4 text-center">Ready in how many minutes?</label>
                                 <div className="relative group">
                                     <input
                                         type="number"
@@ -71,17 +71,17 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                                             setMinutes(e.target.value);
                                             if (error) setError("");
                                         }}
-                                        placeholder="e.g. 15"
-                                        className={`w-full bg-white/5 border ${error ? 'border-rose-500/50' : 'border-white/10'} rounded-2xl px-5 py-4 text-white text-2xl font-bold placeholder-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all text-center`}
+                                        placeholder="00"
+                                        className={`w-full bg-white/[0.03] border-2 ${error ? 'border-rose-500/50' : 'border-white/[0.08]'} rounded-2xl px-5 py-6 text-white text-4xl font-black placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all text-center tracking-tighter shadow-inner`}
                                         autoFocus
                                         onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
                                         id="ready_minutes_input"
                                     />
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 font-bold uppercase tracking-widest text-xs pointer-events-none">
+                                    <div className="absolute right-8 top-1/2 -translate-y-1/2 text-white/10 font-black uppercase tracking-[0.3em] text-[10px] pointer-events-none">
                                         Mins
                                     </div>
                                 </div>
-                                {error && <p className="text-rose-400 text-xs mt-2 font-medium text-center">{error}</p>}
+                                {error && <p className="text-rose-400 text-[10px] mt-3 font-black uppercase tracking-widest text-center">{error}</p>}
                             </div>
 
                             {/* Quick Select */}
@@ -93,9 +93,9 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                                             setMinutes(t.toString());
                                             setError("");
                                         }}
-                                        className={`py-3 rounded-xl border text-sm font-bold transition-all ${minutes === t.toString()
-                                                ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
-                                                : 'bg-white/5 border-white/5 text-white/60 hover:border-white/20 hover:text-white'
+                                        className={`py-4 rounded-xl border text-[10px] font-black tracking-widest uppercase transition-all shadow-lg ${minutes === t.toString()
+                                                ? 'bg-gradient-to-r from-yellow-500 to-amber-500 border-transparent text-[#071428] scale-105'
+                                                : 'bg-white/5 border-white/[0.05] text-white/40 hover:border-white/20 hover:text-white'
                                             }`}
                                     >
                                         {t} Min
@@ -105,19 +105,19 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                         </div>
 
                         {/* Footer */}
-                        <div className="p-6 bg-white/5 border-t border-white/5 flex gap-3">
+                        <div className="p-8 bg-white/5 border-t border-white/[0.08] flex gap-4">
                             <button
                                 onClick={onClose}
-                                className="flex-1 py-4 px-6 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl transition-all border border-white/5"
+                                className="flex-1 py-4 px-6 text-white/20 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleConfirm}
-                                className="flex-1 py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                className="flex-[2] py-4 px-6 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 border border-white/10"
                                 id="confirm_ready_time"
                             >
-                                <CheckCircle size={20} />
+                                <CheckCircle size={18} />
                                 Accept Order
                             </button>
                         </div>

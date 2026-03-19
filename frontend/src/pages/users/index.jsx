@@ -32,7 +32,7 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-emerald-500/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-yellow-500/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
       >
         <span className={selected.length ? "text-white" : "text-white/40"}>{labelText}</span>
         <ChevronDown size={16} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -56,9 +56,9 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
                     <div
                       key={opt.id}
                       onClick={() => onToggle(opt.id)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-emerald-600/20 text-emerald-300" : "hover:bg-white/10 text-white/80"}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-yellow-500/10 text-yellow-500" : "hover:bg-white/10 text-white/80"}`}
                     >
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-emerald-500 border-emerald-500" : "border-white/30"}`}>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-yellow-500 border-yellow-500" : "border-white/30"}`}>
                         {active && <Check size={12} className="text-white" />}
                       </div>
                       <span className="text-sm font-medium">{opt.title}</span>
@@ -233,11 +233,11 @@ export default function Users() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] font-sans">
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+      <div className={`flex-1 -mt-12 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -245,38 +245,41 @@ export default function Users() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
           >
             <div>
-              <h2 className="text-3xl font-bold text-white drop-shadow-lg flex items-center gap-3">
-                <UsersIcon className="text-emerald-400" size={32} />
-                Users List
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
+                <UsersIcon className="text-[#00f2ff]" size={36} />
+                USERS LIST
               </h2>
-              <p className="mt-2 text-white/70">Manage registered users and their roles.</p>
+              <p className="mt-2 text-white/50 text-base font-medium">Manage registered users and their roles.</p>
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
                 onClick={() => setOpenCreate(true)}
-                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600/80 hover:bg-emerald-600 backdrop-blur-md text-white rounded-xl font-bold shadow-lg border border-white/20 transition-all hover:-translate-y-0.5"
+                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-2xl font-black shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 uppercase tracking-wider text-sm"
               >
-                <Plus size={20} />
+                <Plus size={20} strokeWidth={3} />
                 Add User
               </button>
             </div>
           </motion.div>
 
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="bg-[#0b1a3d]/60 backdrop-blur-xl border border-white/[0.08] rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col">
             {/* Toolbar */}
-            <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/5">
+            <div className="p-6 border-b border-white/[0.08] flex flex-col sm:flex-row justify-between items-center gap-4 bg-white/[0.02]">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <div className="relative w-full sm:w-72">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20} />
                   <input
                     type="text"
-                    placeholder="Search users by name, email, role..."
+                    placeholder="Search users..."
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-2xl pl-12 pr-6 py-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-[#00f2ff]/50 transition-all font-medium"
                   />
                 </div>
+              </div>
+              <div className="text-white/40 text-sm font-black uppercase tracking-widest">
+                {filtered.length} Users Found
               </div>
             </div>
 
@@ -284,21 +287,21 @@ export default function Users() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10 text-white/70 text-xs uppercase tracking-wider">
-                    <th className="px-6 py-4 font-bold w-16">#</th>
-                    <th className="px-6 py-4 font-bold">Name</th>
-                    <th className="px-6 py-4 font-bold">Email</th>
-                    <th className="px-6 py-4 font-bold">Role</th>
-                    <th className="px-6 py-4 font-bold text-right w-40">Actions</th>
+                  <tr className="bg-white/[0.02] border-b border-white/[0.08] text-white/40 text-xs uppercase font-black tracking-[0.2em]">
+                    <th className="px-8 py-6 w-16">#</th>
+                    <th className="px-8 py-6">Name</th>
+                    <th className="px-8 py-6">Email</th>
+                    <th className="px-8 py-6">Role</th>
+                    <th className="px-8 py-6 text-right w-40">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-white/90">
+                <tbody className="divide-y divide-white/[0.04] text-white/90">
                   {usersLoading ? (
-                    <tr><td colSpan={5} className="px-6 py-8 text-center text-white/50">Loading users...</td></tr>
+                    <tr><td colSpan={5} className="px-8 py-16 text-center text-white/30 font-bold text-lg">Loading users...</td></tr>
                   ) : usersError ? (
-                    <tr><td colSpan={5} className="px-6 py-8 text-center text-red-300">{usersError}</td></tr>
+                    <tr><td colSpan={5} className="px-8 py-16 text-center text-red-300 font-bold">{usersError}</td></tr>
                   ) : pageSlice.length === 0 ? (
-                    <tr><td colSpan={5} className="px-6 py-8 text-center text-white/50">No users found</td></tr>
+                    <tr><td colSpan={5} className="px-8 py-16 text-center text-white/30 font-bold text-lg">No users found</td></tr>
                   ) : (
                     pageSlice.map((u, idx) => (
                       <motion.tr
@@ -306,35 +309,35 @@ export default function Users() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: idx * 0.05 }}
                         key={u.id}
-                        className="hover:bg-white/5 transition-colors"
+                        className="hover:bg-white/[0.02] transition-colors group"
                       >
-                        <td className="px-6 py-4 text-white/50">{(page - 1) * pageSize + idx + 1}</td>
-                        <td className="px-6 py-4 font-semibold">{u.name}</td>
-                        <td className="px-6 py-4 text-white/70">{u.email}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-8 py-6 text-white/30 font-black">{(page - 1) * pageSize + idx + 1}</td>
+                        <td className="px-8 py-6 font-bold text-white group-hover:text-[#00f2ff] transition-colors uppercase tracking-wide">{u.name}</td>
+                        <td className="px-8 py-6 text-white/40 font-medium tracking-wide">{u.email}</td>
+                        <td className="px-8 py-6">
                           {u.role_title ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/20">
+                            <span className="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
                               {u.role_title}
                             </span>
                           ) : (
-                            <span className="text-white/30 italic">No Role</span>
+                            <span className="text-white/20 italic font-medium uppercase text-[10px] tracking-widest">No Role</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex items-center justify-end gap-3">
                             <button
                               onClick={() => openEditFor(u)}
-                              className="p-2 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 rounded-lg transition-colors border border-blue-500/30"
+                              className="p-3 bg-[#00f2ff]/10 text-[#00f2ff] hover:bg-[#00f2ff] hover:text-[#071428] rounded-xl transition-all border border-[#00f2ff]/20 shadow-lg shadow-[#00f2ff]/5"
                               title="Edit"
                             >
-                              <Edit size={16} />
+                              <Edit size={18} strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => handleDelete(u)}
-                              className="p-2 bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded-lg transition-colors border border-red-500/30"
+                              className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-500/5"
                               title="Delete"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} strokeWidth={2.5} />
                             </button>
                           </div>
                         </td>
@@ -346,29 +349,38 @@ export default function Users() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-white/10 bg-white/5 text-white/50 text-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-              <span>Showing {pageSlice.length ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} entries</span>
+            <div className="p-6 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-4">
+              <span className="text-white/40 text-sm font-black uppercase tracking-widest">Showing {pageSlice.length ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} entries</span>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
                 <select
-                  className="bg-white/5 border border-white/10 rounded-lg text-xs py-1 px-2 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                  className="bg-white/[0.05] border border-white/[0.1] rounded-xl text-[10px] font-black uppercase tracking-widest py-2 px-3 text-white focus:outline-none focus:ring-1 focus:ring-[#00f2ff]/50 appearance-none cursor-pointer"
                   value={pageSize}
                   onChange={(e) => setPageSize(Number(e.target.value))}
                 >
-                  <option value="10" className="bg-slate-800">10 / page</option>
-                  <option value="25" className="bg-slate-800">25 / page</option>
-                  <option value="50" className="bg-slate-800">50 / page</option>
+                  <option value="10" className="bg-[#0b1a3d]">10 per page</option>
+                  <option value="25" className="bg-[#0b1a3d]">25 per page</option>
+                  <option value="50" className="bg-[#0b1a3d]">50 per page</option>
                 </select>
 
-                <div className="flex gap-1">
-                  <button onClick={() => setPage(p => Math.max(1, p - 1))} className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-50 border border-white/10" disabled={page === 1}>&laquo;</button>
-                  <button className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{page}</button>
-                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-50 border border-white/10" disabled={page >= totalPages}>&raquo;</button>
+                <div className="flex gap-2">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/40 border border-white/[0.1] hover:bg-white/[0.1] disabled:opacity-30 transition-all shadow-inner" disabled={page === 1}>&laquo;</button>
+                  <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#00f2ff] text-[#071428] font-black border border-[#00f2ff]/20 shadow-lg shadow-[#00f2ff]/20">{page}</button>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/40 border border-white/[0.1] hover:bg-white/[0.1] disabled:opacity-30 transition-all shadow-inner" disabled={page >= totalPages}>&raquo;</button>
                 </div>
               </div>
             </div>
           </div>
-          {usersError && <div className="mt-4 p-4 bg-red-500/20 border border-red-500/40 rounded-xl text-red-200">{usersError}</div>}
+          {usersError && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 p-5 bg-red-500/10 border border-red-500/20 rounded-[1.5rem] text-red-400 font-bold flex items-center gap-3"
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+              {usersError}
+            </motion.div>
+          )}
         </main>
         <Footer />
       </div>
@@ -400,7 +412,7 @@ export default function Users() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       value={cName} onChange={(e) => setCName(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="Enter full name"
                     />
                   </div>
@@ -411,7 +423,7 @@ export default function Users() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="name@example.com"
                     />
                   </div>
@@ -422,7 +434,7 @@ export default function Users() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="password" value={cPassword} onChange={(e) => setCPassword(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="Set initial password"
                     />
                   </div>
@@ -437,9 +449,13 @@ export default function Users() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
-                <button onClick={() => setOpenCreate(false)} className="px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/10 transition-colors">Cancel</button>
-                <button onClick={handleCreate} disabled={!canSave || saving} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg border border-white/10 transition-all hover:-translate-y-0.5 disabled:opacity-60">
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
+                <button onClick={() => setOpenCreate(false)} className="px-6 py-3 rounded-xl text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all">Cancel</button>
+                <button
+                  onClick={handleCreate}
+                  disabled={!canSave || saving}
+                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                >
                   {saving ? "Creating..." : "Create User"}
                 </button>
               </div>
@@ -475,7 +491,7 @@ export default function Users() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       value={eName} onChange={(e) => setEName(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="Enter full name"
                     />
                   </div>
@@ -486,7 +502,7 @@ export default function Users() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="name@example.com"
                     />
                   </div>
@@ -497,7 +513,7 @@ export default function Users() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="password" value={ePassword} onChange={(e) => setEPassword(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                       placeholder="Blank to keep current"
                     />
                   </div>
@@ -512,9 +528,13 @@ export default function Users() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10">
-                <button onClick={() => setOpenEdit(false)} className="px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/10 transition-colors">Cancel</button>
-                <button onClick={handleUpdate} disabled={!canUpdate || updating} className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg border border-white/10 transition-all hover:-translate-y-0.5 disabled:opacity-60">
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
+                <button onClick={() => setOpenEdit(false)} className="px-6 py-3 rounded-xl text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all">Cancel</button>
+                <button
+                  onClick={handleUpdate}
+                  disabled={!canUpdate || updating}
+                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-black uppercase tracking-widest text-[10px] shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                >
                   {updating ? "Saving..." : "Save Changes"}
                 </button>
               </div>

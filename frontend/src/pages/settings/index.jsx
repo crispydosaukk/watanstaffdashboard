@@ -6,7 +6,7 @@ import api from "../../api.js";
 import { motion } from "framer-motion";
 import {
   Settings as SettingsIcon, Save, CreditCard, Gift, ShoppingCart,
-  Percent, Clock, AlertCircle, Users, Wallet, Award, Calendar, Coins, ShieldCheck
+  Percent, Clock, AlertCircle, Users, Wallet, Award, Calendar, Coins, ShieldCheck, Loader2
 } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
 
@@ -121,11 +121,11 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans">
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className={`flex-1 flex flex-col pt-36 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+      <div className={`flex-1 flex flex-col pt-20 lg:pt-24 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 px-4 sm:px-6 lg:px-10 py-8">
           <div className="max-w-7xl mx-auto">
             {/* Page Header */}
@@ -135,44 +135,42 @@ export default function Settings() {
               transition={{ duration: 0.4 }}
               className="mb-8"
             >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20">
-                  <SettingsIcon className="text-white" size={28} />
+              <div className="flex items-center gap-3 sm:gap-4 mb-6 overflow-hidden">
+                <div className="p-2.5 sm:p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08] flex-shrink-0">
+                  <SettingsIcon className="text-yellow-400" size={24} />
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-white drop-shadow-lg">Global Settings</h1>
-                  <p className="text-white/90 mt-1 text-base drop-shadow">
-                    Configure bonuses, order rules, and loyalty rewards (GBP £).
-                  </p>
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Global Settings</h1>
+                  <p className="text-white/60 mt-1 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] whitespace-nowrap overflow-hidden text-ellipsis">Configure bonuses, order rules, and loyalty rewards</p>
                 </div>
               </div>
 
               {/* MAIN FORM */}
-              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/20">
+              <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-6 sm:p-10 shadow-2xl border border-white/[0.08]">
                 {loading ? (
-                  <div className="text-center py-20 text-white/70 flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
-                    <span className="text-lg animate-pulse">Loading Configuration...</span>
+                   <div className="text-center py-20 text-white flex flex-col items-center gap-4">
+                    <Loader2 className="animate-spin text-yellow-400" size={40} />
+                    <span className="text-xs font-black uppercase tracking-widest animate-pulse">Loading Configuration...</span>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-12">
 
                     {/* SECTION 1: CUSTOMER REWARDS & BONUSES */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                        <Gift className="text-amber-400" size={24} />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
+                        <Gift className="text-yellow-500" size={24} />
                         <div>
-                          <h3 className="text-xl font-bold text-white drop-shadow">Customer Rewards & Bonuses</h3>
-                          <p className="text-white/60 text-sm">Credits and earnings for customer acquisition and retention.</p>
+                          <h3 className="text-lg font-black text-white uppercase tracking-tight">Customer Rewards & Bonuses</h3>
+                          <p className="text-white/40 text-[10px] sm:text-[11px] font-black uppercase tracking-widest mt-1">Credits and earnings for customer acquisition and retention</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Signup Bonus Amount */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Signup Bonus (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Signup Bonus (£)</label>
                           <div className="relative group">
-                            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-amber-400 transition-colors" size={18} />
+                            <Gift className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -180,16 +178,16 @@ export default function Settings() {
                               value={form.signup_bonus_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:bg-white/10 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Referral Bonus Amount */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Referral Bonus (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Referral Bonus (£)</label>
                           <div className="relative group">
-                            <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-amber-400 transition-colors" size={18} />
+                            <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -197,16 +195,16 @@ export default function Settings() {
                               value={form.referral_bonus_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:bg-white/10 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Earn Per Order Amount */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Earn Per Order (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Earn Per Order (£)</label>
                           <div className="relative group">
-                            <Coins className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-amber-400 transition-colors" size={18} />
+                            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -214,7 +212,7 @@ export default function Settings() {
                               value={form.earn_per_order_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:bg-white/10 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -222,21 +220,21 @@ export default function Settings() {
                     </div>
 
                     {/* SECTION 2: ORDER CONSTRAINTS */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                        <ShieldCheck className="text-emerald-400" size={24} />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
+                        <ShieldCheck className="text-yellow-400" size={24} />
                         <div>
-                          <h3 className="text-xl font-bold text-white drop-shadow">Order Constraints</h3>
-                          <p className="text-white/60 text-sm">Rules for order eligibility and checkout validation.</p>
+                          <h3 className="text-lg font-black text-white uppercase tracking-tight">Order Constraints</h3>
+                          <p className="text-white/40 text-[10px] sm:text-[11px] font-black uppercase tracking-widest mt-1">Rules for order eligibility and checkout validation</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Minimum Order */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Minimum Order for Rewards (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Minimum Order for Rewards (£)</label>
                           <div className="relative group">
-                            <ShoppingCart className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-emerald-400 transition-colors" size={18} />
+                            <ShoppingCart className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -244,16 +242,16 @@ export default function Settings() {
                               value={form.minimum_order}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Minimum Cart Total */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Minimum Final Checkout Total (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Minimum Final Checkout Total (£)</label>
                           <div className="relative group">
-                            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-emerald-400 transition-colors" size={18} />
+                            <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -261,7 +259,7 @@ export default function Settings() {
                               value={form.minimum_cart_total}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -269,21 +267,21 @@ export default function Settings() {
                     </div>
 
                     {/* SECTION 3: LOYALTY PROGRAM */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                        <Award className="text-teal-400" size={24} />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
+                        <Award className="text-yellow-500" size={24} />
                         <div>
-                          <h3 className="text-xl font-bold text-white drop-shadow">Loyalty Program Dynamics</h3>
-                          <p className="text-white/60 text-sm">Points calculation and redemption rules for repeat customers.</p>
+                          <h3 className="text-lg font-black text-white uppercase tracking-tight">Loyalty Program Dynamics</h3>
+                          <p className="text-white/40 text-[10px] sm:text-[11px] font-black uppercase tracking-widest mt-1">Points calculation and redemption rules for repeat customers</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Loyalty Points Per GBP */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Points Earned Per £1</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Points Earned Per £1</label>
                           <div className="relative group">
-                            <Percent className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-teal-400 transition-colors" size={18} />
+                            <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -291,16 +289,16 @@ export default function Settings() {
                               value={form.loyalty_points_per_gbp}
                               onChange={handleChange}
                               placeholder="1"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Loyalty Redeem Points */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Points Needed to Redeem</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Points Needed to Redeem</label>
                           <div className="relative group">
-                            <Award className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-teal-400 transition-colors" size={18} />
+                            <Award className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="1"
@@ -308,16 +306,16 @@ export default function Settings() {
                               value={form.loyalty_redeem_points}
                               onChange={handleChange}
                               placeholder="10"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Loyalty Redeem Value */}
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-white/90 ml-1">Value Per Redemption (£)</label>
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1">Value Per Redemption (£)</label>
                           <div className="relative group">
-                            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-teal-400 transition-colors" size={18} />
+                            <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
                             <input
                               type="number"
                               step="0.01"
@@ -325,64 +323,70 @@ export default function Settings() {
                               value={form.loyalty_redeem_value}
                               onChange={handleChange}
                               placeholder="1.00"
-                              className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
 
                         {/* Loyalty Available After (Hours) */}
-                        <div className="space-y-2 text-white/50 focus-within:text-white transition-colors">
-                          <label className="block text-sm font-medium ml-1 flex items-center gap-1.5">
-                            <Clock size={14} /> Available After (Hours)
+                        <div className="space-y-2">
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1 flex items-center gap-2">
+                             Available After (Hours)
                           </label>
-                          <input
-                            type="number"
-                            step="1"
-                            name="loyalty_available_after_hours"
-                            value={form.loyalty_available_after_hours}
-                            onChange={handleChange}
-                            placeholder="24"
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
-                          />
+                          <div className="relative group">
+                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                            <input
+                              type="number"
+                              step="1"
+                              name="loyalty_available_after_hours"
+                              value={form.loyalty_available_after_hours}
+                              onChange={handleChange}
+                              placeholder="24"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                            />
+                          </div>
                         </div>
 
                         {/* Loyalty Expiry Days */}
-                        <div className="space-y-2 text-white/50 focus-within:text-white transition-colors">
-                          <label className="block text-sm font-medium ml-1 flex items-center gap-1.5">
-                            <Calendar size={14} /> Points Expiry (Days)
+                        <div className="space-y-2">
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-white ml-1 flex items-center gap-2">
+                             Points Expiry (Days)
                           </label>
-                          <input
-                            type="number"
-                            step="1"
-                            name="loyalty_expiry_days"
-                            value={form.loyalty_expiry_days}
-                            onChange={handleChange}
-                            placeholder="30"
-                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:bg-white/10 transition-all hover:bg-white/10"
-                          />
+                          <div className="relative group">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                            <input
+                              type="number"
+                              step="1"
+                              name="loyalty_expiry_days"
+                              value={form.loyalty_expiry_days}
+                              onChange={handleChange}
+                              placeholder="30"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* ACTION BUTTONS */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-6 pt-6 border-t border-white/10">
-                      <div className="flex items-start gap-3 max-w-xl text-xs text-white/40 italic">
-                        <AlertCircle className="shrink-0" size={16} />
-                        <p>Changes to these settings will apply immediately to all new registrations, orders, and rewards processing. Please double-check values before saving.</p>
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-8 pt-10 border-t border-white/[0.08]">
+                      <div className="flex items-start gap-4 max-w-xl text-[11px] font-black uppercase tracking-[0.2em] text-white/30 italic">
+                        <AlertCircle className="shrink-0 text-yellow-500" size={18} />
+                        <p>Changes apply immediately to all transactions. Please verify values before saving.</p>
                       </div>
                       <button
                         type="submit"
                         disabled={saving}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-2xl shadow-xl hover:shadow-emerald-500/30 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/20"
+                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl hover:shadow-yellow-500/20 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08]"
                       >
                         {saving ? (
                           <>
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <Loader2 className="animate-spin" size={20} />
                             Processing...
                           </>
                         ) : (
                           <>
-                            <Save size={22} />
+                            <Save size={20} className="font-bold" />
                             Commit Changes
                           </>
                         )}
@@ -399,4 +403,3 @@ export default function Settings() {
     </div>
   );
 }
-

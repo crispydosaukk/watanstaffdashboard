@@ -56,126 +56,169 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        .animated-border { position: relative; border-radius: 20px; }
-        .animated-border::before {
-          content:""; position:absolute; inset:-6px; border-radius:inherit;
-          background:linear-gradient(120deg,#4ade80,#22d3ee,#818cf8,#f472b6,#facc15,#4ade80);
-          background-size:250% 250%; animation:borderGlow 4s ease infinite;
-          filter:blur(18px); opacity:0.55; z-index:-1;
+        .animated-border {
+          position: relative;
+          border-radius: 24px;
+          padding: 3px;
+          background: linear-gradient(120deg,#10b981,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#10b981);
+          background-size: 250% 250%;
+          animation: borderGlow 4s linear infinite;
         }
-        @keyframes borderGlow { 0%{background-position:0 50%} 50%{background-position:150% 50%} 100%{background-position:0 50%}}
-        @keyframes floatUpDown {0%{transform:translateY(0)}50%{transform:translateY(-14px)}100%{transform:translateY(0)}}
+        .animated-border-inner {
+          background: #ffffff;
+          border-radius: 21px;
+          width: 100%;
+        }
+        @keyframes borderGlow { 0%{background-position:0 50%} 50%{background-position:100% 50%} 100%{background-position:0 50%}}
 
         .underline-input {
           width: 100%;
-          padding: 10px 2px;
+          padding: 8px 4px;
           font-size: 14px;
           outline: none;
           border: none;
-          border-bottom: 2px solid #d1d5db;
-          transition: border-color .3s ease;
+          border-bottom: 2px solid #e5e7eb;
+          background: transparent;
+          transition: all 0.3s ease;
+        }
+        @media (min-width: 640px) {
+          .underline-input {
+            padding: 12px 4px;
+            font-size: 15px;
+          }
         }
         .underline-input:focus {
           border-bottom-color: #059669;
         }
         .underline-focus-line {
           position: relative;
+          display: block;
+          width: 100%;
         }
         .underline-focus-line::after {
           content:"";
           position:absolute;
-          left:0; bottom:0;
+          left:50%; bottom:0;
           width:0%; height:2px;
           background:#059669;
-          transition:width .35s ease;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          transform: translateX(-50%);
         }
         .underline-input:focus + .underline-focus-line::after {
           width:100%;
         }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .premium-shadow {
+          box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 8px 16px -6px rgba(0, 0, 0, 0.08);
+        }
       `}</style>
 
-      <div className="min-h-screen w-full bg-white flex items-center justify-center px-3 py-6">
-        <div className={`animated-border shadow-xl w-full max-w-5xl rounded-xl transition-all flex flex-col md:flex-row ${
-          mounted ? "scale-100 opacity-100" : "scale-95 opacity-0"
-        }`}>
-
-          {/* LEFT (Hidden on small screens) */}
-          <div className="hidden md:flex flex-col justify-center items-center w-1/2 px-6 py-10 bg-gradient-to-br from-[#e9faff] via-[#dff3ff] to-[#cfeaff] text-center">
-            <h2 className="leading-tight font-extrabold">
-              <span className="block text-lg text-emerald-700">Welcome to</span>
-              <span className="block text-2xl text-emerald-600">ZingBite Admin</span>
-            </h2>
-            <img src="/login-side.png" className="w-72 mt-8 ml-8" style={{ animation:"floatUpDown 4s ease-in-out infinite" }} draggable="false" />
-          </div>
-
-          {/* RIGHT */}
-          <div className="flex-1 px-6 sm:px-10 py-10 bg-white">
-            <div className="flex justify-center">
-              <img src="/zingbitelogo.png" alt="logo" className="h-14 object-contain" />
-            </div>
-            
-            <h2 className="text-center mt-6 font-extrabold">
-              <span className="block text-lg text-emerald-700">Login to start your session</span>
-            </h2>
-
-            {err && (
-              <div className="mt-5 bg-red-50 text-red-700 text-sm px-3 py-2 rounded border border-red-200">{err}</div>
-            )}
-
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={onChange}
-                  placeholder="Email address"
-                  className="underline-input"
+      <div className="min-h-screen w-full bg-[#f9fafb] flex items-center justify-center p-3 sm:p-4">
+        <div className={`animated-border premium-shadow w-full max-w-[420px] transition-all duration-700 ease-out ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+          }`}>
+          <div className="animated-border-inner">
+            <div className="px-4 py-5 sm:px-8 sm:py-10 md:px-12">
+              <div className="flex justify-center mb-2 sm:mb-3">
+                <img
+                  src="/zingbitelogo.png"
+                  alt="logo"
+                  className="h-24 sm:h-28 object-contain transition-transform hover:scale-105 duration-300"
                 />
-                <span className="underline-focus-line"></span>
               </div>
 
-              <div className="relative">
-                <input
-                  type={showPwd ? "text" : "password"}
-                  name="password"
-                  value={form.password}
-                  onChange={onChange}
-                  placeholder="Password"
-                  className="underline-input"
-                />
-                <span className="underline-focus-line"></span>
-
-                <button
-                  type="button"
-                  onClick={() => setShowPwd((s) => !s)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-500"
-                >
-                  {showPwd ? "Hide" : "Show"}
-                </button>
+              <div className="text-center space-y-0.5 mb-4 sm:mb-8">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">Please enter your details to sign in</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input type="checkbox" checked={remember} onChange={(e)=>setRemember(e.target.checked)} className="h-4 w-4"/>
-                  Remember me
-                </label>
+              {err && (
+                <div className="mb-6 bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100 flex items-center animate-shake">
+                  <span className="mr-2">⚠️</span> {err}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-7">
+                <div className="group">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 mb-1 block group-focus-within:text-emerald-600 transition-colors">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={onChange}
+                    placeholder="name@example.com"
+                    className="underline-input"
+                  />
+                  <span className="underline-focus-line"></span>
+                </div>
+
+                <div className="group relative">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 mb-1 block group-focus-within:text-emerald-600 transition-colors">
+                    Password
+                  </label>
+                  <input
+                    type={showPwd ? "text" : "password"}
+                    name="password"
+                    value={form.password}
+                    onChange={onChange}
+                    placeholder="••••••••"
+                    className="underline-input"
+                  />
+                  <span className="underline-focus-line"></span>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((s) => !s)}
+                    className="absolute right-0 bottom-3 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors px-2 py-1"
+                  >
+                    {showPwd ? "HIDE" : "SHOW"}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 sm:pt-2">
+                  <label className="flex items-center group cursor-pointer">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-200 transition-all checked:border-emerald-500 checked:bg-emerald-500 hover:border-emerald-400"
+                      />
+                      <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <span className="ml-3 text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Remember me</span>
+                  </label>
+                </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto flex items-center justify-center bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 rounded-md text-sm"
+                  className="w-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold py-3 sm:py-3.5 rounded-xl shadow-lg shadow-emerald-200 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-1 sm:mt-2"
                 >
-                  {loading ? <><ImSpinner2 className="animate-spin mr-2" /> Logging in…</> : <><FiLogIn className="mr-2" /> Login</>}
+                  {loading ? (
+                    <><ImSpinner2 className="animate-spin mr-2 text-xl" /> Authenticating...</>
+                  ) : (
+                    <><FiLogIn className="mr-2 text-lg" /> Sign In</>
+                  )}
                 </button>
-              </div>
-            </form>
+              </form>
 
-            <p className="mt-6 text-center text-xs text-gray-500">Forgot password? Contact admin</p>
+              <div className="mt-4 sm:mt-10 pt-4 sm:pt-6 border-t border-gray-100 text-center">
+                <p className="text-sm text-gray-500 font-medium">
+                  Forgot your password? <button className="text-emerald-600 font-bold hover:underline">Contact Support</button>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
     </>
   );
 }

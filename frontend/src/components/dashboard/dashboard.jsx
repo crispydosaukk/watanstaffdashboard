@@ -23,11 +23,11 @@ const ChartCard = ({ title, subtitle, children, delay, className = "" }) => (
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ delay, duration: 0.4 }}
-    className={`rounded-2xl p-6 shadow-xl border border-white/20 bg-white/10 backdrop-blur-xl flex flex-col ${className}`}
+    className={`rounded-2xl p-6 shadow-2xl border border-white/[0.08] bg-[#0b1a3d]/60 backdrop-blur-xl flex flex-col ${className}`}
   >
     <div className="mb-6">
-      <h3 className="text-lg font-bold text-white">{title}</h3>
-      <p className="text-xs mt-1 text-white/60">{subtitle}</p>
+      <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+      <p className="text-[11px] mt-1 text-white/40 uppercase tracking-widest font-semibold">{subtitle}</p>
     </div>
     <div className="flex-1 w-full min-h-[250px] relative">
       {children}
@@ -40,37 +40,41 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.4 }}
-    className="relative overflow-hidden rounded-2xl p-5 border border-white/20 bg-white/10 backdrop-blur-xl shadow-xl group hover:bg-white/15 transition-all duration-300 flex flex-col justify-between h-full min-h-[160px]"
+    className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/[0.08] bg-[#0b1a3d]/60 backdrop-blur-xl shadow-2xl group hover:bg-[#0b1a3d]/80 transition-all duration-300 flex flex-col justify-between h-full min-h-[140px] sm:min-h-[170px]"
   >
     <div className="relative z-10 flex justify-between items-start mb-2">
-      <div className={`p-2.5 rounded-xl backdrop-blur-md inline-block ${colorClass}`}>
-        <Icon size={20} className="text-white" />
+      <div className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl backdrop-blur-md inline-block shadow-inner ${colorClass}`}>
+        <Icon size={18} className="sm:size-[22px] text-white" />
       </div>
-      {onEyeClick && (
-        <button
-          onClick={onEyeClick}
-          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/20 text-white/40 hover:text-white transition-all border border-transparent hover:border-white/10"
-        >
-          <Eye size={18} />
-        </button>
-      )}
-      {trend && (
-        <div className="flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-lg text-emerald-300 text-[10px] font-bold border border-emerald-500/20">
-          <TrendingUp size={10} /> {trend}
+      {(onEyeClick || trend) && (
+        <div className="flex flex-col items-end gap-1.5">
+          {onEyeClick && (
+            <button
+              onClick={onEyeClick}
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/15 text-white/30 hover:text-white transition-all border border-white/5"
+            >
+              <Eye size={16} />
+            </button>
+          )}
+          {trend && (
+            <div className="flex items-center gap-1 bg-yellow-500/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-yellow-400 text-[9px] sm:text-[10px] font-black border border-yellow-500/20 shadow-sm">
+              <TrendingUp size={10} /> {trend}
+            </div>
+          )}
         </div>
       )}
     </div>
 
-    <div className="relative z-10">
-      <h3 className="text-3xl font-black text-white drop-shadow-md tracking-tight">{value}</h3>
-      <div className="mt-2">
-        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest leading-none">{title}</p>
-        <p className="text-[11px] font-medium text-white/60 mt-1">{subtext}</p>
+    <div className="relative z-10 mt-auto">
+      <h3 className="text-xl sm:text-3xl font-black text-white drop-shadow-lg tracking-tight truncate">{value}</h3>
+      <div className="mt-1 sm:mt-2 text-left">
+        <p className="text-[8px] sm:text-[10px] font-black text-white/50 uppercase tracking-[0.1em] sm:tracking-[0.15em] leading-none mb-1 sm:mb-1.5 truncate">{title}</p>
+        <p className="text-[9px] sm:text-[11px] font-bold text-white/80 truncate">{subtext}</p>
       </div>
     </div>
 
     {/* Decorative Glow */}
-    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-colors" />
+    <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors" />
   </motion.div>
 );
 
@@ -103,14 +107,14 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
         onClick={(e) => e.stopPropagation()}
         className="bg-[#1a1c23] border border-white/10 rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[85vh]"
       >
-        <div className="bg-gradient-to-r from-emerald-900 to-teal-900 px-8 py-5 flex justify-between items-center border-b border-white/10">
+        <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-8 py-6 flex justify-between items-center border-b border-white/10">
           <div>
             <h3 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-wider">
-              <Eye size={24} className="text-emerald-400" /> {title}
+              <Eye size={24} className="text-yellow-400" /> {title}
             </h3>
-            <p className="text-xs text-white/50 mt-1 uppercase tracking-widest">{items.length} records found</p>
+            <p className="text-[10px] text-white/40 mt-1.5 uppercase font-bold tracking-[0.2em]">{items.length} records found</p>
           </div>
-          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl text-white/70 hover:text-white transition-all border border-white/5">
+          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white transition-all border border-white/10">
             <X size={20} />
           </button>
         </div>
@@ -164,12 +168,12 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                                 <ShoppingBag size={16} className="m-auto text-white/20 h-full" />
                               )}
                             </div>
-                            <span className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{item.name || item.product_name}</span>
+                            <span className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">{item.name || item.product_name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-emerald-400 font-black text-sm">£{Number(item.price || item.product_price || 0).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-yellow-400 font-black text-sm">£{Number(item.price || item.product_price || 0).toFixed(2)}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${Number(item.status || item.product_status) === 1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${Number(item.status || item.product_status) === 1 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                             {Number(item.status || item.product_status) === 1 ? 'In Stock' : 'Out of Stock'}
                           </span>
                         </td>
@@ -188,9 +192,9 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                       <>
                         <td className="px-6 py-4 font-bold text-white">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm group-hover:text-emerald-400 transition-colors">#{item.order_number}</span>
+                            <span className="text-sm group-hover:text-yellow-400 transition-colors">#{item.order_number}</span>
                             {item.order_source === 'Dashboard' && (
-                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-black border border-white/10" title="Dashboard Order">
+                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-[9px] font-black border border-white/20" title="Dashboard Order">
                                 D
                               </div>
                             )}
@@ -200,12 +204,12 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                           </span>
                         </td>
                         <td className="px-6 py-4 text-white/70 text-sm font-medium">{item.customer_name || 'Guest'}</td>
-                        <td className="px-6 py-4 text-emerald-400 font-black text-sm">£{Number(item.grand_total).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-yellow-400 font-black text-sm">£{Number(item.grand_total).toFixed(2)}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${Number(item.order_status) === 4 ? "bg-emerald-500/20 text-emerald-400" :
-                            Number(item.order_status) === 0 ? "bg-blue-500/20 text-blue-400" :
-                              Number(item.order_status) === 2 ? "bg-red-500/20 text-red-400" :
-                                "bg-amber-500/20 text-amber-400"
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${Number(item.order_status) === 4 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                            Number(item.order_status) === 0 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
+                              Number(item.order_status) === 2 ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+                                "bg-amber-500/20 text-amber-400 border border-amber-400/30"
                             }`}>
                             {Number(item.order_status) === 0 ? 'Placed' :
                               Number(item.order_status) === 1 ? 'Accepted' :
@@ -215,12 +219,11 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            {Number(item.order_status) === 0 && (
+                          <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>                            {Number(item.order_status) === 0 && (
                               <>
                                 <button
                                   onClick={() => onReadyClick(item.order_number)}
-                                  className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
+                                  className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-lg transition-all flex items-center gap-1.5 border border-yellow-500/20 shadow-md active:scale-95"
                                   title="Accept"
                                 >
                                   <CheckCircle size={14} />
@@ -228,7 +231,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                                 </button>
                                 <button
                                   onClick={() => onUpdateStatus(item.order_number, 2)}
-                                  className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 rounded-lg transition-all flex items-center gap-1.5 border border-rose-500/20"
+                                  className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 rounded-lg transition-all flex items-center gap-1.5 border border-rose-500/20 shadow-md active:scale-95"
                                   title="Reject"
                                 >
                                   <XCircle size={14} />
@@ -239,7 +242,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             {Number(item.order_status) === 1 && (
                               <button
                                 onClick={() => onUpdateStatus(item.order_number, 3)}
-                                className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 rounded-lg transition-all flex items-center gap-1.5 border border-purple-500/20"
+                                className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 rounded-lg transition-all flex items-center gap-1.5 border border-purple-500/20 shadow-md active:scale-95"
                                 title="Mark as Ready"
                               >
                                 <ShoppingBag size={14} />
@@ -249,7 +252,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             {Number(item.order_status) === 3 && (
                               <button
                                 onClick={() => onUpdateStatus(item.order_number, 4)}
-                                className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 rounded-lg transition-all flex items-center gap-1.5 border border-emerald-500/20"
+                                className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-lg transition-all flex items-center gap-1.5 border border-yellow-500/20 shadow-md active:scale-95"
                                 title="Mark Collected"
                               >
                                 <CheckCircle size={14} />
@@ -278,7 +281,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
 
         <div className="bg-white/5 p-6 border-t border-white/10 flex justify-between items-center sm:px-8">
           <p className="text-[10px] text-white/30 uppercase font-black tracking-widest">Click any row to manage</p>
-          <button onClick={onClose} className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/40 active:scale-95">
+          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
             Close Details
           </button>
         </div>
@@ -319,9 +322,9 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
         onClick={(e) => e.stopPropagation()}
         className="bg-[#1a1c23] border border-white/10 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="bg-gradient-to-r from-emerald-900 to-teal-900 px-6 py-4 flex justify-between items-center border-b border-white/10 shrink-0">
+        <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-6 py-5 flex justify-between items-center border-b border-white/10 shrink-0">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <ShoppingBag size={20} /> Order #{order.order_number}
+            <ShoppingBag size={20} className="text-yellow-400" /> Order #{order.order_number}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors">
             <X size={20} />
@@ -332,7 +335,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Customer Info */}
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h4 className="text-emerald-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
+              <h4 className="text-yellow-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
                 <Users size={14} /> Customer Details
               </h4>
               <div className="space-y-2">
@@ -350,7 +353,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
 
             {/* Order Info */}
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h4 className="text-emerald-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
+              <h4 className="text-yellow-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
                 <CreditCard size={14} /> Payment & Status
               </h4>
               <div className="space-y-3">
@@ -360,10 +363,10 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-white/60 text-sm">Status</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${Number(order.order_status) === 4 ? "bg-emerald-500/20 text-emerald-400" :
-                    Number(order.order_status) === 0 ? "bg-blue-500/20 text-blue-400" :
-                      Number(order.order_status) === 2 ? "bg-red-500/20 text-red-400" :
-                        "bg-amber-500/20 text-amber-400"
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${Number(order.order_status) === 4 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                    Number(order.order_status) === 0 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
+                      Number(order.order_status) === 2 ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+                        "bg-amber-500/20 text-amber-400 border border-amber-400/30"
                     }`}>
                     {Number(order.order_status) === 0 ? 'Placed' :
                       Number(order.order_status) === 1 ? 'Accepted' :
@@ -382,7 +385,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
           {/* Product List */}
           <div>
             <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-              <ShoppingBag size={16} className="text-emerald-400" /> Order Items
+              <ShoppingBag size={16} className="text-yellow-400" /> Order Items
             </h4>
             <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
               {loading ? (
@@ -425,14 +428,14 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
                           </div>
                         </td>
                         <td className="px-4 py-3 text-white/70 text-center">x{item.quantity}</td>
-                        <td className="px-4 py-3 text-emerald-300 font-medium text-right">£{Number(item.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-yellow-300 font-medium text-right">£{Number(item.price).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-white/5 border-t border-white/10">
                     <tr>
                       <td colSpan="2" className="px-4 py-3 text-right font-bold text-white">Total</td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-400">£{Number(order.grand_total).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right font-bold text-yellow-400">£{Number(order.grand_total).toFixed(2)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -447,13 +450,13 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
               <>
                 <button
                   onClick={() => onReadyClick(order.order_number)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-900/30"
+                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
                 >
                   <CheckCircle size={16} /> Accept
                 </button>
                 <button
                   onClick={() => onUpdateStatus(order.order_number, 2)}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-lg shadow-rose-900/30"
+                  className="px-6 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/30 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-rose-900/20 active:scale-95"
                 >
                   <XCircle size={16} /> Reject
                 </button>
@@ -462,7 +465,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
             {Number(order.order_status) === 1 && (
               <button
                 onClick={() => onUpdateStatus(order.order_number, 3)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-bold text-sm flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-blue-500 hover:from-yellow-300 hover:to-blue-400 text-white rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-cyan-900/20 active:scale-95"
               >
                 <ShoppingBag size={16} /> Mark as Ready
               </button>
@@ -470,7 +473,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
             {Number(order.order_status) === 3 && (
               <button
                 onClick={() => onUpdateStatus(order.order_number, 4)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-bold text-sm flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
               >
                 <CheckCircle size={16} /> Mark Collected
               </button>
@@ -527,7 +530,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
           </button>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">
             <h3 className="text-2xl font-bold text-white shadow-sm">{product.name}</h3>
-            <p className="text-emerald-300 font-medium text-sm mt-1">{product.category_name || "Uncategorized"}</p>
+            <p className="text-yellow-300 font-medium text-sm mt-1">{product.category_name || "Uncategorized"}</p>
           </div>
         </div>
 
@@ -539,7 +542,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
             </div>
             <div className="text-right">
               <span className="text-white/60 text-xs block mb-1">Total Sales</span>
-              <span className="text-xl font-bold text-emerald-400">{product.count} <span className="text-sm font-normal text-white/60">units</span></span>
+              <span className="text-xl font-bold text-yellow-400">{product.count} <span className="text-sm font-normal text-white/60">units</span></span>
             </div>
           </div>
 
@@ -552,9 +555,8 @@ const ProductDetailsModal = ({ product, onClose }) => {
             </p>
           </div>
         </div>
-
         <div className="bg-white/5 p-4 border-t border-white/10 flex justify-end">
-          <button onClick={onClose} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-bold shadow-lg shadow-emerald-500/20">
+          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
             Close
           </button>
         </div>
@@ -772,11 +774,11 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
         onClick={(e) => e.stopPropagation()}
         className="bg-[#1a1c23] border border-white/10 rounded-3xl shadow-2xl max-w-5xl w-full overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="bg-gradient-to-r from-emerald-900 to-teal-900 px-8 py-5 flex justify-between items-center border-b border-white/10">
+        <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-8 py-6 flex justify-between items-center border-b border-white/10">
           <h3 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-wider">
-            <Plus size={24} className="text-emerald-400" /> New Order
+            <Plus size={24} className="text-yellow-400" /> New Order
           </h3>
-          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl text-white/70 hover:text-white transition-all">
+          <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white transition-all border border-white/10">
             <X size={20} />
           </button>
         </div>
@@ -800,7 +802,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-emerald-900/40"
+                  className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
                 >
                   Close Manager
                 </button>
@@ -1055,7 +1057,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                   <button
                     onClick={placeOrder}
                     disabled={cart.length === 0 || loading}
-                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-emerald-900/40 active:scale-95"
+                    className="w-full py-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 disabled:opacity-50 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
                   >
                     {loading ? "Placing..." : "Confirm Order"}
                   </button>
@@ -1354,12 +1356,12 @@ export default function Dashboard() {
 
   const getStatusBadge = (status) => {
     const s = Number(status);
-    if (s === 0) return <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">Placed</span>;
-    if (s === 1) return <span className="px-2 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Accepted</span>;
-    if (s === 2) return <span className="px-2 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">Rejected</span>;
-    if (s === 3) return <span className="px-2 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Ready</span>;
-    if (s === 4) return <span className="px-2 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Collected</span>;
-    return <span className="px-2 py-1 rounded-full text-xs font-bold bg-gray-500/20 text-gray-300">Cancelled</span>;
+    if (s === 0) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">Placed</span>;
+    if (s === 1) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Accepted</span>;
+    if (s === 2) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/40">Rejected</span>;
+    if (s === 3) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/50">Ready</span>;
+    if (s === 4) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">Collected</span>;
+    return <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gray-500/20 text-gray-300 border border-white/10">Cancelled</span>;
   };
 
   const OrderActions = ({ order }) => {
@@ -1368,7 +1370,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center gap-2">
         <button
           onClick={() => setSelectedOrder(order)}
-          className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-emerald-300 hover:text-emerald-200 transition-all shadow-md active:scale-95"
+          className="p-2 bg-white/5 hover:bg-white/15 rounded-lg text-yellow-400 hover:text-yellow-300 transition-all border border-white/5 active:scale-95"
           title="View Details"
         >
           <Eye size={18} />
@@ -1380,14 +1382,14 @@ export default function Dashboard() {
                 setOrderForReady(order.order_number);
                 setIsReadyModalOpen(true);
               }}
-              className="p-2 bg-emerald-500/20 hover:bg-emerald-500/40 rounded-lg text-emerald-400 transition-all shadow-md active:scale-95"
+              className="p-2 bg-yellow-500/15 hover:bg-yellow-500/30 rounded-lg text-yellow-400 transition-all border border-yellow-500/20 active:scale-95"
               title="Accept"
             >
               <CheckCircle size={18} />
             </button>
             <button
               onClick={() => updateOrderStatus(order.order_number, 2)}
-              className="p-2 bg-rose-500/20 hover:bg-rose-500/40 rounded-lg text-rose-400 transition-all shadow-md active:scale-95"
+              className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg text-red-400 transition-all shadow-md active:scale-95"
               title="Reject"
             >
               <XCircle size={18} />
@@ -1406,7 +1408,7 @@ export default function Dashboard() {
         {status === 3 && (
           <button
             onClick={() => updateOrderStatus(order.order_number, 4)}
-            className="p-2 bg-emerald-500/20 hover:bg-emerald-500/40 rounded-lg text-emerald-400 transition-all shadow-md active:scale-95"
+            className="p-2 bg-yellow-500/20 hover:bg-yellow-500/40 rounded-lg text-yellow-400 transition-all shadow-md active:scale-95"
             title="Mark Collected"
           >
             <CheckCircle size={18} />
@@ -1417,7 +1419,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-900 via-teal-800 to-emerald-900 text-white font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] text-white font-sans selection:bg-yellow-500/30">
       <style dangerouslySetInnerHTML={{
         __html: `
             .custom-scrollbar::-webkit-scrollbar {
@@ -1438,11 +1440,11 @@ export default function Dashboard() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
+      <main className={`pt-24 lg:pt-20 pb-12 px-3 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
         <div className="max-w-7xl mx-auto">
 
           {/* Header Section */}
-          <div className="flex flex-col items-center text-center mb-10 gap-8">
+          <div className="flex flex-col items-center text-center mt-2 mb-6 sm:mb-10 lg:mb-12 gap-6 sm:gap-8">
             <div>
               <h1 className="text-3xl sm:text-4xl font-black text-white drop-shadow-lg tracking-tight whitespace-nowrap">
                 {stats.restaurant_name ? `Welcome to ${stats.restaurant_name}` : "Dashboard"}
@@ -1456,22 +1458,22 @@ export default function Dashboard() {
                 <div className="relative">
                   <button
                     onClick={() => setShowRestaurantMenu(!showRestaurantMenu)}
-                    className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider h-full whitespace-nowrap"
+                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-black hover:scale-[1.02] transition-all text-[11px] font-black uppercase tracking-wider h-full whitespace-nowrap shadow-lg shadow-yellow-900/10"
                   >
-                    <LayoutDashboard size={18} />
+                    <LayoutDashboard size={18} strokeWidth={2.5} />
                     {selectedRestaurant ? (restaurants.find(r => String(r.user_id) === String(selectedRestaurant))?.restaurant_name || "Restaurant") : "All Restaurants"}
                     <ChevronDown size={14} className={`transition-transform ${showRestaurantMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showRestaurantMenu && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-[100] py-2 overflow-hidden text-left">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-[#0b1a3d]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-[100] py-2 overflow-hidden text-left">
                       <div className="max-h-60 overflow-y-auto custom-scrollbar">
                         <button
                           onClick={() => {
                             setSelectedRestaurant("");
                             setShowRestaurantMenu(false);
                           }}
-                          className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${selectedRestaurant === "" ? 'text-emerald-400 bg-white/5' : 'text-white/80'}`}
+                          className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${selectedRestaurant === "" ? 'text-yellow-400 bg-white/5' : 'text-white/80'}`}
                         >
                           All Restaurants
                         </button>
@@ -1482,7 +1484,7 @@ export default function Dashboard() {
                               setSelectedRestaurant(String(r.user_id));
                               setShowRestaurantMenu(false);
                             }}
-                            className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${String(selectedRestaurant) === String(r.user_id) ? 'text-emerald-400 bg-white/5' : 'text-white/80'}`}
+                            className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${String(selectedRestaurant) === String(r.user_id) ? 'text-yellow-400 bg-white/5' : 'text-white/80'}`}
                           >
                             {r.restaurant_name}
                           </button>
@@ -1496,24 +1498,24 @@ export default function Dashboard() {
               {/* Super Admin Buttons (Matches reference image style) */}
               <button
                 onClick={() => setIsDateTimeFilterModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider whitespace-nowrap"
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-black hover:scale-[1.02] transition-all text-[11px] font-black uppercase tracking-wider whitespace-nowrap shadow-lg shadow-yellow-900/10"
               >
-                <Calendar size={18} /> {dateRange.label} <ChevronDown size={14} />
+                <Calendar size={18} strokeWidth={2.5} /> {dateRange.label} <ChevronDown size={14} />
               </button>
-              <button className="flex items-center gap-2 px-6 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white font-bold hover:bg-white/20 transition-all text-sm uppercase tracking-wider whitespace-nowrap">
+              <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-bold hover:from-yellow-400/30 hover:to-amber-500/30 transition-all text-sm uppercase tracking-wider whitespace-nowrap">
                 <ArrowRight className="rotate-90" size={18} /> Export
               </button>
               <button
                 onClick={() => setIsNewOrderModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 rounded-xl text-white font-bold hover:bg-emerald-500 transition-all text-sm uppercase tracking-wider shadow-lg shadow-emerald-900/40 whitespace-nowrap"
+                className="flex items-center gap-2 px-8 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 rounded-xl text-slate-900 font-black hover:scale-[1.02] active:scale-95 transition-all text-sm uppercase tracking-widest shadow-lg shadow-yellow-900/20 whitespace-nowrap"
               >
-                <Plus size={18} /> New Order
+                <Plus size={18} strokeWidth={3} /> New Order
               </button>
             </div>
           </div>
 
           {/* Stats Grid - Row 1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Pending Orders"
               value={stats.pending_orders}
@@ -1528,7 +1530,7 @@ export default function Dashboard() {
               value={stats.total_bookings}
               subtext="Lifetime Orders"
               icon={ShoppingBag}
-              colorClass="bg-indigo-500/20 border border-indigo-400/30"
+              colorClass="bg-yellow-500/20 border border-yellow-400/30"
               delay={0.1}
               onEyeClick={() => openDetailModal('total_bookings', 'Total Bookings')}
             />
@@ -1537,7 +1539,7 @@ export default function Dashboard() {
               value={stats.rejected_orders || stats.complaint_requests}
               subtext="To Be Reviewed"
               icon={RotateCcw}
-              colorClass="bg-rose-500/20 border border-rose-400/30"
+              colorClass="bg-red-500/20 border border-red-400/40"
               delay={0.2}
               onEyeClick={() => openDetailModal('rejected', 'Rejected Orders')}
             />
@@ -1546,29 +1548,31 @@ export default function Dashboard() {
               value={stats.yet_to_receive_payments}
               subtext="To Be Received"
               icon={CreditCard}
-              colorClass="bg-blue-500/20 border border-blue-400/30"
+              colorClass="bg-yellow-500/20 border border-yellow-400/30"
               delay={0.3}
               onEyeClick={() => openDetailModal('payments', 'Payment Requests')}
             />
-            <StatCard
-              title="Deactive Products"
-              value={stats.deactive_products}
-              subtext="In-active items"
-              icon={Package}
-              colorClass="bg-emerald-500/20 border border-emerald-400/30"
-              delay={0.4}
-              onEyeClick={() => openDetailModal('deactive', 'Deactive Products')}
-            />
+            <div className="col-span-2 lg:col-span-1">
+              <StatCard
+                title="Inactive Products"
+                value={stats.deactive_products}
+                subtext="In-active items"
+                icon={Package}
+                colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                delay={0.4}
+                onEyeClick={() => openDetailModal('deactive', 'Inactive Products')}
+              />
+            </div>
           </div>
 
           {/* Stats Grid - Row 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Total Products"
               value={stats.total_products}
               subtext="Total Inventory"
               icon={Box}
-              colorClass="bg-indigo-500/20 border border-indigo-400/30"
+              colorClass="bg-yellow-500/20 border border-yellow-400/30"
               delay={0.5}
               trend="0%"
               onEyeClick={() => openDetailModal('products', 'Total Products')}
@@ -1578,7 +1582,7 @@ export default function Dashboard() {
               value={todayOrdersCount}
               subtext={dateRange.label}
               icon={ShoppingBag}
-              colorClass="bg-rose-500/20 border border-rose-400/30"
+              colorClass="bg-red-500/20 border border-red-400/40"
               delay={0.6}
               trend={calculateTrend(stats.today_users, stats.prev_today_users)}
               onEyeClick={() => openDetailModal('orders', 'Orders Overview')}
@@ -1588,7 +1592,7 @@ export default function Dashboard() {
               value={formatCurrency(todayRevenueTotal)}
               subtext={dateRange.label}
               icon={PoundSterling}
-              colorClass="bg-emerald-500/20 border border-emerald-400/30"
+              colorClass="bg-amber-500/20 border border-amber-400/30"
               delay={0.7}
               trend={calculateTrend(stats.daily_revenue, stats.prev_daily_revenue)}
               onEyeClick={() => openDetailModal('orders', 'Revenue Details')}
@@ -1603,15 +1607,17 @@ export default function Dashboard() {
               trend="0%"
               onEyeClick={() => openDetailModal('customers', 'Customers List')}
             />
-            <StatCard
-              title="Completed Orders"
-              value={stats.completed_orders}
-              subtext="Successfully Delivered"
-              icon={CheckCircle}
-              colorClass="bg-emerald-500/20 border border-emerald-400/30"
-              delay={0.9}
-              onEyeClick={() => openDetailModal('completed', 'Completed Orders')}
-            />
+            <div className="col-span-2 lg:col-span-1">
+              <StatCard
+                title="Completed Orders"
+                value={stats.completed_orders}
+                subtext="Successfully Delivered"
+                icon={CheckCircle}
+                colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                delay={0.9}
+                onEyeClick={() => openDetailModal('completed', 'Completed Orders')}
+              />
+            </div>
           </div>
 
           {/* Charts Section 1: Comparisons & Trends */}
@@ -1642,8 +1648,8 @@ export default function Dashboard() {
                     contentStyle={{ borderRadius: '12px', background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     formatter={(value) => [`£${value}`, "Revenue"]}
                   />
-                  <Bar dataKey="previous" name="Previous Period" fill="#9ca3af" radius={[4, 4, 0, 0]} barSize={8} fillOpacity={0.5} />
-                  <Bar dataKey="current" name="Selected Period" fill="#34d399" radius={[4, 4, 0, 0]} barSize={8} />
+                  <Bar dataKey="previous" name="Previous Period" fill="#9ca3af" radius={[4, 4, 0, 0]} barSize={12} fillOpacity={0.3} />
+                  <Bar dataKey="current" name="Selected Period" fill="#22d3ee" radius={[4, 4, 0, 0]} barSize={12} />
                   <Legend wrapperStyle={{ paddingTop: '10px' }} />
                 </BarChart>
               </ResponsiveContainer>
@@ -1679,7 +1685,7 @@ export default function Dashboard() {
                     contentStyle={{ borderRadius: '12px', background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     formatter={(value) => [`£${Number(value).toFixed(2)}`, "Avg Value"]}
                   />
-                  <Area type="monotone" dataKey="value" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorAvg)" />
+                  <Area type="monotone" dataKey="value" stroke="#facc15" strokeWidth={3} fillOpacity={1} fill="url(#colorAvg)" />
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -1705,7 +1711,7 @@ export default function Dashboard() {
                     tick={{ fill: '#fff', fontSize: 11 }}
                   />
                   <Tooltip contentStyle={{ borderRadius: '12px', background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} />
-                  <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="count" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4, fill: '#22d3ee', strokeWidth: 2, stroke: '#071428' }} activeDot={{ r: 6, fill: '#facc15' }} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -1725,7 +1731,7 @@ export default function Dashboard() {
 
                         {/* Rank & Image */}
                         <div className="relative w-12 h-12 shrink-0">
-                          <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center z-10 border border-[#1a1c23] shadow-md">
+                          <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-yellow-500 text-white text-[10px] font-bold flex items-center justify-center z-10 border border-[#0b1a3d] shadow-md">
                             {idx + 1}
                           </div>
                           <div className="w-12 h-12 rounded-lg bg-white/10 overflow-hidden ring-1 ring-white/10">
@@ -1745,16 +1751,16 @@ export default function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <h5 className="font-medium text-white text-sm truncate">{product.name}</h5>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-emerald-400 text-xs font-bold">£{Number(product.price || 0).toFixed(2)}</span>
+                            <span className="text-yellow-400 text-xs font-bold">£{Number(product.price || 0).toFixed(2)}</span>
                             <span className="text-white/30 text-[10px]">•</span>
-                            <span className="text-white/50 text-xs text-xs">{product.count} sales</span>
+                            <span className="text-white/50 text-xs">{product.count} sales</span>
                           </div>
                         </div>
 
                         {/* Action */}
                         <button
                           onClick={() => setSelectedProduct(product)}
-                          className="p-2 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-white/40 hover:text-emerald-400 transition-colors border border-transparent hover:border-emerald-500/30"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-yellow-500/20 text-white/40 hover:text-yellow-400 transition-colors border border-transparent hover:border-yellow-500/30"
                         >
                           <Eye size={18} />
                         </button>
@@ -1776,7 +1782,7 @@ export default function Dashboard() {
             >
               <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-emerald-400" /> Recent Orders
+                  <ShoppingBag size={20} className="text-yellow-400" /> Recent Orders
                 </h2>
               </div>
 
@@ -1802,14 +1808,14 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2">
                               #{order.order_number}
                               {order.order_source === 'Dashboard' && (
-                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-black border border-white/10 shadow-sm" title="Dashboard Order">
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-[9px] font-black border border-white/10 shadow-sm" title="Dashboard Order">
                                   D
                                 </div>
                               )}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-white/80">{order.customer_name || "Guest"}</td>
-                          <td className="px-6 py-4 font-semibold text-emerald-300">{formatCurrency(order.grand_total)}</td>
+                          <td className="px-6 py-4 font-semibold text-yellow-300">{formatCurrency(order.grand_total)}</td>
                           <td className="px-6 py-4">{getStatusBadge(order.order_status)}</td>
                           <td className="px-6 py-4 text-white/60">
                             {new Date(order.created_at).toLocaleDateString()}
@@ -1862,7 +1868,7 @@ export default function Dashboard() {
             <div className="mt-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl overflow-hidden">
               <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Store size={20} className="text-emerald-400" /> Restaurant Performance
+                  <Store size={20} className="text-yellow-400" /> Restaurant Performance
                 </h2>
               </div>
               <div className="overflow-x-auto">
@@ -1879,7 +1885,7 @@ export default function Dashboard() {
                       <tr key={idx} className="hover:bg-white/5">
                         <td className="px-6 py-4 font-medium text-white">{perf.restaurant_name}</td>
                         <td className="px-6 py-4 text-center text-white/70">{perf.order_count}</td>
-                        <td className="px-6 py-4 text-right text-emerald-300 font-bold">{formatCurrency(perf.revenue)}</td>
+                        <td className="px-6 py-4 text-right text-yellow-300 font-bold">{formatCurrency(perf.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
