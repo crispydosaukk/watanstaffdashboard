@@ -152,13 +152,13 @@ export default function OffersPage() {
                       <Tag className="text-yellow-400" size={24} />
                     </div>
                     <div>
-                      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase leading-none">Offers & Promotions</h1>
+                      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg leading-none">Offers & Promotions</h1>
                       <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">Create and manage special offers for your customers</p>
                     </div>
                   </div>
                   <button
                     onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
-                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
+                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-black uppercase tracking-widest text-[12px] shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
                   >
                     <Plus size={16} /> Add New Offer
                   </button>
@@ -192,12 +192,16 @@ export default function OffersPage() {
                         <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mt-1.5 leading-relaxed line-clamp-2">{offer.description || "NO DESCRIPTION AVAILABLE"}</p>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
-                        <div className="flex items-center gap-3">
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" checked={offer.status === 'active'} onChange={() => handleToggle(offer)} className="sr-only peer" />
-                            <div className="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-yellow-500/50 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4 shadow-inner"></div>
-                          </label>
-                        </div>
+                          <div className="flex items-center gap-3">
+                            <div className="relative group/toggle cursor-pointer" onClick={() => handleToggle(offer)}>
+                              <input type="checkbox" className="sr-only" checked={offer.status === 'active'} readOnly />
+                              <div className={`w-10 h-5 rounded-full transition-colors ${offer.status === 'active' ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                              <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${offer.status === 'active' ? 'translate-x-5' : ''}`}></div>
+                            </div>
+                            <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${offer.status === 'active' ? 'text-yellow-400' : 'text-white/30'}`}>
+                              {offer.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
                         <div className="flex items-center gap-2">
                           <button onClick={() => handleEdit(offer)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all"><Edit size={14} /></button>
                           <button onClick={() => handleDelete(offer.id)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all"><Trash2 size={14} /></button>

@@ -345,725 +345,730 @@ export default function Restuarent() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`pt-36 lg:pt-24 pb-12 px-4 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
-        <div className="max-w-7xl mx-auto">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+        <main className="-mt-10 sm:-mt-0 flex-1 pt-36 lg:pt-24 pb-12 px-4 sm:px-6 lg:px-10">
+          <div className="max-w-7xl mx-auto">
 
-          {/* Page Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
-                <Store className="text-yellow-500" size={28} />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase">Restaurant Profile</h1>
-                <p className="text-white/60 mt-1 text-[10px] font-black uppercase tracking-[0.2em]">Manage your restaurant information and operating hours</p>
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* Main Form - Left Side (2 columns) */}
-            <div className="lg:col-span-2 space-y-6">
-
-              {/* Basic Information Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                      <Store size={22} className="text-yellow-500" />
-                      Basic Information
-                    </h2>
-                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Core details of your establishment</p>
-                  </div>
+            {/* Page Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex items-center gap-4 mb-2">
+                <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
+                  <Store className="text-yellow-500" size={28} />
                 </div>
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-black text-white tracking-tight drop-shadow-lg">Restaurant Profile</h1>
+                  <p className="text-white/60 mt-1 text-[10px] font-black uppercase tracking-[0.2em]">Manage your restaurant information and operating hours</p>
+                </div>
+              </div>
+            </motion.div>
 
-                <div className="p-8 space-y-8">
-                  <InputField
-                    icon={Store}
-                    label="Restaurant Name"
-                    value={info.restaurant_name}
-                    onChange={onInfoChange("restaurant_name")}
-                    placeholder="Enter restaurant name"
-                    required
-                  />
-                  {/* Food Type Section */}
-                  <div className="space-y-3 group">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-                      <Utensils size={12} className="text-yellow-500" />
-                      Food Type <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
-                      <div className="flex flex-wrap gap-8 items-center justify-around">
-                        <div className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            id="veg-checkbox"
-                            checked={Array.isArray(info.food_type) ? info.food_type.includes(0) : info.food_type === 0}
-                            onChange={e => {
-                              setInfo(p => {
-                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                                if (e.target.checked) {
-                                  if (!arr.includes(0)) arr.push(0);
-                                } else {
-                                  arr = arr.filter(v => v !== 0);
-                                }
-                                return { ...p, food_type: arr };
-                              });
-                            }}
-                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                          />
-                          <label htmlFor="veg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Veg</label>
-                        </div>
-                        <div className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            id="nonveg-checkbox"
-                            checked={Array.isArray(info.food_type) ? info.food_type.includes(1) : info.food_type === 1}
-                            onChange={e => {
-                              setInfo(p => {
-                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                                if (e.target.checked) {
-                                  if (!arr.includes(1)) arr.push(1);
-                                } else {
-                                  arr = arr.filter(v => v !== 1);
-                                }
-                                return { ...p, food_type: arr, is_halal: e.target.checked ? 1 : 0 };
-                              });
-                            }}
-                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                          />
-                          <label htmlFor="nonveg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Non-Veg</label>
-                        </div>
-                        <div className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            id="jain-food-checkbox"
-                            checked={Array.isArray(info.food_type) ? info.food_type.includes(2) : info.food_type === 2}
-                            onChange={e => {
-                              setInfo(p => {
-                                let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
-                                if (e.target.checked) {
-                                  if (!arr.includes(2)) arr.push(2);
-                                } else {
-                                  arr = arr.filter(v => v !== 2);
-                                }
-                                return { ...p, food_type: arr };
-                              });
-                            }}
-                            className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                          />
-                          <label htmlFor="jain-food-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Jain</label>
-                        </div>
-                        {Array.isArray(info.food_type) && info.food_type.includes(1) && (
-                          <div className="flex items-center gap-4 pl-8 border-l border-white/10">
-                            <div className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                id="halal-checkbox"
-                                checked={info.is_halal === 1}
-                                onChange={e => setInfo(p => ({ ...p, is_halal: e.target.checked ? 1 : 0 }))}
-                                className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                              />
-                              <label htmlFor="halal-checkbox" className="text-sm font-black uppercase tracking-widest text-yellow-400 cursor-pointer">Halal Certified</label>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+              {/* Main Form - Left Side (2 columns) */}
+              <div className="lg:col-span-2 space-y-6">
+
+                {/* Basic Information Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                        <Store size={22} className="text-yellow-500" />
+                        Basic Information
+                      </h2>
+                      <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Core details of your establishment</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-8">
+                    <InputField
+                      icon={Store}
+                      label="Restaurant Name"
+                      value={info.restaurant_name}
+                      onChange={onInfoChange("restaurant_name")}
+                      placeholder="Enter restaurant name"
+                      required
+                    />
+                    {/* Food Type Section */}
+                    <div className="space-y-3 group">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                        <Utensils size={12} className="text-yellow-500" />
+                        Food Type <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
+                        <div className="flex flex-wrap gap-8 items-center justify-around">
+                          <div className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              id="veg-checkbox"
+                              checked={Array.isArray(info.food_type) ? info.food_type.includes(0) : info.food_type === 0}
+                              onChange={e => {
+                                setInfo(p => {
+                                  let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                  if (e.target.checked) {
+                                    if (!arr.includes(0)) arr.push(0);
+                                  } else {
+                                    arr = arr.filter(v => v !== 0);
+                                  }
+                                  return { ...p, food_type: arr };
+                                });
+                              }}
+                              className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                            />
+                            <label htmlFor="veg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Veg</label>
+                          </div>
+                          <div className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              id="nonveg-checkbox"
+                              checked={Array.isArray(info.food_type) ? info.food_type.includes(1) : info.food_type === 1}
+                              onChange={e => {
+                                setInfo(p => {
+                                  let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                  if (e.target.checked) {
+                                    if (!arr.includes(1)) arr.push(1);
+                                  } else {
+                                    arr = arr.filter(v => v !== 1);
+                                  }
+                                  return { ...p, food_type: arr, is_halal: e.target.checked ? 1 : 0 };
+                                });
+                              }}
+                              className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                            />
+                            <label htmlFor="nonveg-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Non-Veg</label>
+                          </div>
+                          <div className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              id="jain-food-checkbox"
+                              checked={Array.isArray(info.food_type) ? info.food_type.includes(2) : info.food_type === 2}
+                              onChange={e => {
+                                setInfo(p => {
+                                  let arr = Array.isArray(p.food_type) ? [...p.food_type] : [p.food_type];
+                                  if (e.target.checked) {
+                                    if (!arr.includes(2)) arr.push(2);
+                                  } else {
+                                    arr = arr.filter(v => v !== 2);
+                                  }
+                                  return { ...p, food_type: arr };
+                                });
+                              }}
+                              className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                            />
+                            <label htmlFor="jain-food-checkbox" className="text-sm font-black uppercase tracking-widest text-white/70 cursor-pointer">Jain</label>
+                          </div>
+                          {Array.isArray(info.food_type) && info.food_type.includes(1) && (
+                            <div className="flex items-center gap-4 pl-8 border-l border-white/10">
+                              <div className="flex items-center gap-3 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  id="halal-checkbox"
+                                  checked={info.is_halal === 1}
+                                  onChange={e => setInfo(p => ({ ...p, is_halal: e.target.checked ? 1 : 0 }))}
+                                  className="w-5 h-5 accent-yellow-500 border-white/[0.08] rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                                />
+                                <label htmlFor="halal-checkbox" className="text-sm font-black uppercase tracking-widest text-yellow-400 cursor-pointer">Halal Certified</label>
+                              </div>
                             </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cuisine Type Section */}
+                    <div className="space-y-3 group">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                        <ChefHat size={12} className="text-yellow-400" />
+                        Cuisine Topology <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+                          {[
+                            { id: 0, label: "Indian", icon: Flame },
+                            { id: 1, label: "Afghan", icon: ChefHat },
+                            { id: 2, label: "Pakistani", icon: ChefHat },
+                            { id: 3, label: "Chinese", icon: Soup },
+                            { id: 4, label: "Italian", icon: Pizza },
+                            { id: 5, label: "Thai", icon: Soup },
+                            { id: 6, label: "Mexican", icon: Flame },
+                            { id: 7, label: "Fried Chicken", icon: Drumstick }
+                          ].map((cuisine) => {
+                            const Icon = cuisine.icon;
+                            const isSelected = Array.isArray(info.cuisine_type) && info.cuisine_type.includes(cuisine.id);
+                            return (
+                              <div
+                                key={cuisine.id}
+                                onClick={() => {
+                                  setInfo(p => {
+                                    let arr = Array.isArray(p.cuisine_type) ? [...p.cuisine_type] : [];
+                                    if (arr.includes(cuisine.id)) {
+                                      arr = arr.filter(v => v !== cuisine.id);
+                                    } else {
+                                      arr.push(cuisine.id);
+                                    }
+                                    return { ...p, cuisine_type: arr };
+                                  });
+                                }}
+                                className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 transform hover:scale-[1.05] cursor-pointer ${isSelected
+                                  ? 'bg-yellow-500/10 border-yellow-500/30'
+                                  : 'bg-white/[0.02] border-white/5 hover:border-white/20'
+                                  }`}
+                              >
+                                <div className={`p-2 rounded-xl mb-2 transition-colors duration-300 ${isSelected ? 'bg-yellow-500 text-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-white/40'}`}>
+                                  <Icon size={18} />
+                                </div>
+                                <span className={`text-[9px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${isSelected ? 'text-white' : 'text-white/40'}`}>
+                                  {cuisine.label}
+                                </span>
+                                {isSelected && (
+                                  <div className="absolute top-2 right-2">
+                                    <div className="bg-yellow-500 rounded-full p-0.5">
+                                      <CheckCircle2 size={10} className="text-slate-900" />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <InputField
+                        icon={Phone}
+                        label="Operator Phone"
+                        value={info.phone}
+                        onChange={onInfoChange("phone")}
+                        placeholder="+44 123 456 7890"
+                        type="tel"
+                        required
+                      />
+                      <InputField
+                        icon={Mail}
+                        label="Business Email"
+                        value={info.email}
+                        onChange={onInfoChange("email")}
+                        placeholder="contact@restaurant.com"
+                        type="email"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-500 shrink-0">Geolocation</h3>
+                        <div className="h-px w-full bg-gradient-to-r from-yellow-500/20 to-transparent"></div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="space-y-2 group">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                            <MapPin size={12} className="text-yellow-500" /> Physical Address <span className="text-rose-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              id="restaurant_address_autocomplete"
+                              value={info.address}
+                              onChange={onInfoChange("address")}
+                              placeholder="Search Google Maps for address..."
+                              className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Latitude</label>
+                            <input
+                              type="text"
+                              value={info.latitude}
+                              readOnly
+                              placeholder="0.000000"
+                              className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Longitude</label>
+                            <input
+                              type="text"
+                              value={info.longitude}
+                              readOnly
+                              placeholder="0.000000"
+                              className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-1 italic text-center">
+                          * Coordinates are synchronized during address selection
+                        </p>
+                      </div>
+                    </div>
+
+                    <InputField
+                      icon={ParkingCircle}
+                      label="Logistics & Parking"
+                      value={info.parking_info}
+                      onChange={onInfoChange("parking_info")}
+                      placeholder="Describe parking availability for patrons"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10">
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                      <Twitter size={22} className="text-yellow-400" />
+                      Social Presence
+                    </h2>
+                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Digital connectivity channels</p>
+                  </div>
+
+                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <InputField
+                      icon={Facebook}
+                      label="Facebook"
+                      value={info.facebook}
+                      onChange={onInfoChange("facebook")}
+                      placeholder="Profile URL"
+                    />
+                    <InputField
+                      icon={Instagram}
+                      label="Instagram"
+                      value={info.instagram}
+                      onChange={onInfoChange("instagram")}
+                      placeholder="Profile URL"
+                    />
+                    <InputField
+                      icon={Twitter}
+                      label="Twitter (X)"
+                      value={info.twitter}
+                      onChange={onInfoChange("twitter")}
+                      placeholder="Profile URL"
+                    />
+                    <InputField
+                      icon={Linkedin}
+                      label="LinkedIn"
+                      value={info.linkedin}
+                      onChange={onInfoChange("linkedin")}
+                      placeholder="Profile URL"
+                    />
+                    <InputField
+                      icon={ImageIcon}
+                      label="Google Reviews"
+                      value={info.google_review_link}
+                      onChange={onInfoChange("google_review_link")}
+                      placeholder="Review Page URL"
+                    />
+                    <InputField
+                      icon={Globe}
+                      label="Official Website"
+                      value={info.website_url}
+                      onChange={onInfoChange("website_url")}
+                      placeholder="https://your-domain.com"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                    <Truck size={22} className="text-yellow-400" />
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight uppercase">Logistics Partners</h2>
+                      <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Delivery infrastructure integration</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-8">
+                    <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl flex items-center gap-4">
+                      <div className="p-2 bg-yellow-500/10 rounded-xl">
+                        <Store size={18} className="text-yellow-400" />
+                      </div>
+                      <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest">
+                        Primary Infrastructure (Restaurant Exclusive)
+                      </p>
+                    </div>
+
+                    <InputField
+                      icon={Truck}
+                      label="Internal Fulfillment Link"
+                      value={info.delivery_partner_1_url}
+                      onChange={onInfoChange("delivery_partner_1_url")}
+                      placeholder="Direct ordering URL"
+                    />
+
+                    <div className="pt-8 border-t border-white/[0.08]">
+                      <div className="flex items-center gap-4 mb-6">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 shrink-0">3rd Party Aggregators</h3>
+                        <div className="h-px w-full bg-gradient-to-r from-white/10 to-transparent"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <InputField
+                          icon={Bike}
+                          label="UberEats Integration"
+                          value={info.delivery_partner_2_url}
+                          onChange={onInfoChange("delivery_partner_2_url")}
+                          placeholder="Partner URL"
+                        />
+                        <InputField
+                          icon={Bike}
+                          label="Deliveroo Integration"
+                          value={info.delivery_partner_3_url}
+                          onChange={onInfoChange("delivery_partner_3_url")}
+                          placeholder="Partner URL"
+                        />
+                        <InputField
+                          icon={ShoppingCart}
+                          label="JustEat Integration"
+                          value={info.delivery_partner_4_url}
+                          onChange={onInfoChange("delivery_partner_4_url")}
+                          placeholder="Partner URL"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                    <Shield size={22} className="text-yellow-400" />
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight uppercase">Stripe Infrastructure</h2>
+                      <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Direct settlement protocol</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <InputField
+                      label="Publishable Topology Key"
+                      value={info.stripe_publishable_key}
+                      onChange={onInfoChange("stripe_publishable_key")}
+                      placeholder="pk_test_..."
+                      required
+                    />
+                    <InputField
+                      label="Secret Authentication Key"
+                      value={info.stripe_secret_key}
+                      onChange={onInfoChange("stripe_secret_key")}
+                      placeholder="sk_test_..."
+                      required
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                    <ShoppingCart size={22} className="text-yellow-400" />
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight uppercase">Fulfillment Modes</h2>
+                      <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Service availability protocols</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.instore
+                        ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
+                        : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={info.instore}
+                          onChange={(e) => setInfo((p) => ({ ...p, instore: e.target.checked }))}
+                          className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                        />
+                        <div className="ml-5 flex-1">
+                          <span className="block text-sm font-black uppercase tracking-widest text-white">In-Store Fulfillment</span>
+                          <span className="text-[10px] font-bold text-white/40 mt-1 block">Patron internal collection protocol</span>
+                        </div>
+                        {info.instore && <CheckCircle2 className="text-yellow-400" size={24} />}
+                      </label>
+
+                      <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.kerbside
+                        ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
+                        : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={info.kerbside}
+                          onChange={(e) => setInfo((p) => ({ ...p, kerbside: e.target.checked }))}
+                          className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
+                        />
+                        <div className="ml-5 flex-1">
+                          <span className="block text-sm font-black uppercase tracking-widest text-white">Kerbside Distribution</span>
+                          <span className="text-[10px] font-bold text-white/40 mt-1 block">External vehicle-side handoff</span>
+                        </div>
+                        {info.kerbside && <CheckCircle2 className="text-yellow-400" size={24} />}
+                      </label>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Right Sidebar */}
+              <div className="space-y-6">
+
+                {/* Photo Upload Card */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden sticky top-24"
+                >
+                  <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
+                    <ImageIcon size={22} className="text-yellow-400" />
+                    <div>
+                      <h2 className="text-xl font-black text-white tracking-tight uppercase">Visual Identity</h2>
+                      <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Primary establishment imagery</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    <div className="relative group/photo">
+                      <div className="aspect-[4/3] bg-white/[0.03] rounded-3xl overflow-hidden border-2 border-dashed border-white/10 group-hover/photo:border-yellow-500/30 transition-all duration-300">
+                        {photoPreview ? (
+                          <div className="relative w-full h-full">
+                            <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                                className="p-4 bg-rose-500 text-white rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
+                              >
+                                <X size={24} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : info.photo ? (
+                          <div className="relative w-full h-full">
+                            <img
+                              src={info.photo.startsWith('http') ? info.photo : `${API_BASE}/uploads/${info.photo}`}
+                              className="w-full h-full object-cover"
+                              alt="Restaurant"
+                              onError={(e) => {
+                                console.error("Image load failed:", e.target.src);
+                                e.target.src = "";
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                onClick={() => fileInputRef.current.click()}
+                                className="p-4 bg-yellow-500 text-slate-900 rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
+                              >
+                                <Upload size={24} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
+                            <ImageIcon size={56} strokeWidth={1} className="mb-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">No Visual Assets</span>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Cuisine Type Section */}
-                  <div className="space-y-3 group">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-                      <ChefHat size={12} className="text-yellow-400" />
-                      Cuisine Topology <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-                        {[
-                          { id: 0, label: "Indian", icon: Flame },
-                          { id: 1, label: "Afghan", icon: ChefHat },
-                          { id: 2, label: "Pakistani", icon: ChefHat },
-                          { id: 3, label: "Chinese", icon: Soup },
-                          { id: 4, label: "Italian", icon: Pizza },
-                          { id: 5, label: "Thai", icon: Soup },
-                          { id: 6, label: "Mexican", icon: Flame },
-                          { id: 7, label: "Fried Chicken", icon: Drumstick }
-                        ].map((cuisine) => {
-                          const Icon = cuisine.icon;
-                          const isSelected = Array.isArray(info.cuisine_type) && info.cuisine_type.includes(cuisine.id);
-                          return (
-                            <div
-                              key={cuisine.id}
-                              onClick={() => {
-                                setInfo(p => {
-                                  let arr = Array.isArray(p.cuisine_type) ? [...p.cuisine_type] : [];
-                                  if (arr.includes(cuisine.id)) {
-                                    arr = arr.filter(v => v !== cuisine.id);
-                                  } else {
-                                    arr.push(cuisine.id);
-                                  }
-                                  return { ...p, cuisine_type: arr };
-                                });
-                              }}
-                              className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 transform hover:scale-[1.05] cursor-pointer ${isSelected
-                                ? 'bg-yellow-500/10 border-yellow-500/30'
-                                : 'bg-white/[0.02] border-white/5 hover:border-white/20'
-                                }`}
-                            >
-                              <div className={`p-2 rounded-xl mb-2 transition-colors duration-300 ${isSelected ? 'bg-yellow-500 text-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.4)]' : 'bg-white/5 text-white/40'}`}>
-                                <Icon size={18} />
-                              </div>
-                              <span className={`text-[9px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${isSelected ? 'text-white' : 'text-white/40'}`}>
-                                {cuisine.label}
-                              </span>
-                              {isSelected && (
-                                <div className="absolute top-2 right-2">
-                                  <div className="bg-yellow-500 rounded-full p-0.5">
-                                    <CheckCircle2 size={10} className="text-slate-900" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <InputField
-                      icon={Phone}
-                      label="Operator Phone"
-                      value={info.phone}
-                      onChange={onInfoChange("phone")}
-                      placeholder="+44 123 456 7890"
-                      type="tel"
-                      required
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPhotoFile(e.target.files[0])}
+                      className="hidden"
                     />
-                    <InputField
-                      icon={Mail}
-                      label="Business Email"
-                      value={info.email}
-                      onChange={onInfoChange("email")}
-                      placeholder="contact@restaurant.com"
-                      type="email"
-                      required
-                    />
+
+                    <button
+                      onClick={() => fileInputRef.current.click()}
+                      className="mt-6 w-full py-4 px-6 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/[0.08] transition-all flex items-center justify-center gap-3 group/btn"
+                    >
+                      <Upload size={18} className="text-yellow-400 group-hover/btn:scale-110 transition-transform" />
+                      {photoFile || info.photo ? "Modify Imagery" : "Upload Identity"}
+                    </button>
+
+                    {photoFile && (
+                      <button
+                        onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                        className="mt-3 w-full py-3 px-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-black uppercase tracking-widest text-[9px] rounded-xl border border-rose-500/20 transition-all flex items-center justify-center gap-2"
+                      >
+                        <X size={14} />
+                        Discard Modification
+                      </button>
+                    )}
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-500 shrink-0">Geolocation</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-yellow-500/20 to-transparent"></div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="space-y-2 group">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-                          <MapPin size={12} className="text-yellow-500" /> Physical Address <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            id="restaurant_address_autocomplete"
-                            value={info.address}
-                            onChange={onInfoChange("address")}
-                            placeholder="Search Google Maps for address..."
-                            className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Latitude</label>
-                          <input
-                            type="text"
-                            value={info.latitude}
-                            readOnly
-                            placeholder="0.000000"
-                            className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Longitude</label>
-                          <input
-                            type="text"
-                            value={info.longitude}
-                            readOnly
-                            placeholder="0.000000"
-                            className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-500/70 text-xs font-mono focus:outline-none cursor-default"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-white/20 ml-1 italic text-center">
-                        * Coordinates are synchronized during address selection
-                      </p>
-                    </div>
+                  {/* Save Button */}
+                  <div className="p-8 pt-0">
+                    <button
+                      onClick={saveAll}
+                      disabled={saving}
+                      className="w-full py-5 px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 disabled:opacity-50 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="animate-spin" size={20} />
+                          Synchronizing...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={20} className="font-black" />
+                          Synchronize Profile
+                        </>
+                      )}
+                    </button>
                   </div>
-
-                  <InputField
-                    icon={ParkingCircle}
-                    label="Logistics & Parking"
-                    value={info.parking_info}
-                    onChange={onInfoChange("parking_info")}
-                    placeholder="Describe parking availability for patrons"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10">
-                  <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                    <Twitter size={22} className="text-yellow-400" />
-                    Social Presence
-                  </h2>
-                  <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Digital connectivity channels</p>
-                </div>
-
-                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <InputField
-                    icon={Facebook}
-                    label="Facebook"
-                    value={info.facebook}
-                    onChange={onInfoChange("facebook")}
-                    placeholder="Profile URL"
-                  />
-                  <InputField
-                    icon={Instagram}
-                    label="Instagram"
-                    value={info.instagram}
-                    onChange={onInfoChange("instagram")}
-                    placeholder="Profile URL"
-                  />
-                  <InputField
-                    icon={Twitter}
-                    label="Twitter (X)"
-                    value={info.twitter}
-                    onChange={onInfoChange("twitter")}
-                    placeholder="Profile URL"
-                  />
-                  <InputField
-                    icon={Linkedin}
-                    label="LinkedIn"
-                    value={info.linkedin}
-                    onChange={onInfoChange("linkedin")}
-                    placeholder="Profile URL"
-                  />
-                  <InputField
-                    icon={ImageIcon}
-                    label="Google Reviews"
-                    value={info.google_review_link}
-                    onChange={onInfoChange("google_review_link")}
-                    placeholder="Review Page URL"
-                  />
-                  <InputField
-                    icon={Globe}
-                    label="Official Website"
-                    value={info.website_url}
-                    onChange={onInfoChange("website_url")}
-                    placeholder="https://your-domain.com"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
-                  <Truck size={22} className="text-yellow-400" />
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Logistics Partners</h2>
-                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Delivery infrastructure integration</p>
-                  </div>
-                </div>
-
-                <div className="p-8 space-y-8">
-                  <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl flex items-center gap-4">
-                    <div className="p-2 bg-yellow-500/10 rounded-xl">
-                      <Store size={18} className="text-yellow-400" />
-                    </div>
-                    <p className="text-[10px] text-yellow-400 font-black uppercase tracking-widest">
-                      Primary Infrastructure (Restaurant Exclusive)
-                    </p>
-                  </div>
-
-                  <InputField
-                    icon={Truck}
-                    label="Internal Fulfillment Link"
-                    value={info.delivery_partner_1_url}
-                    onChange={onInfoChange("delivery_partner_1_url")}
-                    placeholder="Direct ordering URL"
-                  />
-
-                  <div className="pt-8 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-4 mb-6">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 shrink-0">3rd Party Aggregators</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-white/10 to-transparent"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <InputField
-                        icon={Bike}
-                        label="UberEats Integration"
-                        value={info.delivery_partner_2_url}
-                        onChange={onInfoChange("delivery_partner_2_url")}
-                        placeholder="Partner URL"
-                      />
-                      <InputField
-                        icon={Bike}
-                        label="Deliveroo Integration"
-                        value={info.delivery_partner_3_url}
-                        onChange={onInfoChange("delivery_partner_3_url")}
-                        placeholder="Partner URL"
-                      />
-                      <InputField
-                        icon={ShoppingCart}
-                        label="JustEat Integration"
-                        value={info.delivery_partner_4_url}
-                        onChange={onInfoChange("delivery_partner_4_url")}
-                        placeholder="Partner URL"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
-                  <Shield size={22} className="text-yellow-400" />
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Stripe Infrastructure</h2>
-                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Direct settlement protocol</p>
-                  </div>
-                </div>
-
-                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <InputField
-                    label="Publishable Topology Key"
-                    value={info.stripe_publishable_key}
-                    onChange={onInfoChange("stripe_publishable_key")}
-                    placeholder="pk_test_..."
-                    required
-                  />
-                  <InputField
-                    label="Secret Authentication Key"
-                    value={info.stripe_secret_key}
-                    onChange={onInfoChange("stripe_secret_key")}
-                    placeholder="sk_test_..."
-                    required
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
-                  <ShoppingCart size={22} className="text-yellow-400" />
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Fulfillment Modes</h2>
-                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Service availability protocols</p>
-                  </div>
-                </div>
-
-                <div className="p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.instore
-                      ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
-                      : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
-                      }`}>
-                      <input
-                        type="checkbox"
-                        checked={info.instore}
-                        onChange={(e) => setInfo((p) => ({ ...p, instore: e.target.checked }))}
-                        className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                      />
-                      <div className="ml-5 flex-1">
-                        <span className="block text-sm font-black uppercase tracking-widest text-white">In-Store Fulfillment</span>
-                        <span className="text-[10px] font-bold text-white/40 mt-1 block">Patron internal collection protocol</span>
-                      </div>
-                      {info.instore && <CheckCircle2 className="text-yellow-400" size={24} />}
-                    </label>
-
-                    <label className={`relative flex items-center p-6 rounded-2xl border-2 cursor-pointer hover:shadow-2xl transition-all duration-300 group ${info.kerbside
-                      ? 'bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
-                      : 'bg-white/[0.02] border-white/5 hover:bg-white/5'
-                      }`}>
-                      <input
-                        type="checkbox"
-                        checked={info.kerbside}
-                        onChange={(e) => setInfo((p) => ({ ...p, kerbside: e.target.checked }))}
-                        className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                      />
-                      <div className="ml-5 flex-1">
-                        <span className="block text-sm font-black uppercase tracking-widest text-white">Kerbside Distribution</span>
-                        <span className="text-[10px] font-bold text-white/40 mt-1 block">External vehicle-side handoff</span>
-                      </div>
-                      {info.kerbside && <CheckCircle2 className="text-yellow-400" size={24} />}
-                    </label>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
 
-            {/* Right Sidebar */}
-            <div className="space-y-6">
-
-              {/* Photo Upload Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden sticky top-24"
-              >
-                <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
-                  <ImageIcon size={22} className="text-yellow-400" />
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Visual Identity</h2>
-                    <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Primary establishment imagery</p>
-                  </div>
+            {/* Operating Hours Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
+            >
+              <div className="bg-white/5 px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10">
+                <div>
+                  <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                    <Calendar size={22} className="text-yellow-400" />
+                    Chronological Availability
+                  </h2>
+                  <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Weekly operational schedule configuration</p>
                 </div>
+                <button
+                  onClick={handleAddManual}
+                  disabled={timings.length >= 7}
+                  className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
+                >
+                  <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                  Initialize Day
+                </button>
+              </div>
 
-                <div className="p-8">
-                  <div className="relative group/photo">
-                    <div className="aspect-[4/3] bg-white/[0.03] rounded-3xl overflow-hidden border-2 border-dashed border-white/10 group-hover/photo:border-yellow-500/30 transition-all duration-300">
-                      {photoPreview ? (
-                        <div className="relative w-full h-full">
-                          <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                            <button
-                              onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                              className="p-4 bg-rose-500 text-white rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
-                            >
-                              <X size={24} />
-                            </button>
+              <div className="p-8">
+                <div className="space-y-4">
+                  {timings.map((t) => (
+                    <div
+                      key={t.id}
+                      className={`group relative border rounded-[1.5rem] p-6 transition-all duration-300 ${t.is_active
+                        ? 'bg-white/[0.03] border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
+                        : 'bg-white/[0.01] border-white/5 opacity-50 grayscale hover:grayscale-0 hover:opacity-100'
+                        }`}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+
+                        {/* Day Selector */}
+                        <div className="md:col-span-3 space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Operational Day</label>
+                          <select
+                            value={t.day}
+                            onChange={(e) => changeDay(t.id, e.target.value)}
+                            className="w-full px-4 py-3 bg-[#0b1a3d] border border-white/10 rounded-xl text-white font-black uppercase text-[10px] tracking-widest focus:outline-none focus:border-yellow-500 transition-all cursor-pointer appearance-none"
+                          >
+                            {WEEKDAYS.map((d) => (
+                              <option key={d} value={d} disabled={isWeekdayPresent(d) && t.day !== d} className="bg-[#0b1a3d]">
+                                {d}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Start Time */}
+                        <div className="md:col-span-3 space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Start</label>
+                          <div className="relative">
+                            <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-400/50" />
+                            <input
+                              type="time"
+                              value={t.start}
+                              onChange={(e) => updateTiming(t.id, { start: e.target.value })}
+                              className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
+                            />
                           </div>
                         </div>
-                      ) : info.photo ? (
-                        <div className="relative w-full h-full">
-                          <img
-                            src={info.photo.startsWith('http') ? info.photo : `${API_BASE}/uploads/${info.photo}`}
-                            className="w-full h-full object-cover"
-                            alt="Restaurant"
-                            onError={(e) => {
-                              console.error("Image load failed:", e.target.src);
-                              e.target.src = "";
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                            <button
-                              onClick={() => fileInputRef.current.click()}
-                              className="p-4 bg-yellow-500 text-slate-900 rounded-2xl shadow-2xl transform hover:scale-110 transition-all"
-                            >
-                              <Upload size={24} />
-                            </button>
+
+                        {/* End Time */}
+                        <div className="md:col-span-3 space-y-2">
+                          <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Termination</label>
+                          <div className="relative">
+                            <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/50" />
+                            <input
+                              type="time"
+                              value={t.end}
+                              onChange={(e) => updateTiming(t.id, { end: e.target.value })}
+                              className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
+                            />
                           </div>
                         </div>
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
-                          <ImageIcon size={56} strokeWidth={1} className="mb-4" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">No Visual Assets</span>
+
+                        {/* Active Toggle & Remove */}
+                        <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-6">
+                          <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                            <div className="relative">
+                               <input 
+                                 type="checkbox" 
+                                 className="sr-only" 
+                                 checked={!!t.is_active} 
+                                 onChange={(e) => updateTiming(t.id, { is_active: e.target.checked })} 
+                               />
+                               <div className={`w-10 h-5 rounded-full transition-colors ${t.is_active ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                               <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${t.is_active ? 'translate-x-5' : ''}`}></div>
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${t.is_active ? 'text-yellow-400' : 'text-white/30'}`}>
+                              {t.is_active ? 'Online' : 'Offline'}
+                            </span>
+                          </label>
+
+                          <button
+                            onClick={() => removeTiming(t.id)}
+                            className="p-3 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all hover:scale-110 shadow-lg border border-rose-500/10"
+                            title="Purge sequence"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
+                      </div>
+
+                      {/* Active Indicator */}
+                      {t.is_active && (
+                        <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
                       )}
                     </div>
+                  ))}
+                </div>
+
+                {timings.length === 0 && (
+                  <div className="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
+                    <Clock size={48} strokeWidth={1} className="mx-auto mb-4 text-white/20" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">Temporal schedule unidentified</p>
+                    <p className="text-[11px] font-bold text-yellow-400/40 mt-2">Initialize a daily sequence to configure availability</p>
                   </div>
+                )}
+              </div>
+            </motion.div>
 
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setPhotoFile(e.target.files[0])}
-                    className="hidden"
-                  />
-
-                  <button
-                    onClick={() => fileInputRef.current.click()}
-                    className="mt-6 w-full py-4 px-6 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/[0.08] transition-all flex items-center justify-center gap-3 group/btn"
-                  >
-                    <Upload size={18} className="text-yellow-400 group-hover/btn:scale-110 transition-transform" />
-                    {photoFile || info.photo ? "Modify Imagery" : "Upload Identity"}
-                  </button>
-
-                  {photoFile && (
-                    <button
-                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                      className="mt-3 w-full py-3 px-4 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-black uppercase tracking-widest text-[9px] rounded-xl border border-rose-500/20 transition-all flex items-center justify-center gap-2"
-                    >
-                      <X size={14} />
-                      Discard Modification
-                    </button>
-                  )}
-                </div>
-
-                {/* Save Button */}
-                <div className="p-8 pt-0">
-                  <button
-                    onClick={saveAll}
-                    disabled={saving}
-                    className="w-full py-5 px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 disabled:opacity-50 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="animate-spin" size={20} />
-                        Synchronizing...
-                      </>
-                    ) : (
-                      <>
-                        <Save size={20} className="font-black" />
-                        Synchronize Profile
-                      </>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
           </div>
-
-          {/* Operating Hours Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden"
-          >
-            <div className="bg-white/5 px-8 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10">
-              <div>
-                <h2 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                  <Calendar size={22} className="text-yellow-400" />
-                  Chronological Availability
-                </h2>
-                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mt-1">Weekly operational schedule configuration</p>
-              </div>
-              <button
-                onClick={handleAddManual}
-                disabled={timings.length >= 7}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
-              >
-                <Plus size={18} className="group-hover:rotate-90 transition-transform" />
-                Initialize Day
-              </button>
-            </div>
-
-            <div className="p-8">
-              <div className="space-y-4">
-                {timings.map((t) => (
-                  <div
-                    key={t.id}
-                    className={`group relative border rounded-[1.5rem] p-6 transition-all duration-300 ${t.is_active
-                      ? 'bg-white/[0.03] border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)]'
-                      : 'bg-white/[0.01] border-white/5 opacity-50 grayscale hover:grayscale-0 hover:opacity-100'
-                      }`}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-
-                      {/* Day Selector */}
-                      <div className="md:col-span-3 space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Operational Day</label>
-                        <select
-                          value={t.day}
-                          onChange={(e) => changeDay(t.id, e.target.value)}
-                          className="w-full px-4 py-3 bg-[#0b1a3d] border border-white/10 rounded-xl text-white font-black uppercase text-[10px] tracking-widest focus:outline-none focus:border-yellow-500 transition-all cursor-pointer appearance-none"
-                        >
-                          {WEEKDAYS.map((d) => (
-                            <option key={d} value={d} disabled={isWeekdayPresent(d) && t.day !== d} className="bg-[#0b1a3d]">
-                              {d}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Start Time */}
-                      <div className="md:col-span-3 space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Start</label>
-                        <div className="relative">
-                          <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-400/50" />
-                          <input
-                            type="time"
-                            value={t.start}
-                            onChange={(e) => updateTiming(t.id, { start: e.target.value })}
-                            className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* End Time */}
-                      <div className="md:col-span-3 space-y-2">
-                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 ml-1">Shift Termination</label>
-                        <div className="relative">
-                          <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/50" />
-                          <input
-                            type="time"
-                            value={t.end}
-                            onChange={(e) => updateTiming(t.id, { end: e.target.value })}
-                            className="w-full pl-10 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-white font-black text-sm focus:outline-none focus:border-yellow-500 transition-all [color-scheme:dark]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Active Toggle & Remove */}
-                      <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-6">
-                        <label className="flex items-center gap-3 cursor-pointer group/toggle">
-                          <input
-                            type="checkbox"
-                            checked={!!t.is_active}
-                            onChange={(e) => updateTiming(t.id, { is_active: e.target.checked })}
-                            className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
-                          />
-                          <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${t.is_active ? 'text-yellow-400' : 'text-white/30'}`}>
-                            {t.is_active ? 'Online' : 'Offline'}
-                          </span>
-                        </label>
-
-                        <button
-                          onClick={() => removeTiming(t.id)}
-                          className="p-3 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all hover:scale-110 shadow-lg border border-rose-500/10"
-                          title="Purge sequence"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Active Indicator */}
-                    {t.is_active && (
-                      <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {timings.length === 0 && (
-                <div className="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
-                  <Clock size={48} strokeWidth={1} className="mx-auto mb-4 text-white/20" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">Temporal schedule unidentified</p>
-                  <p className="text-[11px] font-bold text-yellow-400/40 mt-2">Initialize a daily sequence to configure availability</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
-        </div>
-      </main>
-
-      <Footer />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

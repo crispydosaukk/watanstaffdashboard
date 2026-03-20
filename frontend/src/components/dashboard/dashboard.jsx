@@ -786,12 +786,12 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
         <div className="p-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {isSuccess ? (
             <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <div className="w-24 h-24 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 border border-emerald-500/30 text-emerald-400">
+              <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30 text-yellow-400">
                 <CheckCircle size={64} />
               </div>
               <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-wider">Order Placed!</h2>
               <p className="text-white/50 mb-8 max-w-sm">
-                Order <span className="text-emerald-400 font-bold">#{successOrderNumber}</span> has been successfully created and sent to the kitchen.
+                Order <span className="text-yellow-400 font-bold">#{successOrderNumber}</span> has been successfully created and sent to the kitchen.
               </p>
               <div className="flex gap-4">
                 <button
@@ -811,7 +811,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
           ) : step === 1 ? (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-emerald-500/30 text-emerald-400">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-yellow-500/30 text-yellow-400">
                   <UserPlus size={32} />
                 </div>
                 <h4 className="text-white font-bold text-xl">Order Initialization</h4>
@@ -829,7 +829,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                         setLocalUserId(e.target.value);
                         if (error) setError("");
                       }}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-10 py-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none text-lg font-medium"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-10 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 appearance-none text-lg font-medium"
                     >
                       <option value="" className="bg-slate-900">Choose Restaurant...</option>
                       {restaurants.map(r => (
@@ -853,7 +853,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                       setPhoneNumber(e.target.value);
                       if (error) setError("");
                     }}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-lg font-medium"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-lg font-medium"
                   />
                 </div>
               </div>
@@ -863,7 +863,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
               <button
                 onClick={searchCustomer}
                 disabled={loading || !phoneNumber}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-emerald-900/40"
+                className="w-full py-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 disabled:opacity-50 text-[#071428] rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/40"
               >
                 {loading ? "Searching..." : "Find Customer"}
               </button>
@@ -881,16 +881,16 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                       placeholder="Search items..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                     />
                   </div>
-                  <div className="flex items-center gap-3 px-4 py-2 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">
+                  <div className="flex items-center gap-3 px-4 py-2 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                    <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center font-bold text-[#071428] shadow-lg">
                       {customer?.full_name?.charAt(0) || "G"}
                     </div>
                     <div>
                       <h5 className="text-white text-xs font-bold truncate max-w-[100px]">{customer?.full_name || "Guest"}</h5>
-                      <button onClick={() => setStep(1)} className="text-[10px] text-emerald-400 font-bold hover:underline uppercase tracking-widest">Change</button>
+                      <button onClick={() => setStep(1)} className="text-[10px] text-yellow-400 font-bold hover:underline uppercase tracking-widest">Change</button>
                     </div>
                   </div>
                 </div>
@@ -905,7 +905,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                         fetchProductsForCategory(cat.id);
                       }}
                       className={`px-5 py-2.5 rounded-xl whitespace-nowrap font-bold text-xs uppercase tracking-widest transition-all border ${selectedCategory === cat.id
-                        ? "bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-900/40"
+                        ? "bg-gradient-to-r from-yellow-400 to-amber-500 border-yellow-500 text-slate-900 shadow-lg shadow-yellow-900/40"
                         : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
                         }`}
                     >
@@ -918,7 +918,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[300px]">
                   {loadingItems ? (
                     <div className="flex flex-col items-center justify-center py-20 text-white/20">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500 mb-4" />
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500 mb-4" />
                       <p className="font-bold uppercase tracking-widest text-xs">Loading items...</p>
                     </div>
                   ) : (
@@ -931,7 +931,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                             <motion.div
                               layout
                               key={p.id}
-                              className={`group relative bg-white/5 border rounded-2xl p-4 transition-all cursor-pointer hover:bg-white/10 ${inCart ? "border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-900/20" : "border-white/10"
+                              className={`group relative bg-white/5 border rounded-2xl p-4 transition-all cursor-pointer hover:bg-white/10 ${inCart ? "border-yellow-500/50 bg-yellow-500/5 shadow-lg shadow-yellow-900/20" : "border-white/10"
                                 }`}
                               onClick={() => addToCart(p)}
                             >
@@ -944,19 +944,19 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h6 className="text-white font-bold text-sm truncate group-hover:text-emerald-400 transition-colors">{p.name}</h6>
-                                  <p className="text-emerald-400 font-black text-sm mt-1">£{Number(p.price).toFixed(2)}</p>
+                                  <h6 className="text-white font-bold text-sm truncate group-hover:text-yellow-400 transition-colors">{p.name}</h6>
+                                  <p className="text-yellow-400 font-black text-sm mt-1">£{Number(p.price).toFixed(2)}</p>
                                   {inCart && (
                                     <div className="mt-2 flex items-center justify-between">
-                                      <div className="flex items-center gap-2 bg-emerald-500/20 px-2 py-1 rounded-lg">
+                                      <div className="flex items-center gap-2 bg-yellow-500/20 px-2 py-1 rounded-lg">
                                         <button
                                           onClick={(e) => { e.stopPropagation(); updateQuantity(p.id, -1); }}
-                                          className="text-emerald-400 hover:text-white"
+                                          className="text-yellow-400 hover:text-white"
                                         >-</button>
                                         <span className="text-white text-xs font-bold">{inCart.quantity}</span>
                                         <button
                                           onClick={(e) => { e.stopPropagation(); updateQuantity(p.id, 1); }}
-                                          className="text-emerald-400 hover:text-white"
+                                          className="text-yellow-400 hover:text-white"
                                         >+</button>
                                       </div>
                                     </div>
@@ -981,7 +981,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
               <div className="w-full lg:w-80 flex flex-col bg-white/5 rounded-3xl border border-white/10 overflow-hidden shrink-0">
                 <div className="p-5 border-b border-white/10 bg-white/5">
                   <h6 className="text-white font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                    <ShoppingBag size={14} className="text-emerald-400" /> Cart Summary
+                    <ShoppingBag size={14} className="text-yellow-400" /> Cart Summary
                   </h6>
                 </div>
 
@@ -1025,13 +1025,13 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                           <p className="text-[9px] text-white/40 mt-1">{customer.loyalty_points || 0} points available</p>
                         </div>
                         {Number(customer.loyalty_points) >= (Number(customer.loyalty_redeem_points) || 10) ? (
-                          <button
-                            onClick={toggleLoyalty}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isLoyaltyApplied
-                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                              : "bg-emerald-500 text-white shadow-lg shadow-emerald-900/40"
-                              }`}
-                          >
+                            <button
+                             onClick={toggleLoyalty}
+                             className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isLoyaltyApplied
+                               ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                               : "bg-gradient-to-r from-yellow-400 to-amber-500 text-[#071428] shadow-lg shadow-yellow-900/40"
+                               }`}
+                           >
                             {isLoyaltyApplied ? "Remove" : "Claim"}
                           </button>
                         ) : (
@@ -1049,7 +1049,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
 
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Total Amount</span>
-                    <span className="text-emerald-400 text-xl font-black">
+                    <span className="text-yellow-400 text-xl font-black">
                       £{(cart.reduce((s, i) => s + i.price * i.quantity, 0) - loyaltyValue).toFixed(2)}
                     </span>
                   </div>
@@ -1440,8 +1440,9 @@ export default function Dashboard() {
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} darkMode={true} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`pt-24 lg:pt-20 pb-12 px-3 sm:px-6 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-80 lg:pr-8" : "lg:pl-8 lg:pr-8"}`}>
-        <div className="max-w-7xl mx-auto">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
+        <main className="flex-1 pt-24 lg:pt-20 pb-12 px-4 sm:px-6 lg:px-10 transition-all duration-300 ease-in-out">
+          <div className="max-w-7xl mx-auto">
 
           {/* Header Section */}
           <div className="flex flex-col items-center text-center mt-2 mb-6 sm:mb-10 lg:mb-12 gap-6 sm:gap-8">
@@ -1898,6 +1899,7 @@ export default function Dashboard() {
       </main>
 
       <Footer />
+      </div>
 
       <AnimatePresence>
         {selectedOrder && (

@@ -247,7 +247,7 @@ export default function Users() {
             <div>
               <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
                 <UsersIcon className="text-[#00f2ff]" size={36} />
-                USERS LIST
+                Users List
               </h2>
               <p className="mt-2 text-white/50 text-base font-medium">Manage registered users and their roles.</p>
             </div>

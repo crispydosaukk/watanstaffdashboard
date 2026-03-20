@@ -408,13 +408,18 @@ export default function Category() {
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-black text-white tracking-tight uppercase truncate">{item.name}</h4>
             <div className="text-[9px] font-black text-white/30 tracking-[0.2em] mt-1">ID: {item.id}</div>
-            <div className="flex items-center gap-3 mt-4">
-              <button onClick={() => handleToggleStatus(item)} className={`px-3 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all ${status ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/30'}`}>
-                {status ? "ACTIVE" : "INACTIVE"}
-              </button>
-              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400"><Pencil size={14} /></button>
-              <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
-            </div>
+              <div className="flex items-center gap-3 mt-4">
+                <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
+                  <input type="checkbox" className="sr-only" checked={status} readOnly />
+                  <div className={`w-10 h-5 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-5' : ''}`}></div>
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
+                  {status ? 'Active' : 'Inactive'}
+                </span>
+                <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto"><Pencil size={14} /></button>
+                <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+              </div>
           </div>
         </div>
       </div>
@@ -439,7 +444,7 @@ export default function Category() {
                     <Zap className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase leading-none">Categories</h1>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg leading-none">Categories</h1>
                     <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">Manage menu categories and sorting</p>
                   </div>
                 </div>
@@ -457,18 +462,18 @@ export default function Category() {
 
                   <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
                     {isSuperAdmin && (
-                      <button onClick={() => setShowIntegrateModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
-                        <Zap size={14} /> Integrate
+                      <button onClick={() => setShowIntegrateModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[11px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                        <Zap size={16} /> Integrate
                       </button>
                     )}
 
-                    <button onClick={() => setShowSearchModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
-                      <Globe size={14} /> Global Search
+                    <button onClick={() => setShowSearchModal(true)} className="px-5 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-black uppercase tracking-widest text-[11px] rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                      <Globe size={16} /> Global Search
                     </button>
 
                     <button
                       onClick={() => { setIsEdit(false); setForm({ id: null, name: "", image: null, oldImage: "" }); setShowModal(true); }}
-                      className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[9px] rounded-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
+                      className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[11px] rounded-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
                     >
                       <Plus size={16} /> New Category
                     </button>
@@ -529,13 +534,17 @@ export default function Category() {
                                         <div className="text-[9px] font-black text-white/30 tracking-[0.2em] mt-1 leading-none uppercase">ID: {item.id}</div>
                                       </div>
                                     </td>
-                                    <td className="px-8 py-5 text-center">
-                                      <button
-                                        onClick={() => handleToggleStatus(item)}
-                                        className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${item.status === 1 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}
-                                      >
-                                        {item.status === 1 ? "ACTIVE" : "INACTIVE"}
-                                      </button>
+                                    <td className="px-8 py-5">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
+                                          <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
+                                          <div className={`w-10 h-5 rounded-full transition-colors ${item.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                                          <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${item.status === 1 ? 'translate-x-5' : ''}`}></div>
+                                        </div>
+                                        <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${item.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
+                                          {item.status === 1 ? 'Active' : 'Inactive'}
+                                        </span>
+                                      </div>
                                     </td>
                                     <td className="px-8 py-5">
                                       <div className="flex items-center justify-end gap-3">

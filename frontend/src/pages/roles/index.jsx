@@ -260,7 +260,7 @@ export default function Roles() {
             <div>
               <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight flex items-center gap-3">
                 <Shield className="text-[#00f2ff]" size={36} />
-                MANAGE ROLES
+                Manage Roles
               </h2>
               <p className="mt-2 text-white/50 text-base font-medium">Configure user roles and their associated permissions.</p>
             </div>

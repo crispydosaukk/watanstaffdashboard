@@ -142,8 +142,8 @@ export default function Orders() {
     if (searchOrder.trim() !== "") data = data.filter((o) => (o.order_number || "").toLowerCase().includes(searchOrder.toLowerCase()));
     if (filterPayment !== "all") data = data.filter((o) => filterPayment === "cod" ? o.payment_mode === 0 : o.payment_mode === 1);
     if (filterStatus !== "all") data = data.filter((o) => o.order_status?.toString() === filterStatus);
-    if (fromDate) data = data.filter((o) => new Date(o.created_at).setHours(0,0,0,0) >= new Date(fromDate).setHours(0,0,0,0));
-    if (toDate) data = data.filter((o) => new Date(o.created_at).setHours(0,0,0,0) <= new Date(toDate).setHours(0,0,0,0));
+    if (fromDate) data = data.filter((o) => new Date(o.created_at).setHours(0, 0, 0, 0) >= new Date(fromDate).setHours(0, 0, 0, 0));
+    if (toDate) data = data.filter((o) => new Date(o.created_at).setHours(0, 0, 0, 0) <= new Date(toDate).setHours(0, 0, 0, 0));
     setFilteredOrders(prev => { if (JSON.stringify(prev) === JSON.stringify(data)) return prev; setCurrentPage(1); return data; });
   }, [searchOrder, filterPayment, filterStatus, fromDate, toDate, orders]);
 
@@ -170,125 +170,125 @@ export default function Orders() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      
+
       <div className="flex flex-1 pt-24 min-h-0 relative">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${sidebarOpen ? "lg:pl-72" : "pl-0"}`}>
           <main className="flex-1 px-3 sm:px-6 lg:px-10 py-8 overflow-y-auto overflow-x-hidden">
             <div className="max-w-7xl mx-auto">
-              
+
               {/* Page Header Area */}
               <div className="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
-                      <ShoppingBag className="text-yellow-400" size={24} />
-                    </div>
-                    <div>
-                      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase leading-none">Order Logistics</h1>
-                      <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">Execute real-time order fulfillments and tracking</p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
+                    <ShoppingBag className="text-yellow-400" size={24} />
                   </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg leading-none">Order Logistics</h1>
+                    <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">Execute real-time order fulfillments and tracking</p>
+                  </div>
+                </div>
 
-                  <div className="flex items-center gap-3 p-2 bg-[#0b1a3d]/40 backdrop-blur-xl border border-white/[0.08] rounded-2xl w-full sm:w-auto">
-                     <label className="flex items-center gap-3 cursor-pointer px-3">
-                        <div className="relative">
-                           <input type="checkbox" className="sr-only" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-                           <div className={`w-10 h-5 rounded-full transition-colors ${autoRefresh ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                           <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${autoRefresh ? 'translate-x-5' : ''}`}></div>
-                        </div>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Live Sync</span>
-                     </label>
-                     <div className="w-px h-6 bg-white/10"></div>
-                     <button onClick={loadOrders} className="p-2.5 bg-white/5 hover:bg-white/10 text-yellow-400 rounded-xl transition-all border border-white/10 active:scale-90"><RefreshCw size={16}/></button>
-                  </div>
+                <div className="flex items-center gap-3 p-2 bg-[#0b1a3d]/40 backdrop-blur-xl border border-white/[0.08] rounded-2xl w-full sm:w-auto">
+                  <label className="flex items-center gap-3 cursor-pointer px-3">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+                      <div className={`w-10 h-5 rounded-full transition-colors ${autoRefresh ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${autoRefresh ? 'translate-x-5' : ''}`}></div>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Live Sync</span>
+                  </label>
+                  <div className="w-px h-6 bg-white/10"></div>
+                  <button onClick={loadOrders} className="p-2.5 bg-white/5 hover:bg-white/10 text-yellow-400 rounded-xl transition-all border border-white/10 active:scale-90"><RefreshCw size={16} /></button>
+                </div>
               </div>
 
               {/* Filters Area */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-10 h-min">
-                 <div className="relative group"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={14} />
-                 <input placeholder="TRANSMISSION ID..." value={searchOrder} onChange={e => setSearchOrder(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all"/></div>
-                 
-                 <select value={filterPayment} onChange={e => setFilterPayment(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white appearance-none focus:outline-none">
-                    <option value="all" className="bg-[#0b1a3d]">PAYMENTS: ALL</option>
-                    <option value="online" className="bg-[#0b1a3d]">ONLINE TRANSFERS</option>
-                 </select>
+                <div className="relative group"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={14} />
+                  <input placeholder="TRANSMISSION ID..." value={searchOrder} onChange={e => setSearchOrder(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all" /></div>
 
-                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white appearance-none focus:outline-none">
-                    <option value="all" className="bg-[#0b1a3d]">STATUS: ALL</option>
-                    <option value="0" className="bg-[#0b1a3d]">PLACED</option>
-                    <option value="1" className="bg-[#0b1a3d]">ACCEPTED</option>
-                    <option value="3" className="bg-[#0b1a3d]">READY</option>
-                    <option value="4" className="bg-[#0b1a3d]">FINALIZED</option>
-                 </select>
+                <select value={filterPayment} onChange={e => setFilterPayment(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white appearance-none focus:outline-none">
+                  <option value="all" className="bg-[#0b1a3d]">PAYMENTS: ALL</option>
+                  <option value="online" className="bg-[#0b1a3d]">ONLINE TRANSFERS</option>
+                </select>
 
-                 <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase text-white focus:outline-none"/>
-                 <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase text-white focus:outline-none"/>
+                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-white appearance-none focus:outline-none">
+                  <option value="all" className="bg-[#0b1a3d]">STATUS: ALL</option>
+                  <option value="0" className="bg-[#0b1a3d]">PLACED</option>
+                  <option value="1" className="bg-[#0b1a3d]">ACCEPTED</option>
+                  <option value="3" className="bg-[#0b1a3d]">READY</option>
+                  <option value="4" className="bg-[#0b1a3d]">FINALIZED</option>
+                </select>
+
+                <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase text-white focus:outline-none" />
+                <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-[10px] font-black uppercase text-white focus:outline-none" />
               </div>
 
               {/* Orders Matrix */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
-                 {currentOrders.map((order, i) => {
-                    const status = statusConfig(order.order_status);
-                    const gross = order.items.reduce((s, x) => s + (safeNumber(x.price) * safeNumber(x.quantity)), 0);
-                    return (
-                       <div key={i} className="bg-[#0b1a3d]/60 backdrop-blur-xl border border-white/[0.08] rounded-[2rem] overflow-hidden hover:bg-[#0b1a3d]/80 transition-all shadow-2xl flex flex-col relative group">
-                          {order.order_status === 0 && <div className="absolute top-0 inset-x-0 h-1 bg-amber-500 animate-pulse z-10"></div>}
-                          <div className="p-6 border-b border-white/[0.05] flex justify-between items-start bg-white/[0.02]">
-                             <div className="min-w-0 flex-1">
-                                <h4 className="text-xl font-black text-white tracking-tighter uppercase truncate leading-none">{order.order_number}</h4>
-                                <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-2">{new Date(order.created_at).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})} • {order.items.length} NODES</div>
-                             </div>
-                             <div className="flex flex-col items-end gap-2">
-                                <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${status.bg} ${status.color} ${status.border}`}>{status.text}</span>
-                                <button onClick={() => setSelectedOrder(order)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:scale-105 transition-all"><Eye size={16}/></button>
-                             </div>
+                {currentOrders.map((order, i) => {
+                  const status = statusConfig(order.order_status);
+                  const gross = order.items.reduce((s, x) => s + (safeNumber(x.price) * safeNumber(x.quantity)), 0);
+                  return (
+                    <div key={i} className="bg-[#0b1a3d]/60 backdrop-blur-xl border border-white/[0.08] rounded-[2rem] overflow-hidden hover:bg-[#0b1a3d]/80 transition-all shadow-2xl flex flex-col relative group">
+                      {order.order_status === 0 && <div className="absolute top-0 inset-x-0 h-1 bg-amber-500 animate-pulse z-10"></div>}
+                      <div className="p-6 border-b border-white/[0.05] flex justify-between items-start bg-white/[0.02]">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xl font-black text-white tracking-tighter uppercase truncate leading-none">{order.order_number}</h4>
+                          <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-2">{new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} • {order.items.length} NODES</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${status.bg} ${status.color} ${status.border}`}>{status.text}</span>
+                          <button onClick={() => setSelectedOrder(order)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:scale-105 transition-all"><Eye size={16} /></button>
+                        </div>
+                      </div>
+                      <div className="p-6 flex-1 space-y-4 max-h-48 overflow-y-auto custom-scrollbar border-b border-white/[0.05]">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-start gap-4">
+                            <div className="flex gap-3 items-start min-w-0">
+                              <span className="text-base font-black text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-xl border border-yellow-500/20 shrink-0">{safeNumber(item.quantity)}<span className="text-[8px] ml-0.5">X</span></span>
+                              <span className="text-xs font-black text-white/80 uppercase leading-snug truncate mt-1">{item.product_name}</span>
+                            </div>
+                            <span className="text-[10px] font-black text-white/20 mt-1">£{safeNumber(item.price).toFixed(2)}</span>
                           </div>
-                          <div className="p-6 flex-1 space-y-4 max-h-48 overflow-y-auto custom-scrollbar border-b border-white/[0.05]">
-                             {order.items.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-start gap-4">
-                                   <div className="flex gap-3 items-start min-w-0">
-                                      <span className="text-base font-black text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-xl border border-yellow-500/20 shrink-0">{safeNumber(item.quantity)}<span className="text-[8px] ml-0.5">X</span></span>
-                                      <span className="text-xs font-black text-white/80 uppercase leading-snug truncate mt-1">{item.product_name}</span>
-                                   </div>
-                                   <span className="text-[10px] font-black text-white/20 mt-1">£{safeNumber(item.price).toFixed(2)}</span>
-                                </div>
-                             ))}
+                        ))}
+                      </div>
+                      <div className="p-6 bg-white/[0.01]">
+                        <div className="flex justify-between items-center mb-6">
+                          <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${order.instore === 1 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'INSTORE TRANSMISSION' : 'KERBSIDE CAPTURE'}</span>
+                          <div className="text-right">
+                            <p className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none mb-1">Total Logic</p>
+                            <p className="text-2xl font-black text-white tracking-tighter leading-none">£{safeNumber(order.grand_total).toFixed(2)}</p>
                           </div>
-                          <div className="p-6 bg-white/[0.01]">
-                             <div className="flex justify-between items-center mb-6">
-                                <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${order.instore === 1 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'INSTORE TRANSMISSION' : 'KERBSIDE CAPTURE'}</span>
-                                <div className="text-right">
-                                   <p className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none mb-1">Total Logic</p>
-                                   <p className="text-2xl font-black text-white tracking-tighter leading-none">£{safeNumber(order.grand_total).toFixed(2)}</p>
-                                </div>
-                             </div>
-                             <div className="space-y-3">
-                                {order.order_status === 0 && (
-                                   <div className="grid grid-cols-2 gap-3">
-                                      <button onClick={() => { setOrderForReady(order.order_number); setIsReadyModalOpen(true); }} className="py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/10">ACCEPT NODE</button>
-                                      <button onClick={() => updateOrderStatus(order.order_number, 2)} className="py-3.5 bg-white/5 border border-white/10 text-white/40 font-black uppercase tracking-widest text-[9px] rounded-xl hover:text-rose-500 transition-all">REJECT</button>
-                                   </div>
-                                )}
-                                {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">MARK READY FOR PICKUP</button>}
-                                {order.order_status === 3 && <button onClick={() => updateOrderStatus(order.order_number, 4)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">COMPLETE HANDOFF</button>}
-                             </div>
-                          </div>
-                       </div>
-                    );
-                 })}
+                        </div>
+                        <div className="space-y-3">
+                          {order.order_status === 0 && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <button onClick={() => { setOrderForReady(order.order_number); setIsReadyModalOpen(true); }} className="py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[9px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/10">ACCEPT NODE</button>
+                              <button onClick={() => updateOrderStatus(order.order_number, 2)} className="py-3.5 bg-white/5 border border-white/10 text-white/40 font-black uppercase tracking-widest text-[9px] rounded-xl hover:text-rose-500 transition-all">REJECT</button>
+                            </div>
+                          )}
+                          {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">MARK READY FOR PICKUP</button>}
+                          {order.order_status === 3 && <button onClick={() => updateOrderStatus(order.order_number, 4)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">COMPLETE HANDOFF</button>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-               {/* Pagination Component */}
-               {totalPages > 1 && (
-                 <div className="flex justify-center items-center gap-3 mb-10 overflow-x-auto no-scrollbar py-4">
-                    <button onClick={() => setCurrentPage(p => Math.max(1, p-1))} disabled={currentPage === 1} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">PREV</button>
-                    {Array.from({length: totalPages}, (_, i) => i + 1).map(num => (
-                       <button key={num} onClick={() => setCurrentPage(num)} className={`w-10 h-10 rounded-xl font-black text-[10px] transition-all ${currentPage === num ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428] scale-110 shadow-xl' : 'bg-white/5 text-white/40 border border-white/10'}`}>{num}</button>
-                    ))}
-                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p+1))} disabled={currentPage === totalPages} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">NEXT</button>
-                 </div>
-               )}
+              {/* Pagination Component */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-3 mb-10 overflow-x-auto no-scrollbar py-4">
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">PREV</button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
+                    <button key={num} onClick={() => setCurrentPage(num)} className={`w-10 h-10 rounded-xl font-black text-[10px] transition-all ${currentPage === num ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428] scale-110 shadow-xl' : 'bg-white/5 text-white/40 border border-white/10'}`}>{num}</button>
+                  ))}
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">NEXT</button>
+                </div>
+              )}
             </div>
           </main>
           <Footer />

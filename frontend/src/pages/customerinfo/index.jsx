@@ -121,13 +121,13 @@ export default function CustomerInfo() {
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 py-6 sm:py-8">
 
               {/* Page Header Area */}
-              <div className="mb-8 space-y-8 -mt-16">
+              <div className="mb-8 space-y-8 -mt-10 sm:-mt-16">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08]">
                     <Users className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg uppercase leading-none">Customer Registry</h1>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-lg leading-none">Customer Registry</h1>
                     <p className="text-white/40 mt-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] leading-none">View and manage restaurant customer profiles</p>
                   </div>
                 </div>
