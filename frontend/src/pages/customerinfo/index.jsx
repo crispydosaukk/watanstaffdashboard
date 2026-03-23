@@ -188,8 +188,8 @@ export default function CustomerInfo() {
                   <h3 className="text-sm font-bold text-white tracking-wide flex items-center gap-3">
                     <Users size={18} className="text-yellow-400" /> Customer List
                   </h3>
-                  <button className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all flex items-center gap-2 active:scale-95">
-                    <Download size={16} /> Export CSV
+                  <button className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-base rounded-xl shadow-xl transition-all flex items-center gap-2 active:scale-95">
+                    <Download size={18} /> Export CSV
                   </button>
                 </div>
 

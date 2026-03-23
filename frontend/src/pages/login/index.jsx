@@ -122,16 +122,16 @@ export default function LoginPage() {
         <div className={`animated-border premium-shadow w-full max-w-[420px] transition-all duration-700 ease-out ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
           }`}>
           <div className="animated-border-inner">
-            <div className="px-4 py-5 sm:px-8 sm:py-10 md:px-12">
+            <div className="px-4 py-5 sm:px-8 sm:py-8 md:px-12">
               <div className="flex justify-center mb-2 sm:mb-3">
                 <img
                   src="/zingbitelogo.png"
                   alt="logo"
-                  className="h-24 sm:h-28 object-contain transition-transform hover:scale-105 duration-300"
+                  className="h-20 sm:h-24 object-contain transition-transform hover:scale-105 duration-300"
                 />
               </div>
 
-              <div className="text-center space-y-0.5 mb-4 sm:mb-8">
+              <div className="text-center space-y-0.5 mb-4 sm:mb-6">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
                 <p className="text-xs sm:text-sm text-gray-500 font-medium">Please enter your details to sign in</p>
               </div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-7">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-5">
                 <div className="group">
                   <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 mb-1 block group-focus-within:text-emerald-600 transition-colors">
                     Email Address
@@ -209,7 +209,7 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="mt-4 sm:mt-10 pt-4 sm:pt-6 border-t border-gray-100 text-center">
+              <div className="mt-4 sm:mt-8 pt-4 border-t border-gray-100 text-center">
                 <p className="text-sm text-gray-500 font-medium">
                   Forgot your password? <button className="text-emerald-600 font-bold hover:underline">Contact Support</button>
                 </p>

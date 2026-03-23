@@ -534,8 +534,8 @@ export default function ProductPage() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
               <div className="sticky top-0 z-10 p-8 border-b border-white/[0.08] bg-white/5 backdrop-blur-xl flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">{form.id ? "Edit Product" : "Add Product"}</h2>
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Product Details</p>
+                  <h2 className="text-xl font-bold text-white tracking-tight">{form.id ? "Edit Product" : "Add Product"}</h2>
+                  <p className="text-xs font-bold text-white/30 mt-1">Product Details</p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
@@ -543,34 +543,34 @@ export default function ProductPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Product Name</label>
-                      <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all" />
+                      <label className="block text-xs font-bold text-white/40 mb-3">Product Name</label>
+                      <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Description</label>
-                      <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white focus:outline-none focus:border-yellow-500/40 transition-all resize-none" />
+                      <label className="block text-xs font-bold text-white/40 mb-3">Description</label>
+                      <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all resize-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Price (GBP)</label>
-                        <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
+                        <label className="block text-xs font-bold text-white/40 mb-3">Price (GBP)</label>
+                        <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Discount (%)</label>
-                        <input type="text" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: e.target.value })} placeholder="e.g. 15%" className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
+                        <label className="block text-xs font-bold text-white/40 mb-3">Discount (%)</label>
+                        <input type="text" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: e.target.value })} placeholder="e.g. 15%" className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Category</label>
-                      <select value={form.cat_id} onChange={e => setForm({ ...form, cat_id: e.target.value })} className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white appearance-none focus:outline-none">
-                        <option value="">SELECT CATEGORY...</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
+                      <label className="block text-xs font-bold text-white/40 mb-3">Category</label>
+                      <select value={form.cat_id} onChange={e => setForm({ ...form, cat_id: e.target.value })} className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white appearance-none focus:outline-none">
+                        <option value="">Select category...</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
                   </div>
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Product Image</label>
+                      <label className="block text-xs font-bold text-white/40 mb-3">Product Image</label>
                       <div
                         onClick={() => document.getElementById('imageProd').click()}
                         className="aspect-square bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
@@ -578,12 +578,12 @@ export default function ProductPage() {
                         <input type="file" id="imageProd" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
                         {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" /> : <ImageIcon size={32} className="text-white/10" />}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Overwrite Visual</span>
+                          <span className="text-xs font-bold text-white">Overwrite Media</span>
                         </div>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Allergens</label>
+                      <label className="block text-xs font-bold text-white/40 mb-3">Allergens</label>
                       <div className="flex flex-wrap gap-3">
                         {CONTAINS_OPTIONS.map(opt => (
                           <button
@@ -604,7 +604,7 @@ export default function ProductPage() {
                   </div>
                 </div>
                 <div className="pt-6 border-t border-white/[0.08] flex justify-end">
-                  <button type="submit" className="px-10 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10 flex items-center gap-3">
+                  <button type="submit" className="px-10 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-base rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10 flex items-center gap-3">
                     <Save size={18} /> {form.id ? "Save Changes" : "Add Product"}
                   </button>
                 </div>
@@ -620,7 +620,7 @@ export default function ProductPage() {
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-yellow-500/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Global Catalog Index</h2>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Product Menu Import</h2>
                 </div>
                 <button onClick={() => setShowSearchModal(false)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
@@ -629,8 +629,8 @@ export default function ProductPage() {
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={18} />
                   <input
                     autoFocus
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-14 pr-6 py-4 text-sm font-black text-white focus:outline-none focus:border-yellow-500/40 transition-all shadow-xl"
-                    placeholder="SCAN FOR EXTERNAL NODES..."
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-14 pr-6 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all shadow-xl"
+                    placeholder="Search global products..."
                     value={globalSearchQuery}
                     onChange={e => setGlobalSearchQuery(e.target.value)}
                   />
@@ -644,8 +644,8 @@ export default function ProductPage() {
                         {prod.image ? <img src={`${API_BASE}/uploads/${prod.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/20">VOID</div>}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-black text-white uppercase tracking-tight truncate">{prod.name}</div>
-                        <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-0.5">{prod.restaurant_name}</div>
+                        <div className="text-sm font-bold text-white tracking-tight truncate">{prod.name}</div>
+                        <div className="text-[10px] font-medium text-white/20 mt-0.5">{prod.restaurant_name}</div>
                       </div>
                     </div>
                     <button onClick={() => handleAddGlobalProduct(prod)} className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 rounded-xl hover:scale-105 transition-all shadow-lg border border-white/10"><Plus size={20} /></button>

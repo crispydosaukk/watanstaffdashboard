@@ -406,20 +406,20 @@ export default function Category() {
             {imgUrl ? <img src={imgUrl} className="h-full w-full object-cover" alt="" /> : <div className="h-full w-full flex items-center justify-center text-[8px] font-black uppercase text-white/20">NO IMAGE</div>}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-black text-white tracking-tight uppercase truncate">{item.name}</h4>
-            <div className="text-[9px] font-black text-white/30 tracking-[0.2em] mt-1">ID: {item.id}</div>
-              <div className="flex items-center gap-3 mt-4">
-                <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
-                  <input type="checkbox" className="sr-only" checked={status} readOnly />
-                  <div className={`w-10 h-5 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-5' : ''}`}></div>
-                </div>
-                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
-                  {status ? 'Active' : 'Inactive'}
-                </span>
-                <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto"><Pencil size={14} /></button>
-                <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+            <h4 className="text-sm font-bold text-white tracking-tight truncate">{item.name}</h4>
+            <div className="text-[10px] font-bold text-white/30 mt-1">ID: {item.id}</div>
+            <div className="flex items-center gap-3 mt-4">
+              <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
+                <input type="checkbox" className="sr-only" checked={status} readOnly />
+                <div className={`w-10 h-5 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-5' : ''}`}></div>
               </div>
+              <span className={`text-[10px] font-bold transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
+                {status ? 'Active' : 'Inactive'}
+              </span>
+              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto"><Pencil size={14} /></button>
+              <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -463,7 +463,7 @@ export default function Category() {
                   <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
                     {isSuperAdmin && (
                       <button onClick={() => setShowIntegrateModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
-                        <Zap size={18} /> Integrate
+                        <Zap size={18} /> Integrate Menu
                       </button>
                     )}
 
@@ -483,7 +483,7 @@ export default function Category() {
 
               {/* Content Area */}
               <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border border-white/[0.08] overflow-hidden mb-12">
-                 <div className="px-8 py-6 border-b border-white/[0.08] bg-white/5 flex justify-between items-center sm:px-10">
+                <div className="px-8 py-6 border-b border-white/[0.08] bg-white/5 flex justify-between items-center sm:px-10">
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-3">
                     <GripVertical size={20} className="text-yellow-400" /> Category List
                   </h3>
@@ -494,7 +494,7 @@ export default function Category() {
 
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left">
-                     <thead className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight">
+                    <thead className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight">
                       <tr>
                         <th className="px-8 py-6 w-16"></th>
                         <th className="px-8 py-6">Image</th>
@@ -528,13 +528,13 @@ export default function Category() {
                                         )}
                                       </div>
                                     </td>
-                                     <td className="px-8 py-5">
+                                    <td className="px-8 py-5">
                                       <div className="min-w-0">
                                         <div className="text-base font-bold text-white tracking-tight truncate max-w-xs">{item.name}</div>
                                         <div className="text-xs font-bold text-white/30 tracking-widest mt-1 leading-none">ID: {item.id}</div>
                                       </div>
                                     </td>
-                                     <td className="px-8 py-5">
+                                    <td className="px-8 py-5">
                                       <div className="flex flex-col items-center gap-2">
                                         <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
                                           <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
@@ -584,14 +584,14 @@ export default function Category() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-md w-full overflow-hidden">
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">{isEdit ? "Edit Category" : "Add Category"}</h2>
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">Category Details</p>
+                  <h2 className="text-xl font-bold text-white tracking-tight">{isEdit ? "Edit Category" : "Add Category"}</h2>
+                  <p className="text-xs font-bold text-white/30 mt-1">Category Details</p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-8 space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Category Name</label>
+                  <label className="block text-xs font-bold text-white/40 mb-3">Category Name</label>
                   <input
                     type="text"
                     value={form.name}
@@ -601,7 +601,7 @@ export default function Category() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Category Image</label>
+                  <label className="block text-xs font-bold text-white/40 mb-3">Category Image</label>
                   <div
                     onClick={() => document.getElementById('imageUp').click()}
                     className="aspect-video bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
@@ -612,16 +612,16 @@ export default function Category() {
                     ) : (
                       <>
                         <Plus size={32} className="text-white/10 group-hover:text-yellow-400 transition-colors" />
-                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-2">Upload Image</span>
+                        <span className="text-xs font-bold text-white/20 mt-2">Upload Image</span>
                       </>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Overwrite Media</span>
+                      <span className="text-xs font-bold text-white">Overwrite Media</span>
                     </div>
                   </div>
                 </div>
                 <div className="pt-4">
-                  <button type="submit" className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10">
+                  <button type="submit" className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10">
                     {isEdit ? "Update Category" : "Save Category"}
                   </button>
                 </div>
@@ -637,7 +637,7 @@ export default function Category() {
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-yellow-500/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Global Category Search</h2>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Global Category Search</h2>
                 </div>
                 <button onClick={() => setShowSearchModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
@@ -647,7 +647,7 @@ export default function Category() {
                   <input
                     autoFocus
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-14 pr-6 py-4 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all shadow-xl"
-                    placeholder="SEARCH GLOBAL CATEGORIES..."
+                    placeholder="Search global categories..."
                     value={globalSearchQuery}
                     onChange={e => setGlobalSearchQuery(e.target.value)}
                   />
@@ -661,8 +661,8 @@ export default function Category() {
                         {cat.image ? <img src={`${API_BASE}/uploads/${cat.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/20">IMAGE</div>}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-black text-white uppercase tracking-tight truncate">{cat.name}</div>
-                        <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mt-0.5">{cat.restaurant_name}</div>
+                        <div className="text-sm font-bold text-white tracking-tight truncate">{cat.name}</div>
+                        <div className="text-[10px] font-medium text-white/20 mt-0.5">{cat.restaurant_name}</div>
                       </div>
                     </div>
                     <button onClick={() => handleAddGlobalCategory(cat)} className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 rounded-xl shadow-lg border border-white/20 hover:scale-105 transition-all transform active:scale-95"><Plus size={20} /></button>
@@ -680,18 +680,18 @@ export default function Category() {
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-yellow-500/10 rounded-xl"><Zap size={20} className="text-yellow-400" /></div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Restaurant Integration</h2>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Restaurant Integration</h2>
                 </div>
                 <button onClick={() => setShowIntegrateModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
               <div className="flex flex-col md:flex-row h-full overflow-hidden">
                 <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-b md:border-b-0 md:border-r border-white/[0.08]">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Source Category</label>
+                  <label className="block text-xs font-bold text-white/40 mb-4">Source Category</label>
                   <div className="relative group mb-6">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={16} />
                     <input
                       className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/40 transition-all"
-                      placeholder="SCAN ALL CATEGORIES..."
+                      placeholder="Scan all categories..."
                       value={integrateSearch}
                       onChange={e => setIntegrateSearch(e.target.value)}
                     />
@@ -703,8 +703,8 @@ export default function Category() {
                           {cat.image ? <img src={`${API_BASE}/uploads/${cat.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/10">VOID</div>}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-xs font-black text-white uppercase tracking-tight truncate">{cat.name}</div>
-                          <div className="text-[8px] font-black text-white/20 uppercase tracking-widest">{cat.restaurant_name}</div>
+                          <div className="text-xs font-bold text-white truncate">{cat.name}</div>
+                          <div className="text-[10px] font-medium text-white/20 mt-0.5">{cat.restaurant_name}</div>
                         </div>
                         {selectedSourceCat?.id === cat.id && <Check size={16} className="text-yellow-400 ml-auto" />}
                       </div>
@@ -712,27 +712,27 @@ export default function Category() {
                   </div>
                 </div>
                 <div className="flex-1 p-8 bg-white/[0.01] flex flex-col">
-                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Target Restaurant</label>
+                  <label className="block text-xs font-bold text-white/40 mb-4">Target Restaurant</label>
                   <select
                     value={targetRestaurantId}
                     onChange={e => setTargetRestaurantId(e.target.value)}
-                    className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-black text-white appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500/20 mb-8"
+                    className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500/20 mb-8"
                   >
-                    <option value="">SELECT DESTINATION...</option>
-                    {restaurants.map(r => <option key={r.id} value={r.id}>{r.restaurant_name.toUpperCase()}</option>)}
+                    <option value="">Select destination...</option>
+                    {restaurants.map(r => <option key={r.id} value={r.id}>{r.restaurant_name}</option>)}
                   </select>
                   <div className="mt-auto p-6 bg-white/[0.03] border border-white/[0.05] rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Status</span>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-yellow-400">READY</span>
+                      <span className="text-[10px] font-bold text-white/20">Status</span>
+                      <span className="text-[10px] font-bold text-yellow-400">Ready</span>
                     </div>
                     <button
                       disabled={integrating}
                       onClick={handleIntegrate}
-                      className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-black uppercase tracking-widest text-xs rounded-xl shadow-2xl transition-all transform active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 border border-white/10"
+                      className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all transform active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 border border-white/10"
                     >
                       {integrating ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
-                      {integrating ? "Processing..." : "Start Integration"}
+                      {integrating ? "Processing..." : "Start Menu Integration"}
                     </button>
                   </div>
                 </div>

@@ -158,7 +158,7 @@ export default function OffersPage() {
                   </div>
                    <button
                     onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
-                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-bold text-xs shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
+                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
                   >
                     <Plus size={16} /> Add New Offer
                   </button>
@@ -181,7 +181,7 @@ export default function OffersPage() {
                         <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-white/10" /></div>
                       )}
                       <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border backdrop-blur-md ${offer.status === 'active' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-white/10 text-white/40 border-white/20'}`}>
+                        <span className={`px-3 py-1 text-[10px] font-bold capitalize rounded-full border backdrop-blur-md ${offer.status === 'active' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-white/10 text-white/40 border-white/20'}`}>
                           {offer.status}
                         </span>
                       </div>
@@ -216,7 +216,7 @@ export default function OffersPage() {
                   className="bg-white/[0.02] border-2 border-dashed border-white/10 rounded-[2rem] h-full min-h-[280px] flex flex-col items-center justify-center gap-4 group hover:bg-white/5 hover:border-yellow-500/30 transition-all"
                 >
                    <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-yellow-500/10 transition-colors"><Plus className="text-white/20 group-hover:text-yellow-400" size={32} /></div>
-                  <span className="text-white/20 font-bold text-xs">Create Offer</span>
+                  <span className="text-white/20 font-bold text-sm">Create Offer</span>
                 </button>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function OffersPage() {
                       {form.bannerPreview ? (
                         <img src={form.bannerPreview} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />
                       ) : (
-                        <div className="text-center p-6"><Upload size={32} className="mx-auto text-white/10 mb-4" /><p className="text-xs font-medium text-white/40">DRAG OR UPLOAD OFFER IMAGE</p></div>
+                        <div className="text-center p-6"><Upload size={32} className="mx-auto text-white/10 mb-4" /><p className="text-xs font-bold text-white/40">Drag or upload offer image</p></div>
                       )}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"><span className="text-xs font-bold text-white">Change Image</span></div>
                     </label>

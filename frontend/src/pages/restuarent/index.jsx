@@ -544,7 +544,7 @@ export default function Restuarent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <InputField
                         icon={Phone}
-                        label="Operator Phone"
+                        label="Restaurant Phone Number"
                         value={info.phone}
                         onChange={onInfoChange("phone")}
                         placeholder="+44 123 456 7890"
@@ -920,7 +920,7 @@ export default function Restuarent() {
                     <button
                       onClick={saveAll}
                       disabled={saving}
-                      className="w-full py-5 px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 disabled:opacity-50 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
+                      className="w-full py-5 px-8 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 disabled:opacity-50 text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
                     >
                       {saving ? (
                         <>
@@ -956,7 +956,7 @@ export default function Restuarent() {
                 <button
                   onClick={handleAddManual}
                   disabled={timings.length >= 7}
-                  className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-xs rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
+                  className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-base rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
                 >
                   <Plus size={18} className="group-hover:rotate-90 transition-transform" />
                   Initialize Day
