@@ -385,13 +385,13 @@ export default function ProductPage() {
 
             <div className="mt-3 flex flex-col gap-1">
               {hasDiscount ? (
-                 <div className="space-y-1">
+                 <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                       <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[8px] font-black rounded uppercase">Save {formatGBP(discAmt)}</span>
+                       <span className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-black rounded uppercase tracking-wider shadow-sm">Save {formatGBP(discAmt)}</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-lg font-black text-yellow-500">{formatGBP(p.price)}</span>
-                       <span className="text-[10px] font-bold text-white/20 line-through">{formatGBP(p.discountPrice)}</span>
+                    <div className="flex items-baseline gap-3">
+                       <span className="text-xl font-black text-yellow-500">{formatGBP(p.price)}</span>
+                       <span className="text-sm font-bold text-white/50 line-through decoration-rose-500/60 decoration-2">{formatGBP(p.discountPrice)}</span>
                     </div>
                  </div>
               ) : (
@@ -583,13 +583,13 @@ export default function ProductPage() {
                                       </div>
                                       <div className="px-6 py-5 flex flex-col justify-center gap-1">
                                         {p.discountPrice && Number(p.discountPrice) > Number(p.price) ? (
-                                          <div className="space-y-1.5">
+                                          <div className="space-y-2">
                                             <div className="flex items-center gap-2">
-                                              <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[8px] font-black rounded uppercase tracking-tighter shadow-sm">Save {formatGBP(Number(p.discountPrice) - Number(p.price))}</span>
+                                              <span className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-black rounded uppercase tracking-wider shadow-sm">Save {formatGBP(Number(p.discountPrice) - Number(p.price))}</span>
                                             </div>
-                                            <div className="flex items-baseline gap-2">
-                                              <span className="text-[16px] font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</span>
-                                              <span className="text-[10px] font-bold text-white/20 line-through">{formatGBP(p.discountPrice)}</span>
+                                            <div className="flex items-baseline gap-3">
+                                              <span className="text-lg font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</span>
+                                              <span className="text-sm font-bold text-white/50 line-through decoration-rose-500/60 decoration-2">{formatGBP(p.discountPrice)}</span>
                                             </div>
                                           </div>
                                         ) : (
