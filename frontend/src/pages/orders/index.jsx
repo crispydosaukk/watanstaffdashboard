@@ -8,7 +8,7 @@ import api from "../../api.js";
 import ReadyInModal from "../../components/common/ReadyInModal.jsx";
 import {
   Search, RefreshCw, Filter, Calendar, PoundSterling, User, Truck,
-  MapPin, Phone, Car, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, CreditCard, Eye, X, Loader2, ChevronRight
+  MapPin, Phone, Car, Clock, CheckCircle, XCircle, AlertCircle, ShoppingBag, CreditCard, Eye, X, Loader2, ChevronRight, ChefHat, PackageCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePopup } from "../../context/PopupContext";
@@ -151,8 +151,9 @@ export default function Orders() {
     const map = {};
     filteredOrders.forEach((o, idx) => {
       const key = o.order_number || `ORDER_${idx}`;
-      if (!map[key]) map[key] = { ...o, items: [] };
+      if (!map[key]) map[key] = { ...o, items: [], grand_total: 0 };
       map[key].items.push(o);
+      map[key].grand_total += safeNumber(o.grand_total);
     });
     return Object.values(map);
   }, [filteredOrders]);
@@ -269,8 +270,8 @@ export default function Orders() {
                                 <button onClick={() => updateOrderStatus(order.order_number, 2)} className="py-3.5 bg-white/5 border border-white/10 text-white font-bold text-xs rounded-xl hover:text-rose-500 transition-all">Reject</button>
                               </div>
                             )}
-                            {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">Mark Ready</button>}
-                            {order.order_status === 3 && <button onClick={() => updateOrderStatus(order.order_number, 4)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">Collected</button>}
+                            {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><ChefHat size={18} /> Mark Ready</button>}
+                            {order.order_status === 3 && <button onClick={() => updateOrderStatus(order.order_number, 4)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><PackageCheck size={18} /> Collected</button>}
                           </div>
                         </div>
                       </div>

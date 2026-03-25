@@ -467,15 +467,9 @@ export const getAllOrders = async (req, res) => {
 
     let sql = `
       SELECT 
-        o.order_number,
-        o.customer_id,
-        MIN(o.id) as id,
-        SUM(o.grand_total) as grand_total,
-        MAX(o.order_status) as order_status,
-        MAX(o.created_at) as created_at,
-        MAX(o.order_source) as order_source,
-        MAX(c.full_name) AS customer_name,
-        MAX(rd.restaurant_name) AS restaurant_name
+        o.*,
+        c.full_name AS customer_name,
+        rd.restaurant_name AS restaurant_name
       FROM orders o
       LEFT JOIN products p ON o.product_id = p.id
       LEFT JOIN restaurant_details rd ON o.user_id = rd.user_id
@@ -496,7 +490,7 @@ export const getAllOrders = async (req, res) => {
     sql += ` AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ? `;
     params.push(targetStartDate, targetEndDate);
 
-    sql += ` GROUP BY o.order_number ORDER BY MAX(o.created_at) DESC `;
+    sql += ` ORDER BY o.created_at DESC `;
 
     const [rows] = await db.query(sql, params);
 

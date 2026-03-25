@@ -339,7 +339,7 @@ export default function ProductPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-base font-bold text-white tracking-tight truncate">{p.name}</h4>
-            <div className="text-xs font-bold text-white/30 truncate mt-1">{categories.find(c => c.id == p.cat_id)?.name || "Void"} Node</div>
+            <div className="text-xs font-bold text-white/30 truncate mt-1">({categories.find(c => c.id == p.cat_id)?.name || "Void"})</div>
             <div className="mt-3 flex items-center justify-between">
               <span className="text-lg font-bold text-yellow-500">{formatGBP(p.price)}</span>
               <div className="flex items-center gap-3">
@@ -473,7 +473,7 @@ export default function ProductPage() {
                                       <div className="min-w-0">
                                         <div className="text-base font-bold text-white tracking-tight truncate max-w-xs">{p.name}</div>
                                         <div className="text-xs font-bold text-white/30 tracking-widest mt-1 leading-none">
-                                          {categories.find(c => c.id == p.cat_id)?.name || "Void"} Node
+                                          ({categories.find(c => c.id == p.cat_id)?.name || "Void"})
                                         </div>
                                       </div>
                                     </td>
