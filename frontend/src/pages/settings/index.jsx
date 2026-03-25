@@ -122,6 +122,16 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans">
+      <style>{`
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

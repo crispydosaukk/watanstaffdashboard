@@ -127,7 +127,7 @@ export default function CustomerInfo() {
                     <Users className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Customer Registry</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Customer Information</h1>
                     <p className="text-white/60 mt-2 text-sm font-medium tracking-wide">View and manage restaurant customer profiles</p>
                   </div>
                 </div>
@@ -137,7 +137,7 @@ export default function CustomerInfo() {
                   <div className="bg-[#0b1a3d]/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.08] shadow-2xl">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium tracking-wide text-white mb-1">Total Nodes</p>
+                        <p className="text-sm font-medium tracking-wide text-white mb-1">Total Customers</p>
                         <p className="text-3xl font-bold text-white tracking-tight">{stats.total}</p>
                       </div>
                       <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
@@ -148,7 +148,7 @@ export default function CustomerInfo() {
                   <div className="bg-[#0b1a3d]/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.08] shadow-2xl">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium tracking-wide text-white mb-1">Global Credit</p>
+                        <p className="text-sm font-medium tracking-wide text-white mb-1">Total Wallet</p>
                         <p className="text-3xl font-bold text-yellow-500 tracking-tight">{formatWallet(stats.totalWallet)}</p>
                       </div>
                       <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
@@ -159,7 +159,7 @@ export default function CustomerInfo() {
                   <div className="bg-[#0b1a3d]/40 backdrop-blur-xl rounded-2xl p-6 border border-white/[0.08] shadow-2xl">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium tracking-wide text-white mb-1">Loyalty Index</p>
+                        <p className="text-sm font-medium tracking-wide text-white mb-1">Total Points</p>
                         <p className="text-3xl font-bold text-yellow-600 tracking-tight">{stats.totalLoyalty.toLocaleString()}</p>
                       </div>
                       <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
@@ -271,8 +271,8 @@ export default function CustomerInfo() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
               <div className="sticky top-0 z-10 p-8 border-b border-white/[0.08] bg-white/5 backdrop-blur-xl flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-bold text-white tracking-tight">Identity Analysis</h3>
-                  <p className="text-xs font-medium text-white tracking-wide mt-1">Classification Code: {selectedCustomer.id}</p>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Customer Information</h3>
+                  <p className="text-xs font-medium text-white tracking-wide mt-1">Customer ID: {selectedCustomer.id}</p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="p-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
               </div>
@@ -285,54 +285,54 @@ export default function CustomerInfo() {
                   <div className="text-center sm:text-left">
                     <h4 className="text-2xl font-bold text-white tracking-tight">{selectedCustomer.full_name}</h4>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-3">
-                      <span className="px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold tracking-wider rounded-full">Active Node</span>
-                      <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-white/40 text-[10px] font-medium tracking-wider rounded-full">Est. {new Date(selectedCustomer.created_at).getFullYear()}</span>
+                      <span className="px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold tracking-wider rounded-full">Active Customer</span>
+                      <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-white/40 text-[10px] font-medium tracking-wider rounded-full">Joined {new Date(selectedCustomer.created_at).getFullYear()}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2 uppercase"><Phone size={12} className="text-yellow-500" /> Communication Hub</p>
+                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Phone size={12} className="text-yellow-500" /> Contact Details</p>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs font-medium text-white tracking-wide">Mobile String</p>
+                        <p className="text-xs font-medium text-white tracking-wide">Mobile Number</p>
                         <p className="text-base font-bold text-white mt-1">{formatPhoneNumber(selectedCustomer.country_code, selectedCustomer.mobile_number)}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-white tracking-wide">Virtual Endpoint</p>
+                        <p className="text-xs font-medium text-white tracking-wide">Email Address</p>
                         <p className="text-base font-bold text-white mt-1 truncate">{selectedCustomer.email || "Not Available"}</p>
                       </div>
                     </div>
                   </div>
                   <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2 uppercase"><Calendar size={12} className="text-yellow-500" /> Chronology</p>
+                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Calendar size={12} className="text-yellow-500" /> Bio Details</p>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs font-medium text-white tracking-wide">Birth Sequence</p>
+                        <p className="text-xs font-medium text-white tracking-wide">Date Of Birth</p>
                         <p className="text-base font-bold text-white mt-1">{selectedCustomer.date_of_birth ? new Date(selectedCustomer.date_of_birth).toLocaleDateString('en-GB') : "Not Specified"}</p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-white tracking-wide">Gender Profile</p>
-                        <p className="text-base font-bold text-white mt-1">{selectedCustomer.gender || "Unassigned"}</p>
+                        <p className="text-xs font-medium text-white tracking-wide">Gender</p>
+                        <p className="text-base font-bold text-white mt-1 capitalize">{selectedCustomer.gender || "Unassigned"}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                  <p className="text-xs font-bold tracking-wide text-white mb-6 flex items-center gap-2 uppercase"><Wallet size={12} className="text-yellow-500" /> Global Assets</p>
+                  <p className="text-xs font-bold tracking-wide text-white mb-6 flex items-center gap-2"><Wallet size={12} className="text-yellow-500" /> Customer Wallet</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
-                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Liquid Balance</p>
+                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Wallet Balance</p>
                       <p className="text-2xl font-bold text-yellow-500 leading-none">{formatWallet(selectedCustomer.wallet_balance)}</p>
                     </div>
                     <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
-                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Loyalty Power</p>
+                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Loyalty Points</p>
                       <p className="text-2xl font-bold text-yellow-600 leading-none">{Number(selectedCustomer.loyalty_points || 0)}</p>
                     </div>
                     <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
-                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Redeem Value</p>
+                      <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Redeemable Value</p>
                       <p className="text-2xl font-bold text-yellow-500 leading-none">{calculateRedeemable(selectedCustomer)}</p>
                     </div>
                   </div>
@@ -341,7 +341,7 @@ export default function CustomerInfo() {
                 {selectedCustomer.referral_code && (
                   <div className="p-6 bg-gradient-to-r from-[#0b1a3d] to-white/5 border border-white/[0.08] rounded-2xl flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-white tracking-wide mb-1">Viral Referral Link</p>
+                      <p className="text-xs font-medium text-white tracking-wide mb-1">Referral Code</p>
                       <p className="text-xl font-bold text-yellow-500 tracking-[0.15em]">{selectedCustomer.referral_code}</p>
                     </div>
                     <div className="p-4 bg-yellow-500/10 rounded-2xl"><Gift size={24} className="text-yellow-400" /></div>

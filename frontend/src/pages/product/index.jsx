@@ -1,5 +1,6 @@
 // src/pages/product/index.jsx
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
@@ -22,6 +23,9 @@ export default function ProductPage() {
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState("all");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const CONTAINS_OPTIONS = [
     { key: "Dairy", icon: "/contains/Dairy.png" },
@@ -111,17 +115,26 @@ export default function ProductPage() {
     if (filterCategory !== "all") {
       list = list.filter((p) => String(p.cat_id) === String(filterCategory));
     }
-    if (!debouncedQuery) return list;
-    const q = debouncedQuery;
-    return list.filter((p) => {
-      if (p.name?.toLowerCase().includes(q)) return true;
-      if (p.description?.toLowerCase().includes(q)) return true;
-      const catName = categories.find((c) => c.id == p.cat_id)?.name;
-      if (catName?.toLowerCase().includes(q)) return true;
-      if (String(p.price).includes(q)) return true;
-      return false;
-    });
+    if (debouncedQuery) {
+      const q = debouncedQuery;
+      list = list.filter((p) => {
+        if (p.name?.toLowerCase().includes(q)) return true;
+        if (p.description?.toLowerCase().includes(q)) return true;
+        const catName = categories.find((c) => c.id == p.cat_id)?.name;
+        if (catName?.toLowerCase().includes(q)) return true;
+        if (String(p.price).includes(q)) return true;
+        return false;
+      });
+    }
+    return list;
   }, [products, categories, debouncedQuery, filterCategory]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterCategory, debouncedQuery]);
 
   const handleAddGlobalProduct = async (item) => {
     showPopup({
@@ -315,8 +328,13 @@ export default function ProductPage() {
   const onDragEnd = async (result) => {
     if (!result.destination) return;
     const items = Array.from(products);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const actualSourceIdx = startIndex + result.source.index;
+    const actualDestIdx = startIndex + result.destination.index;
+
+    const [moved] = items.splice(actualSourceIdx, 1);
+    items.splice(actualDestIdx, 0, moved);
     const updated = items.map((p, i) => ({ ...p, sort_order: i + 1 }));
     setProducts(updated);
     await fetch(`${API}/products/reorder`, {
@@ -326,11 +344,31 @@ export default function ProductPage() {
     });
   };
 
+  const handleEdit = (p) => {
+    const isDiscounted = p.discountPrice && Number(p.discountPrice) > Number(p.price);
+    const originalPriceInput = isDiscounted ? p.discountPrice : p.price;
+    const discountInput = isDiscounted 
+      ? Math.round(((p.discountPrice - p.price) / p.discountPrice) * 100) + "%" 
+      : "";
+
+    setForm({ 
+      ...p, 
+      price: originalPriceInput,
+      discountPrice: discountInput,
+      oldImage: p.image, 
+      image: null 
+    });
+    setShowModal(true);
+  };
+
   const formatGBP = (v) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(v || 0);
 
   const ProductCard = ({ p }) => {
     const imgUrl = p.image ? `${API_BASE}/uploads/${p.image}` : null;
     const status = p.status === 1;
+    const hasDiscount = p.discountPrice && Number(p.discountPrice) > Number(p.price);
+    const discAmt = hasDiscount ? Number(p.discountPrice) - Number(p.price) : 0;
+
     return (
       <div className={`bg-white/[0.03] backdrop-blur-md border ${status ? 'border-white/[0.08]' : 'border-rose-500/20 opacity-60'} rounded-[1.5rem] p-5 shadow-2xl transition-all`}>
         <div className="flex items-start gap-4">
@@ -340,19 +378,37 @@ export default function ProductPage() {
           <div className="flex-1 min-w-0">
             <h4 className="text-base font-bold text-white tracking-tight truncate">{p.name}</h4>
             <div className="text-xs font-bold text-white/30 truncate mt-1">({categories.find(c => c.id == p.cat_id)?.name || "Void"})</div>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-lg font-bold text-yellow-500">{formatGBP(p.price)}</span>
-              <div className="flex items-center gap-3">
-                <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
-                  <input type="checkbox" className="sr-only" checked={status} readOnly />
-                  <div className={`w-12 h-6 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                  <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-6' : ''}`}></div>
+            
+            {p.description && (
+              <p className="text-[10px] text-white/40 mt-2 line-clamp-2 leading-relaxed italic">{p.description}</p>
+            )}
+
+            <div className="mt-3 flex flex-col gap-1">
+              {hasDiscount ? (
+                 <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                       <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[8px] font-black rounded uppercase">Save {formatGBP(discAmt)}</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-lg font-black text-yellow-500">{formatGBP(p.price)}</span>
+                       <span className="text-[10px] font-bold text-white/20 line-through">{formatGBP(p.discountPrice)}</span>
+                    </div>
+                 </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold text-yellow-500">{formatGBP(p.price)}</span>
                 </div>
-                <span className={`text-[10px] font-bold tracking-wide transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
-                  {status ? 'Active' : 'Inactive'}
-                </span>
-                <button onClick={() => { setForm({ ...p, oldImage: p.image, image: null }); setShowModal(true); }} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto"><Edit size={14} /></button>
-                <button onClick={() => handleDelete(p.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+              )}
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-3">
+                  <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
+                    <input type="checkbox" className="sr-only" checked={status} readOnly />
+                    <div className={`w-12 h-6 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-6' : ''}`}></div>
+                  </div>
+                  <button onClick={() => handleEdit(p)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 group-hover:bg-yellow-500/10 transition-colors"><Edit size={14} /></button>
+                  <button onClick={() => handleDelete(p.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+                </div>
               </div>
             </div>
           </div>
@@ -361,8 +417,51 @@ export default function ProductPage() {
     );
   };
 
+  const Pagination = ({ current, total, onPageChange }) => {
+    if (total <= 1) return null;
+    return (
+      <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+        <button 
+          disabled={current === 1}
+          onClick={() => onPageChange(current - 1)}
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+        >
+          <GripVertical className="rotate-90" size={16} />
+        </button>
+        <div className="flex items-center gap-1">
+          {[...Array(total)].map((_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => onPageChange(i + 1)}
+              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-yellow-500 text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+        <button 
+          disabled={current === total}
+          onClick={() => onPageChange(current + 1)}
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+        >
+          <GripVertical className="-rotate-90" size={16} />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+      <style>{`
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 min-h-0 relative">
@@ -433,81 +532,103 @@ export default function ProductPage() {
                 </div>
 
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left">
-                     <thead className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight">
-                      <tr>
-                        <th className="px-8 py-5 w-16"></th>
-                        <th className="px-8 py-5">Image</th>
-                        <th className="px-8 py-5">Product Name</th>
-                        <th className="px-8 py-5">Price</th>
-                        <th className="px-8 py-5">Status</th>
-                        <th className="px-8 py-5 text-right">Actions</th>
-                      </tr>
-                    </thead>
+                  <div className="w-full text-left min-w-[1000px]">
+                     <div className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight grid grid-cols-[80px_100px_1.5fr_2fr_200px_120px_160px] border-b border-white/[0.08]">
+                        <div className="px-6 py-5 flex items-center justify-center"></div>
+                        <div className="px-6 py-5 flex items-center">Image</div>
+                        <div className="px-6 py-5 flex items-center">Product Name</div>
+                        <div className="px-6 py-5 flex items-center">Description</div>
+                        <div className="px-6 py-5 flex items-center">Price Details</div>
+                        <div className="px-6 py-5 flex items-center justify-center">Status</div>
+                        <div className="px-6 py-5 flex items-center justify-end">Actions</div>
+                    </div>
                     <DragDropContext onDragEnd={onDragEnd}>
                       <Droppable droppableId="productsTable">
                         {(provided) => (
-                          <tbody {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-white/[0.05]">
-                            {filteredProducts.map((p, index) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-white/[0.05]">
+                            {paginatedProducts.map((p, index) => (
                               <Draggable key={String(p.id)} draggableId={String(p.id)} index={index}>
-                                {(dragProvided, snapshot) => (
-                                  <tr
-                                    ref={dragProvided.innerRef}
-                                    {...dragProvided.draggableProps}
-                                    className={`${p.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl !table" : ""}`}
-                                    style={{ ...dragProvided.draggableProps.style }}
-                                  >
-                                    <td {...dragProvided.dragHandleProps} className="px-8 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors">
-                                      <GripVertical size={20} />
-                                    </td>
-                                    <td className="px-8 py-5">
-                                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group">
-                                        {p.image ? (
-                                          <img src={`${API_BASE}/uploads/${p.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                {(dragProvided, snapshot) => {
+                                  let child = (
+                                    <div
+                                      ref={dragProvided.innerRef}
+                                      {...dragProvided.draggableProps}
+                                      className={`grid grid-cols-[80px_100px_1.5fr_2fr_200px_120px_160px] items-center ${p.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-yellow-500/50 z-[9999]" : ""}`}
+                                      style={{ ...dragProvided.draggableProps.style }}
+                                    >
+                                      <div {...dragProvided.dragHandleProps} className="px-6 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
+                                        <GripVertical size={20} />
+                                      </div>
+                                      <div className="px-6 py-5 flex items-center">
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
+                                          {p.image ? (
+                                            <img src={`${API_BASE}/uploads/${p.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">VOID</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                       <div className="px-6 py-5 flex items-center min-w-0">
+                                        <div className="min-w-0">
+                                          <div className="text-sm font-bold text-white tracking-tight truncate">{p.name}</div>
+                                          <div className="text-[10px] font-bold text-white/30 tracking-widest mt-0.5 leading-none">
+                                            ({categories.find(c => c.id == p.cat_id)?.name || "Void"})
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="px-6 py-5 flex items-center">
+                                        <div className="text-[10px] font-medium text-white/50 leading-relaxed line-clamp-2 italic pr-4">
+                                          {p.description || "-"}
+                                        </div>
+                                      </div>
+                                      <div className="px-6 py-5 flex flex-col justify-center gap-1">
+                                        {p.discountPrice && Number(p.discountPrice) > Number(p.price) ? (
+                                          <div className="space-y-1.5">
+                                            <div className="flex items-center gap-2">
+                                              <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[8px] font-black rounded uppercase tracking-tighter shadow-sm">Save {formatGBP(Number(p.discountPrice) - Number(p.price))}</span>
+                                            </div>
+                                            <div className="flex items-baseline gap-2">
+                                              <span className="text-[16px] font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</span>
+                                              <span className="text-[10px] font-bold text-white/20 line-through">{formatGBP(p.discountPrice)}</span>
+                                            </div>
+                                          </div>
                                         ) : (
-                                          <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">VOID</div>
+                                          <div className="text-base font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</div>
                                         )}
                                       </div>
-                                    </td>
-                                     <td className="px-8 py-5">
-                                      <div className="min-w-0">
-                                        <div className="text-base font-bold text-white tracking-tight truncate max-w-xs">{p.name}</div>
-                                        <div className="text-xs font-bold text-white/30 tracking-widest mt-1 leading-none">
-                                          ({categories.find(c => c.id == p.cat_id)?.name || "Void"})
+                                      <div className="px-6 py-5 flex items-center justify-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
+                                            <input type="checkbox" className="sr-only" checked={p.status === 1} readOnly />
+                                            <div className={`w-12 h-6 rounded-full transition-colors ${p.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                                            <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${p.status === 1 ? 'translate-x-6' : ''}`}></div>
+                                          </div>
+                                          <span className={`text-[10px] font-bold tracking-wide transition-colors ${p.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
+                                            {p.status === 1 ? 'Active' : 'Inactive'}
+                                          </span>
                                         </div>
                                       </div>
-                                    </td>
-                                    <td className="px-8 py-5 text-base font-bold text-yellow-500">
-                                      {formatGBP(p.price)}
-                                    </td>
-                                    <td className="px-8 py-5">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
-                                          <input type="checkbox" className="sr-only" checked={p.status === 1} readOnly />
-                                          <div className={`w-12 h-6 rounded-full transition-colors ${p.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${p.status === 1 ? 'translate-x-6' : ''}`}></div>
-                                        </div>
-                                        <span className={`text-[10px] font-bold tracking-wide transition-colors ${p.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
-                                          {p.status === 1 ? 'Active' : 'Inactive'}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                      <div className="flex items-center justify-end gap-3">
-                                        <button onClick={() => { setForm({ ...p, oldImage: p.image, image: null }); setShowModal(true); }} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Edit size={16} /></button>
+                                      <div className="px-6 py-5 flex items-center justify-end gap-3">
+                                        <button onClick={() => handleEdit(p)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Edit size={16} /></button>
                                         <button onClick={() => handleDelete(p.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
                                       </div>
-                                    </td>
-                                  </tr>
-                                )}
+                                    </div>
+                                  );
+
+                                  if (snapshot.isDragging) {
+                                    return createPortal(child, document.body);
+                                  }
+
+                                  return child;
+                                }}
                               </Draggable>
                             ))}
                             {provided.placeholder}
-                          </tbody>
+                          </div>
                         )}
                       </Droppable>
                     </DragDropContext>
-                  </table>
+                  </div>
                 </div>
 
                 <div className="md:hidden p-4 sm:p-6 space-y-4">
@@ -520,6 +641,8 @@ export default function ProductPage() {
                     </div>
                   )}
                 </div>
+
+                <Pagination current={currentPage} total={totalPages} onPageChange={setCurrentPage} />
               </div>
             </div>
           </main>
@@ -576,9 +699,16 @@ export default function ProductPage() {
                         className="aspect-square bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
                       >
                         <input type="file" id="imageProd" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
-                        {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" /> : <ImageIcon size={32} className="text-white/10" />}
+                        {previewUrl ? (
+                          <img src={previewUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                        ) : (
+                          <>
+                            <ImageIcon size={32} className="text-white/10 group-hover:text-yellow-400 transition-colors" />
+                            <span className="text-xs font-bold text-white/20 mt-2">Upload Image</span>
+                          </>
+                        )}
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-xs font-bold text-white">Overwrite Media</span>
+                          <span className="text-xs font-bold text-white">{previewUrl ? "Update Image" : "Upload Image"}</span>
                         </div>
                       </div>
                     </div>

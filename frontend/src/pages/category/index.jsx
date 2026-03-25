@@ -19,6 +19,9 @@ export default function Category() {
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
   const [form, setForm] = useState({
     id: null,
     name: "",
@@ -265,15 +268,25 @@ export default function Category() {
   };
 
   const filteredCategories = useMemo(() => {
-    if (!debouncedQuery) return categories;
-    const q = debouncedQuery;
-    return categories.filter((c) => {
-      if (!c) return false;
-      if (c.name?.toLowerCase().includes(q)) return true;
-      if (String(c.id).includes(q)) return true;
-      return false;
-    });
+    let list = [...categories];
+    if (debouncedQuery) {
+      const q = debouncedQuery;
+      list = list.filter((c) => {
+        if (!c) return false;
+        if (c.name?.toLowerCase().includes(q)) return true;
+        if (String(c.id).includes(q)) return true;
+        return false;
+      });
+    }
+    return list;
   }, [categories, debouncedQuery]);
+
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const paginatedCategories = filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     if (form.image instanceof File) {
@@ -389,8 +402,13 @@ export default function Category() {
   const onDragEnd = (result) => {
     if (!result.destination) return;
     const items = Array.from(categories);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const actualSourceIdx = startIndex + result.source.index;
+    const actualDestIdx = startIndex + result.destination.index;
+
+    const [moved] = items.splice(actualSourceIdx, 1);
+    items.splice(actualDestIdx, 0, moved);
     const updated = items.map((cat, index) => ({ ...cat, sort_order: index + 1 }));
     setCategories(updated);
     saveOrder(updated);
@@ -407,7 +425,6 @@ export default function Category() {
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-bold text-white tracking-tight truncate">{item.name}</h4>
-            <div className="text-[10px] font-bold text-white/30 mt-1">ID: {item.id}</div>
             <div className="flex items-center gap-3 mt-4">
               <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
                 <input type="checkbox" className="sr-only" checked={status} readOnly />
@@ -417,8 +434,8 @@ export default function Category() {
               <span className={`text-[10px] font-bold transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
                 {status ? 'Active' : 'Inactive'}
               </span>
-              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto"><Pencil size={14} /></button>
-              <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
+              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto transition-all active:scale-90 hover:bg-yellow-500/10"><Pencil size={14} /></button>
+              <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500 transition-all active:scale-90 hover:bg-rose-500/10"><Trash2 size={14} /></button>
             </div>
           </div>
         </div>
@@ -426,8 +443,51 @@ export default function Category() {
     );
   };
 
+  const Pagination = ({ current, total, onPageChange }) => {
+    if (total <= 1) return null;
+    return (
+      <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+        <button 
+          disabled={current === 1}
+          onClick={() => onPageChange(current - 1)}
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+        >
+          <GripVertical className="rotate-90" size={16} />
+        </button>
+        <div className="flex items-center gap-1">
+          {[...Array(total)].map((_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => onPageChange(i + 1)}
+              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-yellow-500 text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+        <button 
+          disabled={current === total}
+          onClick={() => onPageChange(current + 1)}
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+        >
+          <GripVertical className="-rotate-90" size={16} />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+      <style>{`
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 pt-16 min-h-0 relative">
@@ -493,48 +553,46 @@ export default function Category() {
                 </div>
 
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight">
-                      <tr>
-                        <th className="px-8 py-6 w-16"></th>
-                        <th className="px-8 py-6">Image</th>
-                        <th className="px-8 py-6">Category Name</th>
-                        <th className="px-8 py-6 text-center">Status</th>
-                        <th className="px-8 py-6 text-right">Actions</th>
-                      </tr>
-                    </thead>
+                  <div className="w-full text-left min-w-[800px]">
+                    <div className="bg-[#0b1a3d]/60 text-white text-sm font-bold tracking-tight grid grid-cols-[80px_140px_1fr_150px_200px] border-b border-white/[0.08]">
+                      <div className="px-6 py-6 flex items-center justify-center"></div>
+                      <div className="px-6 py-6 flex items-center">Image</div>
+                      <div className="px-6 py-6 flex items-center">Category Name</div>
+                      <div className="px-6 py-6 flex items-center justify-center">Status</div>
+                      <div className="px-6 py-6 flex items-center justify-end">Actions</div>
+                    </div>
                     <DragDropContext onDragEnd={onDragEnd}>
                       <Droppable droppableId="categoryTable">
                         {(provided) => (
-                          <tbody {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-white/[0.05]">
-                            {filteredCategories.map((item, index) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="divide-y divide-white/[0.05]">
+                            {paginatedCategories.map((item, index) => (
                               <Draggable key={String(item.id)} draggableId={String(item.id)} index={index}>
-                                {(dragProvided, snapshot) => (
-                                  <tr
-                                    ref={dragProvided.innerRef}
-                                    {...dragProvided.draggableProps}
-                                    className={`${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl !table" : ""}`}
-                                    style={{ ...dragProvided.draggableProps.style }}
-                                  >
-                                    <td {...dragProvided.dragHandleProps} className="px-8 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors">
+                                {(dragProvided, snapshot) => {
+                                  const child = (
+                                    <div
+                                      ref={dragProvided.innerRef}
+                                      {...dragProvided.draggableProps}
+                                      className={`grid grid-cols-[80px_140px_1fr_150px_200px] items-center ${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-yellow-500/50 z-[9999]" : ""}`}
+                                      style={{ ...dragProvided.draggableProps.style }}
+                                    >
+                                    <div {...dragProvided.dragHandleProps} className="px-6 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
                                       <GripVertical size={20} />
-                                    </td>
-                                    <td className="px-8 py-5">
-                                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group">
+                                    </div>
+                                    <div className="px-6 py-5 flex items-center">
+                                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
                                         {item.image ? (
                                           <img src={`${API_BASE}/uploads/${item.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                                         ) : (
                                           <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">NO IMAGE</div>
                                         )}
                                       </div>
-                                    </td>
-                                    <td className="px-8 py-5">
+                                    </div>
+                                    <div className="px-6 py-5 flex items-center">
                                       <div className="min-w-0">
                                         <div className="text-base font-bold text-white tracking-tight truncate max-w-xs">{item.name}</div>
-                                        <div className="text-xs font-bold text-white/30 tracking-widest mt-1 leading-none">ID: {item.id}</div>
                                       </div>
-                                    </td>
-                                    <td className="px-8 py-5">
+                                    </div>
+                                    <div className="px-6 py-5 flex items-center justify-center">
                                       <div className="flex flex-col items-center gap-2">
                                         <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
                                           <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
@@ -545,31 +603,37 @@ export default function Category() {
                                           {item.status === 1 ? 'Active' : 'Inactive'}
                                         </span>
                                       </div>
-                                    </td>
-                                    <td className="px-8 py-5">
-                                      <div className="flex items-center justify-end gap-3">
-                                        <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
-                                        <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
-                                        <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )}
+                                    </div>
+                                    <div className="px-6 py-5 flex items-center justify-end gap-3">
+                                      <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
+                                      <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
+                                      <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
+                                    </div>
+                                    </div>
+                                  );
+
+                                  if (snapshot.isDragging) {
+                                    return createPortal(child, document.body);
+                                  }
+
+                                  return child;
+                                }}
                               </Draggable>
                             ))}
                             {provided.placeholder}
-                          </tbody>
+                          </div>
                         )}
                       </Droppable>
                     </DragDropContext>
-                  </table>
+                  </div>
                 </div>
-
                 <div className="md:hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
-                  {filteredCategories.map((item) => (
+                  {paginatedCategories.map((item) => (
                     <CategoryCard key={item.id} item={item} />
                   ))}
                 </div>
+
+                <Pagination current={currentPage} total={totalPages} onPageChange={setCurrentPage} />
               </div>
             </div>
           </main>
@@ -616,7 +680,7 @@ export default function Category() {
                       </>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-xs font-bold text-white">Overwrite Media</span>
+                      <span className="text-xs font-bold text-white">{previewUrl || form.oldImage ? "Update Image" : "Upload Image"}</span>
                     </div>
                   </div>
                 </div>

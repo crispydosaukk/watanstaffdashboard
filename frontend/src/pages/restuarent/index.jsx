@@ -839,8 +839,7 @@ export default function Restuarent() {
                   <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
                     <ImageIcon size={22} className="text-yellow-400" />
                     <div>
-                      <h2 className="text-xl font-bold text-white tracking-tight">Visual Identity</h2>
-                      <p className="text-white text-sm font-medium mt-1">Primary establishment imagery</p>
+                      <h2 className="text-xl font-bold text-white tracking-tight">Restaurant Image</h2>
                     </div>
                   </div>
 
