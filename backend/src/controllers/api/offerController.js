@@ -28,6 +28,7 @@ export async function getActiveOffers(req, res) {
               name: p[0].product_name,
               image: buildImageUrl(req, p[0].product_image),
               price: p[0].product_price,
+              discount_price: p[0].product_discount_price,
               description: p[0].product_description,
               contains: p[0].contains ? JSON.parse(p[0].contains) : []
             };

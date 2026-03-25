@@ -33,6 +33,8 @@ export const getRestaurants = async (req, res) => {
         restaurant_address AS address,
         instore,
         kerbside,
+        food_type,
+        is_halal,
         latitude,
         longitude,
         ( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) AS distance
@@ -50,6 +52,8 @@ export const getRestaurants = async (req, res) => {
         restaurant_address AS address,
         instore,
         kerbside,
+        food_type,
+        is_halal,
         latitude,
         longitude
       FROM restaurant_details
@@ -68,6 +72,8 @@ export const getRestaurants = async (req, res) => {
       photo: buildPhotoUrl(req, r.photo),
       instore: !!r.instore,
       kerbside: !!r.kerbside,
+      food_type: r.food_type,
+      is_halal: !!r.is_halal,
       latitude: r.latitude,
       longitude: r.longitude,
       distance: r.distance ? parseFloat(r.distance.toFixed(2)) : null
