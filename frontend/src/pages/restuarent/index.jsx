@@ -41,7 +41,7 @@ import Footer from "../../components/common/footer.jsx";
 import { v4 as uuidv4 } from "uuid";
 import api from "../../api.js";
 import {
-  Store, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Linkedin,
+  Store, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Music2,
   ParkingCircle, Upload, X, Clock, Plus, Trash2, Save, Image as ImageIcon,
   CheckCircle2, AlertCircle, Calendar, Utensils, ChefHat, Pizza, Soup, Flame,
   Truck, Bike, ShoppingCart, Globe, Drumstick, Loader2, Shield
@@ -82,7 +82,7 @@ export default function Restuarent() {
     facebook: "",
     twitter: "",
     instagram: "",
-    linkedin: "",
+    tiktok: "",
     parking_info: "",
     instore: false,
     kerbside: false,
@@ -209,7 +209,7 @@ export default function Restuarent() {
       restaurant_facebook: info.facebook || null,
       restaurant_twitter: info.twitter || null,
       restaurant_instagram: info.instagram || null,
-      restaurant_linkedin: info.linkedin || null,
+      restaurant_tiktok: info.tiktok || null,
       parking_info: info.parking_info || null,
       instore: info.instore ? 1 : 0,
       kerbside: info.kerbside ? 1 : 0,
@@ -254,7 +254,7 @@ export default function Restuarent() {
       facebook: restaurant.restaurant_facebook ?? "",
       twitter: restaurant.twitter ?? "",
       instagram: restaurant.instagram ?? "",
-      linkedin: restaurant.linkedin ?? "",
+      tiktok: restaurant.restaurant_tiktok ?? "",
       parking_info: restaurant.parking_info ?? "",
       instore: !!restaurant.instore,
       kerbside: !!restaurant.kerbside,
@@ -383,7 +383,7 @@ export default function Restuarent() {
                         <Store size={22} className="text-yellow-500" />
                         Basic Information
                       </h2>
-                      <p className="text-white text-sm font-medium tracking-wide mt-1">Core details of your establishment</p>
+                      {/* <p className="text-white text-sm font-medium tracking-wide mt-1">Core details of your Restaurant</p> */}
                     </div>
                   </div>
 
@@ -486,7 +486,7 @@ export default function Restuarent() {
                     <div className="space-y-3 group">
                       <label className="text-sm font-medium tracking-wide text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
                         <ChefHat size={12} className="text-yellow-400" />
-                        Cuisine Topology <span className="text-rose-500">*</span>
+                        Cuisine Type <span className="text-rose-500">*</span>
                       </label>
                       <div className="bg-white/[0.03] rounded-2xl p-6 border border-white/[0.08]">
                         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
@@ -613,7 +613,7 @@ export default function Restuarent() {
 
                     <InputField
                       icon={ParkingCircle}
-                      label="Logistics & Parking"
+                      label="Parking Info"
                       value={info.parking_info}
                       onChange={onInfoChange("parking_info")}
                       placeholder="Describe parking availability for patrons"
@@ -629,7 +629,7 @@ export default function Restuarent() {
                   <div className="bg-white/5 px-8 py-6 border-b border-white/10">
                     <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
                       <Twitter size={22} className="text-yellow-400" />
-                      Social Presence
+                      Social Media
                     </h2>
                     <p className="text-white text-sm font-medium mt-1">Digital connectivity channels</p>
                   </div>
@@ -657,10 +657,10 @@ export default function Restuarent() {
                       placeholder="Profile URL"
                     />
                     <InputField
-                      icon={Linkedin}
-                      label="LinkedIn"
-                      value={info.linkedin}
-                      onChange={onInfoChange("linkedin")}
+                      icon={Music2}
+                      label="Tik-Tok"
+                      value={info.tiktok}
+                      onChange={onInfoChange("tiktok")}
                       placeholder="Profile URL"
                     />
                     <InputField
@@ -688,8 +688,7 @@ export default function Restuarent() {
                   <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
                     <Truck size={22} className="text-yellow-400" />
                     <div>
-                      <h2 className="text-xl font-bold text-white tracking-tight">Logistics Partners</h2>
-                      <p className="text-white text-sm font-medium mt-1">Delivery infrastructure integration</p>
+                      <h2 className="text-xl font-bold text-white tracking-tight">Delivery Partners</h2>
                     </div>
                   </div>
 
@@ -699,13 +698,13 @@ export default function Restuarent() {
                         <Store size={18} className="text-yellow-400" />
                       </div>
                       <p className="text-sm text-yellow-500 font-medium tracking-wide">
-                        Primary Infrastructure (Restaurant Exclusive)
+                        Restaurant Delivery Info
                       </p>
                     </div>
 
                     <InputField
                       icon={Truck}
-                      label="Internal Fulfillment Link"
+                      label="Restuarent (delivery link)"
                       value={info.delivery_partner_1_url}
                       onChange={onInfoChange("delivery_partner_1_url")}
                       placeholder="Direct ordering URL"
@@ -782,8 +781,8 @@ export default function Restuarent() {
                   <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center gap-3">
                     <ShoppingCart size={22} className="text-yellow-400" />
                     <div>
-                      <h2 className="text-xl font-bold text-white tracking-tight">Fulfillment Modes</h2>
-                      <p className="text-white text-sm font-medium mt-1">Service availability protocols</p>
+                      <h2 className="text-xl font-bold text-white tracking-tight">Collection Options</h2>
+
                     </div>
                   </div>
 
@@ -800,8 +799,8 @@ export default function Restuarent() {
                           className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
                         />
                         <div className="ml-5 flex-1">
-                          <span className="block text-base font-medium text-white">In-Store Fulfillment</span>
-                          <span className="text-sm font-normal text-white/50 mt-1 block">Patron internal collection protocol</span>
+                          <span className="block text-base font-medium text-white">In-Store</span>
+                          <span className="text-sm font-normal text-white/50 mt-1 block">Customers can pick up orders inside</span>
                         </div>
                         {info.instore && <CheckCircle2 className="text-yellow-400" size={24} />}
                       </label>
@@ -817,8 +816,8 @@ export default function Restuarent() {
                           className="w-6 h-6 text-yellow-500 border-white/10 rounded-lg focus:ring-yellow-500/20 focus:ring-4 bg-white/[0.03]"
                         />
                         <div className="ml-5 flex-1">
-                          <span className="block text-base font-medium text-white">Kerbside Distribution</span>
-                          <span className="text-sm font-normal text-white/50 mt-1 block">External vehicle-side handoff</span>
+                          <span className="block text-base font-medium text-white">Kerbside</span>
+                          <span className="text-sm font-normal text-white/50 mt-1 block">Kerbside delivery available</span>
                         </div>
                         {info.kerbside && <CheckCircle2 className="text-yellow-400" size={24} />}
                       </label>
@@ -900,7 +899,7 @@ export default function Restuarent() {
                       className="mt-6 w-full py-4 px-6 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm rounded-2xl border border-white/[0.08] transition-all flex items-center justify-center gap-3 group/btn"
                     >
                       <Upload size={18} className="text-yellow-400 group-hover/btn:scale-110 transition-transform" />
-                      {photoFile || info.photo ? "Modify Imagery" : "Upload Identity"}
+                      {photoFile || info.photo ? "Modify Image" : "Upload Identity"}
                     </button>
 
                     {photoFile && (
@@ -928,7 +927,7 @@ export default function Restuarent() {
                         </>
                       ) : (
                         <>
-                          <Save size={20} className="font-bold" />
+                          <Save size={26} className="font-bold" />
                           Save Changes
                         </>
                       )}
@@ -948,9 +947,9 @@ export default function Restuarent() {
                 <div>
                   <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
                     <Calendar size={22} className="text-yellow-400" />
-                    Chronological Availability
+                    Restuarent Operating Hours
                   </h2>
-                  <p className="text-white/80 text-sm font-medium mt-1">Weekly operational schedule configuration</p>
+
                 </div>
                 <button
                   onClick={handleAddManual}
@@ -958,7 +957,7 @@ export default function Restuarent() {
                   className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-base rounded-2xl shadow-xl transition-all flex items-center gap-3 justify-center disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
                 >
                   <Plus size={18} className="group-hover:rotate-90 transition-transform" />
-                  Initialize Day
+                  Add Day
                 </button>
               </div>
 
@@ -976,7 +975,7 @@ export default function Restuarent() {
 
                         {/* Day Selector */}
                         <div className="md:col-span-3 space-y-2">
-                          <label className="text-sm font-medium text-white ml-1">Operational Day</label>
+                          <label className="text-sm font-medium text-white ml-1"> Day</label>
                           <select
                             value={t.day}
                             onChange={(e) => changeDay(t.id, e.target.value)}
@@ -992,7 +991,7 @@ export default function Restuarent() {
 
                         {/* Start Time */}
                         <div className="md:col-span-3 space-y-2">
-                          <label className="text-sm font-medium text-white ml-1">Shift Start</label>
+                          <label className="text-sm font-medium text-white ml-1">Opening Time</label>
                           <div className="relative">
                             <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-yellow-400/50" />
                             <input
@@ -1006,7 +1005,7 @@ export default function Restuarent() {
 
                         {/* End Time */}
                         <div className="md:col-span-3 space-y-2">
-                          <label className="text-sm font-medium text-white ml-1">Shift Termination</label>
+                          <label className="text-sm font-medium text-white ml-1">Closing Time</label>
                           <div className="relative">
                             <Clock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/50" />
                             <input
@@ -1022,14 +1021,14 @@ export default function Restuarent() {
                         <div className="md:col-span-3 flex items-center justify-between md:justify-end gap-6">
                           <label className="flex items-center gap-3 cursor-pointer group/toggle">
                             <div className="relative">
-                               <input 
-                                 type="checkbox" 
-                                 className="sr-only" 
-                                 checked={!!t.is_active} 
-                                 onChange={(e) => updateTiming(t.id, { is_active: e.target.checked })} 
-                               />
-                               <div className={`w-10 h-5 rounded-full transition-colors ${t.is_active ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                               <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${t.is_active ? 'translate-x-5' : ''}`}></div>
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={!!t.is_active}
+                                onChange={(e) => updateTiming(t.id, { is_active: e.target.checked })}
+                              />
+                              <div className={`w-10 h-5 rounded-full transition-colors ${t.is_active ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                              <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${t.is_active ? 'translate-x-5' : ''}`}></div>
                             </div>
                             <span className={`text-sm font-medium transition-colors ${t.is_active ? 'text-yellow-400' : 'text-white/60'}`}>
                               {t.is_active ? 'Online' : 'Offline'}

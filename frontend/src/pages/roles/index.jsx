@@ -258,7 +258,7 @@ export default function Roles() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
           >
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
+              <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                 <Shield className="text-[#00f2ff]" size={36} />
                 Manage Roles
               </h2>
@@ -299,7 +299,7 @@ export default function Roles() {
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                 <thead>
+                <thead>
                   <tr className="bg-white/[0.02] border-b border-white/[0.08] text-white text-sm font-bold tracking-tight">
                     <th className="px-8 py-6 w-16">#</th>
                     <th className="px-8 py-6 w-48">Role Title</th>
@@ -323,7 +323,7 @@ export default function Roles() {
                         key={r.id}
                         className="hover:bg-white/[0.02] transition-colors group"
                       >
-                         <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
+                        <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
                         <td className="px-8 py-6 font-bold text-[#00f2ff] tracking-wide">{r.title}</td>
                         <td className="px-8 py-6">
                           {renderPermissionsInline(r.permissions)}
@@ -356,7 +356,7 @@ export default function Roles() {
 
             {/* Footer */}
             <div className="p-6 border-t border-white/[0.08] bg-white/[0.02] flex justify-between items-center text-white/40 text-sm">
-               <span className="font-bold tracking-wide">Showing {Math.min(filteredRoles.length, pageSize)} of {filteredRoles.length} entries</span>
+              <span className="font-bold tracking-wide">Showing {Math.min(filteredRoles.length, pageSize)} of {filteredRoles.length} entries</span>
               <div className="flex gap-2">
                 <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/20 border border-white/[0.1] disabled:opacity-30 cursor-not-allowed" disabled>&laquo;</button>
                 <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#00f2ff] text-[#071428] font-black border border-[#00f2ff]/20 shadow-lg shadow-[#00f2ff]/20">1</button>

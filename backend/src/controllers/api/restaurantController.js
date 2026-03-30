@@ -106,19 +106,35 @@ export const getRestaurantById = async (req, res) => {
     } else if (typeof r.food_type === "number") {
       foodTypeArr = [r.food_type];
     }
+    let cuisineTypeArr = [];
+    if (typeof r.cuisine_type === "string" && r.cuisine_type.length > 0) {
+      cuisineTypeArr = r.cuisine_type.split(",").map(v => Number(v)).filter(v => !isNaN(v));
+    } else if (typeof r.cuisine_type === "number") {
+      cuisineTypeArr = [r.cuisine_type];
+    }
+
     const restaurant = {
       id: r.id,
       userid: r.user_id,
       restaurant_name: r.restaurant_name,
       restaurant_address: r.restaurant_address,
       restaurant_phonenumber: r.restaurant_phonenumber,
+      restaurant_email: r.restaurant_email,
       restaurant_photo: buildPhotoUrl(req, r.restaurant_photo),
       instore: !!r.instore,
       kerbside: !!r.kerbside,
       latitude: r.latitude,
       longitude: r.longitude,
       food_type: foodTypeArr,
-      is_halal: !!r.is_halal,
+      cuisine_type: cuisineTypeArr,
+      is_halal: r.is_halal ? 1 : 0,
+      parking_info: r.parking_info || null,
+      google_review_link: r.google_review_link || null,
+      website_url: r.website_url || null,
+      restaurant_facebook: r.restaurant_facebook || null,
+      restaurant_instagram: r.restaurant_instagram || null,
+      restaurant_twitter: r.restaurant_twitter || null,
+      restaurant_tiktok: r.restaurant_tiktok || null,
     };
 
     return res.json({ status: 1, data: [restaurant] });

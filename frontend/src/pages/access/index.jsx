@@ -104,7 +104,7 @@ export default function AccessManagement() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
           >
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
+              <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                 <Shield className="text-[#00f2ff]" size={36} />
                 Permissions
               </h2>
@@ -145,7 +145,7 @@ export default function AccessManagement() {
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                 <thead>
+                <thead>
                   <tr className="bg-white/[0.02] border-b border-white/[0.08] text-white text-sm font-bold tracking-tight">
                     <th className="px-8 py-6 w-20">#</th>
                     <th className="px-8 py-6">Permission Title</th>
@@ -167,7 +167,7 @@ export default function AccessManagement() {
                         key={p.id}
                         className="hover:bg-white/[0.02] transition-colors group"
                       >
-                         <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
+                        <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
                         <td className="px-8 py-6 font-bold text-[#00f2ff] group-hover:text-white transition-colors tracking-wide">{p.title}</td>
                         <td className="px-8 py-6 text-white/60 font-medium tracking-wide">
                           {p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
@@ -199,7 +199,7 @@ export default function AccessManagement() {
 
             {/* Footer */}
             <div className="p-6 border-t border-white/[0.08] bg-white/[0.02] flex justify-between items-center">
-               <span className="text-white text-sm font-bold tracking-wide">Showing {filtered.length} entries</span>
+              <span className="text-white text-sm font-bold tracking-wide">Showing {filtered.length} entries</span>
               {/* Pagination Placeholders */}
               <div className="flex gap-2">
                 <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/[0.05] text-white/20 border border-white/[0.1] disabled:opacity-30 cursor-not-allowed" disabled>&laquo;</button>
@@ -303,7 +303,7 @@ export default function AccessManagement() {
                   />
                 </div>
 
-                 <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/[0.08]">
                   <button onClick={() => setEditOpen(false)} className="px-6 py-3 rounded-xl text-white/60 hover:text-white font-bold text-sm transition-all">Cancel</button>
                   <button
                     onClick={handleEditSave}

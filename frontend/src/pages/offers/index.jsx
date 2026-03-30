@@ -152,11 +152,11 @@ export default function OffersPage() {
                       <Tag className="text-yellow-400" size={24} />
                     </div>
                     <div>
-                      <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Offers & Promotions</h1>
+                      <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Offers & Promotions</h1>
                       <p className="text-white mt-1.5 text-sm font-medium tracking-wide leading-none">Create and manage special offers for your customers</p>
                     </div>
                   </div>
-                   <button
+                  <button
                     onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
                     className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
                   >
@@ -192,16 +192,16 @@ export default function OffersPage() {
                         <p className="text-xs font-medium text-white/50 tracking-wide mt-1.5 leading-relaxed line-clamp-2">{offer.description || "No description available"}</p>
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
-                          <div className="flex items-center gap-3">
-                            <div className="relative group/toggle cursor-pointer" onClick={() => handleToggle(offer)}>
-                              <input type="checkbox" className="sr-only" checked={offer.status === 'active'} readOnly />
-                              <div className={`w-10 h-5 rounded-full transition-colors ${offer.status === 'active' ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                              <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${offer.status === 'active' ? 'translate-x-5' : ''}`}></div>
-                            </div>
-                            <span className={`text-[10px] font-bold tracking-wide transition-colors ${offer.status === 'active' ? 'text-yellow-400' : 'text-white/30'}`}>
-                              {offer.status === 'active' ? 'Active' : 'Inactive'}
-                            </span>
+                        <div className="flex items-center gap-3">
+                          <div className="relative group/toggle cursor-pointer" onClick={() => handleToggle(offer)}>
+                            <input type="checkbox" className="sr-only" checked={offer.status === 'active'} readOnly />
+                            <div className={`w-10 h-5 rounded-full transition-colors ${offer.status === 'active' ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                            <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${offer.status === 'active' ? 'translate-x-5' : ''}`}></div>
                           </div>
+                          <span className={`text-[10px] font-bold tracking-wide transition-colors ${offer.status === 'active' ? 'text-yellow-400' : 'text-white/30'}`}>
+                            {offer.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <button onClick={() => handleEdit(offer)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all"><Edit size={14} /></button>
                           <button onClick={() => handleDelete(offer.id)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all"><Trash2 size={14} /></button>
@@ -215,7 +215,7 @@ export default function OffersPage() {
                   onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
                   className="bg-white/[0.02] border-2 border-dashed border-white/10 rounded-[2rem] h-full min-h-[280px] flex flex-col items-center justify-center gap-4 group hover:bg-white/5 hover:border-yellow-500/30 transition-all"
                 >
-                   <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-yellow-500/10 transition-colors"><Plus className="text-white/20 group-hover:text-yellow-400" size={32} /></div>
+                  <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-yellow-500/10 transition-colors"><Plus className="text-white/20 group-hover:text-yellow-400" size={32} /></div>
                   <span className="text-white/20 font-bold text-sm">Create Offer</span>
                 </button>
               </div>
@@ -231,7 +231,7 @@ export default function OffersPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-y-auto overflow-x-hidden custom-scrollbar">
               <div className="sticky top-0 z-10 p-8 border-b border-white/[0.08] bg-white/5 backdrop-blur-xl flex justify-between items-center">
-                 <div>
+                <div>
                   <h2 className="text-xl font-bold text-white tracking-tight">{isEdit ? "Update Campaign" : "New Campaign"}</h2>
                   <p className="text-xs font-medium text-white/40 tracking-wide mt-1">Campaign Details</p>
                 </div>
@@ -240,7 +240,7 @@ export default function OffersPage() {
 
               <div className="p-8 space-y-10">
                 <div className="space-y-4">
-                  <label className="text-sm font-bold text-white flex items-center gap-2"><ImageIcon size={14} /> Campaign Visual Matrix</label>
+                  <label className="text-sm font-bold text-white flex items-center gap-2"><ImageIcon size={14} /> Campaign Offer Banner</label>
                   <div className="relative group">
                     <input type="file" id="offerBanner" className="hidden" accept="image/*" onChange={handleBannerChange} />
                     <label htmlFor="offerBanner" className={`cursor-pointer min-h-[220px] rounded-[1.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden relative ${form.bannerPreview ? 'border-yellow-500/40' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
@@ -255,18 +255,18 @@ export default function OffersPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div>
-                    <label className="block text-sm font-bold text-white mb-3">Campaign Title</label>
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-3">Offer Title</label>
                     <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-medium text-white focus:outline-none focus:border-yellow-400/40 transition-all shadow-inner" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-white mb-3">Campaign Description</label>
+                    <label className="block text-sm font-bold text-white mb-3">Offer Description</label>
                     <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-medium text-white focus:outline-none focus:border-yellow-400/40 transition-all shadow-inner" />
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                   <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-white">Target Items</label>
                     <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                       <button onClick={() => setSelectionTab("categories")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectionTab === 'categories' ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428]' : 'text-white/40'}`}>Categories</button>
@@ -290,7 +290,7 @@ export default function OffersPage() {
                 </div>
               </div>
 
-               <div className="p-8 bg-white/5 border-t border-white/10 flex justify-end gap-4">
+              <div className="p-8 bg-white/5 border-t border-white/10 flex justify-end gap-4">
                 <button onClick={() => setShowModal(false)} className="px-8 py-4 text-xs font-bold text-white/40 hover:text-white transition-all">Cancel</button>
                 <button onClick={handleSubmit} disabled={loading} className="px-10 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-2xl font-bold text-xs shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50">
                   {loading ? "Saving..." : "Save Campaign"}

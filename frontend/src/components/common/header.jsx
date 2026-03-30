@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Check, Navigation } from "lucide-react";
+import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Check, Navigation, Phone, Mail, Calendar, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api.js";
 import ReadyInModal from "./ReadyInModal.jsx";
@@ -204,7 +204,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
                         <MapPin size={16} />
                       </div>
                       <div>
-                        <p className="text-white text-xs font-bold uppercase tracking-wider mb-0.5">Current Detected Location</p>
+                        <p className="text-white text-xs font-bold tracking-wider mb-0.5">Current Detected Location</p>
                         <p className="text-white/80 text-sm font-medium leading-snug">{currentAddress}</p>
                         <div className="flex gap-2 mt-2">
                           <span className="inline-flex items-center text-[10px] font-mono text-white/50 bg-white/5 px-2 py-1 rounded border border-white/5">
@@ -284,6 +284,10 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
   const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
   const [generalNotifications, setGeneralNotifications] = useState([]);
+  const [reservations, setReservations] = useState([]); // Track pending reservations
+
+  const [selectedQuickRes, setSelectedQuickRes] = useState(null);
+  const [updatingRes, setUpdatingRes] = useState(false);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const storedUserId = localStorage.getItem("userid") || user.id;
   const isSuperAdmin = String(user.role_title || "").toLowerCase() === "super admin";
@@ -415,7 +419,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
       setOrders((prev) => {
         // If we have more new orders than before, triggers toast & sound
         if (newOrders.length > prev.length) {
-          const latestOrder = newOrders[0]; // Assuming newest is first or just take one
+          const latestOrder = newOrders[0]; 
 
           // Sound
           const audio = new Audio("/message.mp3");
@@ -423,12 +427,48 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
           // Toast
           setNewOrderToast(latestOrder);
-          // No auto-close: popup stays until action
         }
         return newOrders;
       });
     } catch (err) {
-      console.error("Notification fetch failed:", err);
+      console.error("Order notification fetch failed:", err);
+    }
+  };
+
+  const fetchNewReservations = async () => {
+    if (!token) return;
+    try {
+      // Use the existing admin reservation endpoint
+      const res = await api.get("/table-reservations");
+      if (res.data.status !== 1) return;
+
+      const allRows = res.data.data || [];
+      const pendingRows = allRows.filter(r => r.status === 'pending');
+
+      setReservations(prev => {
+        // If we have more pending reservations than before
+        if (pendingRows.length > prev.length) {
+          const latest = pendingRows[0];
+          
+          // Sound
+          const audio = new Audio("/message.mp3");
+          audio.play().catch(() => {});
+
+          // Toast Alert
+          setNewOrderToast({
+             ...latest,
+             isReservation: true,
+             order_number: `Res #${latest.id}`,
+             customer_name: latest.customer_name,
+             body: `Table request for ${latest.party_size} persons`,
+             items: [], // no food items
+             order_total: 0
+          });
+        }
+        return pendingRows;
+      });
+    } catch (err) {
+      console.error("Reservation notification failed:", err);
     }
   };
 
@@ -469,9 +509,11 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
   useEffect(() => {
     fetchNewOrders();
+    fetchNewReservations(); // Added polling for reservations
     fetchGeneralNotifications();
     const interval = setInterval(() => {
       fetchNewOrders();
+      fetchNewReservations(); // Added polling for reservations
       fetchGeneralNotifications();
     }, 10000);
     return () => clearInterval(interval);
@@ -510,10 +552,35 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
   const handleReject = async (order) => {
     try {
-      await api.post("/mobile/orders/update-status", { order_number: order.order_number, status: 2 });
-      setNewOrderToast(null); // Close popup after action
+      if (order.isReservation) {
+        await api.put(`/table-reservations/${order.id}/status`, { status: "cancelled" });
+      } else {
+        await api.post("/mobile/orders/update-status", { order_number: order.order_number, status: 2 });
+      }
+      setNewOrderToast(null);
       fetchNewOrders();
-    } catch { alert("Failed to reject order"); }
+      fetchNewReservations();
+    } catch {
+      alert("Failed to reject");
+    }
+  };
+
+  const handleGoToReservation = (res) => {
+    setNewOrderToast(null);
+    setSelectedQuickRes(res); // Open the modal directly
+  };
+
+  const handleQuickUpdateStatus = async (id, status) => {
+    setUpdatingRes(true);
+    try {
+      await api.put(`/table-reservations/${id}/status`, { status });
+      setSelectedQuickRes((prev) => ({ ...prev, status }));
+      fetchNewReservations(); // Refresh polling
+    } catch {
+      alert("Failed to update status");
+    } finally {
+      setUpdatingRes(false);
+    }
   };
 
   return (
@@ -558,7 +625,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
           {/* MOBILE CENTER: Location ONLY */}
           <div className="flex lg:hidden flex-1 items-center mx-1.5 min-w-0">
-            <button 
+            <button
               onClick={() => setIsLocationModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 shrink-0 active:scale-95 transition-all"
             >
@@ -590,17 +657,16 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
             <div className="relative" ref={notifyRef}>
               <button
                 onClick={() => setShowNotifications((v) => !v)}
-                className={`relative p-2.5 rounded-xl transition-all duration-200 ${
-                  showNotifications
+                className={`relative p-2.5 rounded-xl transition-all duration-200 ${showNotifications
                     ? 'bg-white/10 text-yellow-300'
                     : 'text-white/60 hover:text-white hover:bg-white/8'
                   }`}
               >
                 <Bell size={19} />
-                {(orders.length + generalNotifications.length) > 0 && (
+                {(orders.length + generalNotifications.length + reservations.length) > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[17px] h-[17px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full border-2 shadow-lg"
                     style={{ borderColor: '#071428' }}>
-                    {orders.length + generalNotifications.length}
+                    {orders.length + generalNotifications.length + reservations.length}
                   </span>
                 )}
               </button>
@@ -615,8 +681,8 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-white/[0.07] flex justify-between items-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
                     <h3 className="font-semibold text-white text-sm sm:text-[15px] tracking-wide">Notifications</h3>
                     <div className="flex items-center gap-2">
-                      {(orders.length + generalNotifications.length) > 0 && <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/20 text-rose-300 rounded-full border border-rose-500/25">{orders.length + generalNotifications.length} New</span>}
-                      <button
+                       {(orders.length + generalNotifications.length + reservations.length) > 0 && <span className="text-xs font-semibold px-2.5 py-1 bg-rose-500/20 text-rose-300 rounded-full border border-rose-500/25">{orders.length + generalNotifications.length + reservations.length} New</span>}
+                       <button
                         onClick={() => setShowNotifications(false)}
                         className="sm:hidden p-1.5 hover:bg-white/8 text-white/50 hover:text-white rounded-lg transition-colors"
                       >
@@ -626,13 +692,34 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                   </div>
 
                   <div className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto custom-scrollbar">
-                    {orders.length === 0 && generalNotifications.length === 0 ? (
+                    {orders.length === 0 && generalNotifications.length === 0 && reservations.length === 0 ? (
                       <div className="py-10 text-center flex flex-col items-center">
                         <Bell size={36} className="mb-3 text-white/15" strokeWidth={1.2} />
                         <p className="text-sm text-white/40 font-medium">No new notifications</p>
                       </div>
                     ) : (
                       <div className="divide-y divide-white/[0.05]">
+                        {/* Table Reservation Notifications */}
+                        {reservations.map((res) => (
+                          <div key={`res-${res.id}`} className="p-4 sm:p-5 hover:bg-white/[0.04] transition-colors cursor-pointer border-b border-white/[0.05]" onClick={() => { setSelectedQuickRes(res); setShowNotifications(false); }}>
+                            <div className="flex justify-between items-start mb-1">
+                               <div className="flex items-center gap-2">
+                                  <p className="font-bold text-white text-sm">Table Booking</p>
+                                  <span className="px-1.5 py-0.5 bg-yellow-500/20 text-yellow-500 text-[9px] font-black uppercase rounded">Pending</span>
+                               </div>
+                               <p className="text-[10px] text-white/30 uppercase font-medium">Just now</p>
+                            </div>
+                            <p className="text-xs text-white/60 mb-2 truncate">{res.customer_name} • {res.party_size} Persons</p>
+                            <div className="flex items-center gap-3 mt-3">
+                               <button 
+                                  onClick={(e) => { e.stopPropagation(); setSelectedQuickRes(res); setShowNotifications(false); }}
+                                  className="flex-1 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-yellow-500/20"
+                               >
+                                  View Details
+                               </button>
+                            </div>
+                          </div>
+                        ))}
                         {/* General Notifications (Registrations etc) */}
                         {generalNotifications.map((notif) => (
                           <div key={`notif-${notif.id}`} className="p-4 sm:p-5 hover:bg-white/[0.04] transition-colors cursor-pointer" onClick={() => navigate('/restaurantregistration')}>
@@ -823,10 +910,10 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                     <div className="flex justify-between items-start font-sans">
                       <div>
                         <h4 className="text-white font-bold text-base tracking-tight leading-tight">
-                          {newOrderToast.isRegistration ? "New Registration!" : "Incoming Order!"}
+                          {newOrderToast.isRegistration ? "New Registration!" : newOrderToast.isReservation ? "New Reservation!" : "Incoming Order!"}
                         </h4>
                         <p className="text-yellow-400 text-xs font-bold leading-none mt-1 uppercase tracking-widest flex items-center gap-1">
-                          {newOrderToast.isRegistration ? newOrderToast.order_number : `#${newOrderToast.order_number}`}
+                          {newOrderToast.isRegistration || newOrderToast.isReservation ? newOrderToast.order_number : `#${newOrderToast.order_number}`}
                         </p>
                       </div>
                       <button
@@ -838,7 +925,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                     </div>
 
                     <div className="mt-3 space-y-1 max-h-24 overflow-y-auto pr-2 custom-scrollbar">
-                      {newOrderToast.isRegistration ? (
+                      {newOrderToast.isRegistration || newOrderToast.isReservation ? (
                         <p className="text-white/80 text-sm font-medium leading-relaxed">
                           {newOrderToast.body}
                         </p>
@@ -854,10 +941,10 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                     <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">
-                          {newOrderToast.isRegistration ? "Action" : "Amount Paid"}
+                          {newOrderToast.isRegistration || newOrderToast.isReservation ? "Action" : "Amount Paid"}
                         </span>
                         <span className="text-lg font-black text-white">
-                          {newOrderToast.isRegistration ? "Review" : `£${Number(newOrderToast.order_total).toFixed(2)}`}
+                          {newOrderToast.isRegistration || newOrderToast.isReservation ? "Review" : `£${Number(newOrderToast.order_total).toFixed(2)}`}
                         </span>
                       </div>
                       <div className="flex gap-2">
@@ -876,6 +963,13 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                               Reject
                             </button>
                           </>
+                        ) : newOrderToast.isReservation ? (
+                          <button
+                            onClick={() => handleGoToReservation(newOrderToast)}
+                            className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
+                          >
+                            View Booking
+                          </button>
                         ) : (
                           <button
                             onClick={() => {
@@ -901,6 +995,114 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
               />
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Global Quick Reservation Modal (Appears directly from toaster/bell) */}
+      <AnimatePresence>
+        {selectedQuickRes && (
+          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               onClick={() => setSelectedQuickRes(null)}
+               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+               initial={{ scale: 0.9, opacity: 0 }} 
+               animate={{ scale: 1, opacity: 1 }} 
+               exit={{ scale: 0.9, opacity: 0 }}
+               className="bg-[#1a1c23] border border-white/[0.1] rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 flex flex-col max-h-[85vh] overflow-hidden"
+               onClick={e => e.stopPropagation()}
+            >
+              <div className="p-8 border-b border-white/[0.08] flex items-center justify-between bg-gradient-to-r from-[#071428] to-[#0d1f45] shrink-0">
+                <div>
+                  <h3 className="text-2xl font-semibold text-white tracking-tight">Reservation Details</h3>
+                  <p className="text-xs text-white/40 mt-2 font-medium tracking-wider leading-none">Booking ID: #{selectedQuickRes.id}</p>
+                </div>
+                <button onClick={() => setSelectedQuickRes(null)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl text-white/40 hover:text-white transition-all border border-white/10">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/[0.05]">
+                    <p className="text-xs font-semibold text-white/30 mb-2 uppercase tracking-wide">Guest Name</p>
+                    <p className="text-base font-semibold text-white">{selectedQuickRes.customer_name}</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/[0.05]">
+                    <p className="text-xs font-semibold text-white/30 mb-2 uppercase tracking-wide">Status</p>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-widest ${
+                      selectedQuickRes.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                      selectedQuickRes.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                      selectedQuickRes.status === 'seated' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                      'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                    }`}>
+                      {selectedQuickRes.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/[0.05]">
+                    <p className="text-xs font-semibold text-white/30 mb-2 uppercase tracking-wide">Table & Party</p>
+                    <p className="text-base font-semibold text-white">Table: {selectedQuickRes.table_number || "—"} ({selectedQuickRes.party_size} Guests)</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/[0.05]">
+                    <p className="text-xs font-semibold text-white/30 mb-2 uppercase tracking-wide">Duration</p>
+                    <p className="text-base font-semibold text-white">{selectedQuickRes.duration_minutes || 60} minutes</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                   <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
+                      <Phone size={16} className="text-yellow-400/70" />
+                      {selectedQuickRes.customer_phone || "No phone"}
+                   </div>
+                   <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
+                      <Mail size={16} className="text-yellow-400/70" />
+                      {selectedQuickRes.customer_email || "No email"}
+                   </div>
+                   <div className="flex items-center gap-3 text-white/80 text-base font-medium">
+                      <Calendar size={18} className="text-yellow-400/70" />
+                      {new Date(selectedQuickRes.reservation_date).toLocaleDateString()} at {selectedQuickRes.reservation_time}
+                   </div>
+                   <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
+                      <MessageSquare size={16} className="text-yellow-400/70" />
+                      {selectedQuickRes.special_requests || "No special requests"}
+                   </div>
+                </div>
+
+                <div className="pt-6 border-t border-white/[0.08]">
+                  <p className="text-xs font-bold text-white/30 mb-5 uppercase tracking-widest">Update Status</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['confirmed', 'seated', 'completed', 'cancelled', 'no_show'].map(s => (
+                      <button
+                        key={s}
+                        disabled={updatingRes}
+                        onClick={() => handleQuickUpdateStatus(selectedQuickRes.id, s)}
+                        className={`px-3 py-3.5 rounded-2xl text-[13px] font-bold uppercase tracking-wider transition-all border ${
+                          selectedQuickRes.status === s 
+                          ? 'bg-yellow-500 text-slate-900 border-yellow-500 shadow-lg shadow-yellow-500/20' 
+                          : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        {s.replace('_', ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setSelectedQuickRes(null)}
+                  className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all mt-2"
+                >
+                  Close View
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

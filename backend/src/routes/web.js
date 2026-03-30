@@ -84,6 +84,12 @@ import {
   destroy as deleteOffer,
 } from "../controllers/admin/PromotionalOfferController.js";
 
+import {
+  getTableReservations,
+  updateReservationStatus,
+  deleteReservation,
+} from "../controllers/admin/TableReservationController.js";
+
 
 
 const router = express.Router();
@@ -177,5 +183,10 @@ router.post("/offers", auth, upload.single("banner"), saveOffer);
 router.put("/offers/:id", auth, upload.single("banner"), updateOffer);
 router.put("/offers/toggle/:id", auth, toggleOfferStatus);
 router.delete("/offers/:id", auth, deleteOffer);
+
+/* TABLE RESERVATIONS */
+router.get("/table-reservations", auth, getTableReservations);
+router.put("/table-reservations/:id/status", auth, updateReservationStatus);
+router.delete("/table-reservations/:id", auth, deleteReservation);
 
 export default router;

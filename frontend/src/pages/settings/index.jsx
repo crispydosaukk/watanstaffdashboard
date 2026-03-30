@@ -150,7 +150,7 @@ export default function Settings() {
                   <SettingsIcon className="text-yellow-400" size={24} />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Global Settings</h1>
+                  <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Global Settings</h1>
                   <p className="text-white/60 mt-2 text-sm font-medium tracking-wide whitespace-nowrap">Configure bonuses, order rules, and loyalty rewards</p>
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function Settings() {
               {/* MAIN FORM */}
               <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-6 sm:p-10 shadow-2xl border border-white/[0.08]">
                 {loading ? (
-                   <div className="text-center py-20 text-white flex flex-col items-center gap-4">
+                  <div className="text-center py-20 text-white flex flex-col items-center gap-4">
                     <Loader2 className="animate-spin text-yellow-400" size={40} />
                     <span className="text-sm font-bold tracking-wide animate-pulse">Loading Configuration...</span>
                   </div>
@@ -341,7 +341,7 @@ export default function Settings() {
                         {/* Loyalty Available After (Hours) */}
                         <div className="space-y-2">
                           <label className="block text-sm font-medium tracking-wide text-white ml-1 flex items-center gap-2">
-                             Available After (Hours)
+                            Available After (Hours)
                           </label>
                           <div className="relative group">
                             <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
@@ -360,7 +360,7 @@ export default function Settings() {
                         {/* Loyalty Expiry Days */}
                         <div className="space-y-2">
                           <label className="block text-sm font-medium tracking-wide text-white ml-1 flex items-center gap-2">
-                             Points Expiry (Days)
+                            Points Expiry (Days)
                           </label>
                           <div className="relative group">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
@@ -387,7 +387,7 @@ export default function Settings() {
                       <button
                         type="submit"
                         disabled={saving}
-                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl hover:shadow-yellow-500/20 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08]"
+                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black tracking-widest text-l rounded-2xl shadow-xl hover:shadow-yellow-500/20 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08]"
                       >
                         {saving ? (
                           <>

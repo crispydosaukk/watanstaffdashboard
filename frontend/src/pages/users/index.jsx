@@ -245,7 +245,7 @@ export default function Users() {
             className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
           >
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
+              <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
                 <UsersIcon className="text-[#00f2ff]" size={36} />
                 Users List
               </h2>
@@ -286,7 +286,7 @@ export default function Users() {
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
-                 <thead>
+                <thead>
                   <tr className="bg-white/[0.02] border-b border-white/[0.08] text-white text-sm font-bold tracking-tight">
                     <th className="px-8 py-6 w-16">#</th>
                     <th className="px-8 py-6">Name</th>
@@ -311,7 +311,7 @@ export default function Users() {
                         key={u.id}
                         className="hover:bg-white/[0.02] transition-colors group"
                       >
-                         <td className="px-8 py-6 text-white font-bold">{(page - 1) * pageSize + idx + 1}</td>
+                        <td className="px-8 py-6 text-white font-bold">{(page - 1) * pageSize + idx + 1}</td>
                         <td className="px-8 py-6 font-bold text-[#00f2ff] group-hover:text-white transition-colors tracking-wide">{u.name}</td>
                         <td className="px-8 py-6 text-white/60 font-medium tracking-wide">{u.email}</td>
                         <td className="px-8 py-6">
@@ -350,7 +350,7 @@ export default function Users() {
 
             {/* Footer */}
             <div className="p-6 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-4">
-               <span className="text-white/40 text-sm font-bold tracking-wide">Showing {pageSlice.length ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} entries</span>
+              <span className="text-white/40 text-sm font-bold tracking-wide">Showing {pageSlice.length ? (page - 1) * pageSize + 1 : 0} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} entries</span>
 
               <div className="flex items-center gap-6">
                 <select

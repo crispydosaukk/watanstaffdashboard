@@ -14,6 +14,7 @@ import Settings from "./pages/settings/index.jsx";
 import CustomerDetails from "./pages/customerdetails/index.jsx";
 import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
 import OffersPage from "./pages/offers/index.jsx";
+import TableReservations from "./pages/tablereservations/index.jsx";
 import { getSafePath } from "./utils/perm";
 
 function PrivateRoute({ children }) {
@@ -165,8 +166,19 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/table-reservations"
+          element={
+            <PrivateRoute>
+              <RequirePerm perm="table_reservations">
+                <TableReservations />
+              </RequirePerm>
+            </PrivateRoute>
+          }
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

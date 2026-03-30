@@ -50,7 +50,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <div className="bg-white/5 p-5 sm:p-6 rounded-2xl border border-white/[0.08]">
-               <h3 className="text-sm font-bold text-yellow-500 mb-6 flex items-center gap-2"><User size={14} /> Identity Profile</h3>
+              <h3 className="text-sm font-bold text-yellow-500 mb-6 flex items-center gap-2"><User size={14} /> Identity Profile</h3>
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Node</span><span className="text-sm font-bold text-white">{order.customer_name || "Guest"}</span></div>
                 <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Comm</span><span className="text-sm font-bold text-white">{order.mobile_number || "-"}</span></div>
@@ -186,7 +186,7 @@ export default function Orders() {
                     <ShoppingBag className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Order Logistics</h1>
+                    <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Order Management</h1>
                     <p className="text-white mt-1.5 text-sm font-medium tracking-wide">Execute Real-Time Order Fulfillments and Tracking</p>
                   </div>
                 </div>

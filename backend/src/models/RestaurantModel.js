@@ -75,7 +75,7 @@ async function insertRestaurant(conn, userId, payload) {
       `INSERT INTO restaurant_details
         (user_id, restaurant_name, restaurant_address, restaurant_phonenumber,
         restaurant_email, restaurant_facebook, restaurant_twitter, restaurant_instagram,
-        restaurant_linkedin, google_review_link, website_url, delivery_partner_1_url, delivery_partner_2_url, delivery_partner_3_url, delivery_partner_4_url, parking_info, instore, kerbside, latitude, longitude, restaurant_photo,
+        restaurant_tiktok, google_review_link, website_url, delivery_partner_1_url, delivery_partner_2_url, delivery_partner_3_url, delivery_partner_4_url, parking_info, instore, kerbside, latitude, longitude, restaurant_photo,
         stripe_secret_key, stripe_publishable_key, food_type, is_halal, cuisine_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -87,7 +87,7 @@ async function insertRestaurant(conn, userId, payload) {
         payload.restaurant_facebook ?? null,
         payload.restaurant_twitter ?? null,
         payload.restaurant_instagram ?? null,
-        payload.restaurant_linkedin ?? null,
+        payload.restaurant_tiktok ?? null,
         payload.google_review_link ?? null,
         payload.website_url ?? null,
         payload.delivery_partner_1_url ?? null,
@@ -124,7 +124,7 @@ async function updateRestaurant(conn, restaurantId, payload) {
       restaurant_facebook: payload.restaurant_facebook ?? null,
       restaurant_twitter: payload.restaurant_twitter ?? null,
       restaurant_instagram: payload.restaurant_instagram ?? null,
-      restaurant_linkedin: payload.restaurant_linkedin ?? null,
+      restaurant_tiktok: payload.restaurant_tiktok ?? null,
       google_review_link: payload.google_review_link ?? null,
       website_url: payload.website_url ?? null,
       delivery_partner_1_url: payload.delivery_partner_1_url ?? null,

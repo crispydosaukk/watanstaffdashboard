@@ -66,6 +66,7 @@ export function getSafePath() {
     { perm: "customer_info", path: "/customerinfo" },
     { perm: "customer_details", path: "/customerdetails" },
     { perm: "order_management", path: "/orders" },
+    { perm: "table_reservations", path: "/table-reservations" },
     { perm: "settings", path: "/settings" },
     { perm: "restaurant_registration", path: "/restaurantregistration" },
     { perm: "promotional_offers", path: "/offers" }

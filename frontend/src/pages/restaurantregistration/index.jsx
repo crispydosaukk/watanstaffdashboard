@@ -369,373 +369,373 @@ export default function RestaurantRegistration() {
               </div>
             ) : (
               <>
-            {/* Page Header */}
-            {!isEditing && !(myProfile && !isSuperAdmin) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="mb-8"
-              >
-                <div className="flex items-center gap-3 sm:gap-4 mb-6 overflow-hidden">
-                  <div className="p-2.5 sm:p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08] flex-shrink-0">
-                    <Store className="text-yellow-400" size={24} />
-                  </div>
-                  <div className="min-w-0">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Restaurant Registration</h1>
-                    <p className="text-white mt-1 text-sm font-medium tracking-wide">{isSuperAdmin ? "Approval queue for merchant store profiles" : "Register your business and track application"}</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {isSuperAdmin ? (
-              /* SUPER ADMIN VIEW: LIST OF SUBMISSIONS */
-              <div className="space-y-6">
-                {/* Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">                   <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-white text-sm font-bold tracking-wide">Total</p>
-                      <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.length}</h3>
-                    </div>
-                    <Users className="text-yellow-400/20" size={28} />
-                  </div>
-                  <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-amber-400 text-sm font-bold tracking-wide">Pending</p>
-                      <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 0).length}</h3>
-                    </div>
-                    <Clock className="text-amber-400/20" size={28} />
-                  </div>
-                  <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-emerald-400 text-sm font-bold tracking-wide">Approved</p>
-                      <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 1).length}</h3>
-                    </div>
-                    <CheckCircle className="text-emerald-400/20" size={28} />
-                  </div>
-                  <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
-                    <div>
-                      <p className="text-rose-400 text-sm font-bold tracking-wide">Declined</p>
-                      <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 2).length}</h3>
-                    </div>
-                    <AlertCircle className="text-rose-400/20" size={28} />
-                  </div>
-                </div>
-
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search by store, name or email..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-14 pr-6 py-4 bg-[#0b1a3d]/40 backdrop-blur-xl border-2 border-white/[0.08] rounded-2xl text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 shadow-2xl transition-all font-bold"
-                  />
-                </div>
-
-                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-white/5 text-left border-b border-white/[0.08]">
-                          <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Business</th>
-                          <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Applicant</th>
-                          <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Status</th>
-                          <th className="px-8 py-4 text-xs font-bold text-white tracking-wide text-center">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {filteredProfiles.length === 0 ? (
-                          <tr>
-                            <td colSpan="4" className="px-10 py-20 text-center opacity-30 text-xs font-bold tracking-wide">No Records Found</td>
-                          </tr>
-                        ) : (
-                          filteredProfiles.map((p) => (
-                            <tr key={p.id} className="hover:bg-white/5 transition-colors group">
-                              <td className="px-8 py-6">
-                                <div className="flex items-center gap-4">
-                                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg text-white ${p.status === 1 ? 'bg-emerald-500' : p.status === 2 ? 'bg-rose-500' : 'bg-amber-500'}`}>
-                                    {p.store_name?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <p className="font-black text-lg tracking-tight text-white uppercase">{p.store_name}</p>
-                                </div>
-                              </td>
-                              <td className="px-8 py-6">
-                                <p className="font-black text-white tracking-tight">{p.first_name} {p.surname}</p>
-                                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">{p.email}</p>
-                              </td>
-                              <td className="px-8 py-6">
-                                <div className="flex items-center gap-3">
-                                  <span className={`px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest flex items-center gap-2 ${p.status === 0 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : p.status === 1 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
-                                    {p.status === 0 && <Clock size={10} />}
-                                    {p.status === 1 && <CheckCircle size={10} />}
-                                    {p.status === 2 && <X size={10} />}
-                                    {p.status === 0 ? "Pending" : p.status === 1 ? "Approved" : "Declined"}
-                                  </span>
-                                  <button onClick={() => setViewingProfile(p)} className="p-2 bg-white/5 hover:bg-yellow-500/20 text-white/30 hover:text-yellow-400 rounded-xl transition-all border border-white/[0.08]"><Eye size={14} /></button>
-                                </div>
-                              </td>
-                              <td className="px-8 py-6">
-                                <div className="flex items-center justify-center gap-3">
-                                  {p.status === 0 && (
-                                    <>
-                                      <button onClick={() => handleUpdateStatus(p.id, 1)} className="p-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-xl transition-all shadow-lg"><Check size={20} className="font-black" /></button>
-                                      <button onClick={() => setRejectingId(p.id)} className="p-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white rounded-xl transition-all shadow-lg"><X size={20} className="font-black" /></button>
-                                    </>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            ) : myProfile && !isEditing ? (
-              /* COMPACT USER VIEW: STATUS SCREEN */
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex-1 flex items-center justify-center py-10"
-              >
-                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] p-10 md:p-14 border border-white/[0.08] shadow-2xl relative overflow-hidden w-full max-w-4xl text-center">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-yellow-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
-
-                  <div className="relative flex flex-col items-center space-y-10">
-                    <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center border shadow-2xl ${myProfile.status === 0 ? 'bg-amber-500/10 border-amber-500/30' : myProfile.status === 1 ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
-                      {myProfile.status === 0 && <Clock size={48} className="text-amber-500" />}
-                      {myProfile.status === 1 && <CheckCircle size={48} className="text-emerald-500" />}
-                      {myProfile.status === 2 && <AlertCircle size={48} className="text-rose-500" />}
-                    </div>
-
-                    <div className="space-y-4">
-                      <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight ${myProfile.status === 1 ? 'text-emerald-400' : myProfile.status === 2 ? 'text-rose-400' : 'text-white'}`}>
-                        {myProfile.status === 0 ? "Application Under Review" : myProfile.status === 1 ? "Partner Verified" : "Application Declined"}
-                      </h2>
-                      <p className="text-white text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-                        {myProfile.status === 0 && <>Your request is being processed. Our compliance team is auditing your details. Acceptance expected within <span className="text-yellow-400 font-bold">24 Hours</span>.</>}
-                        {myProfile.status === 1 && <>Congratulations! <span className="font-bold text-white">{myProfile.store_name}</span> is now a verified partner. Launch your dashboard to begin operations.</>}
-                        {myProfile.status === 2 && <>Unfortunately, your application for <span className="font-bold text-white">{myProfile.store_name}</span> was not successful. Review our feedback below.</>}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                      <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/[0.08] flex flex-col items-start min-w-[160px]">
-                        <span className="text-xs font-bold text-white tracking-wide">Reference</span>
-                        <span className="font-bold text-sm text-yellow-400 tracking-tight">#ZBR-{myProfile.id.toString().padStart(4, '0')}</span>
+                {/* Page Header */}
+                {!isEditing && !(myProfile && !isSuperAdmin) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="mb-8"
+                  >
+                    <div className="flex items-center gap-3 sm:gap-4 mb-6 overflow-hidden">
+                      <div className="p-2.5 sm:p-3 bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/[0.08] flex-shrink-0">
+                        <Store className="text-yellow-400" size={24} />
                       </div>
-                      <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/[0.08] flex flex-col items-start min-w-[160px]">
-                        <span className="text-xs font-bold text-white tracking-wide">Business</span>
-                        <span className="font-bold text-sm tracking-tight text-white">{myProfile.store_name}</span>
+                      <div className="min-w-0">
+                        <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Restaurant Registration</h1>
+                        <p className="text-white mt-1 text-sm font-medium tracking-wide">{isSuperAdmin ? "Approval queue for merchant store profiles" : "Register your business and track application"}</p>
                       </div>
                     </div>
+                  </motion.div>
+                )}
 
-                    {myProfile.status === 2 && myProfile.rejection_reason && (
-                      <div className="w-full max-w-lg px-6 py-5 bg-rose-500/10 rounded-2xl border border-rose-500/20 text-center">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 block mb-2">Audit Feedback</span>
-                        <p className="text-sm font-bold text-rose-100 italic leading-relaxed">"{myProfile.rejection_reason}"</p>
+                {isSuperAdmin ? (
+                  /* SUPER ADMIN VIEW: LIST OF SUBMISSIONS */
+                  <div className="space-y-6">
+                    {/* Stats */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">                   <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
+                      <div>
+                        <p className="text-white text-sm font-bold tracking-wide">Total</p>
+                        <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.length}</h3>
                       </div>
-                    )}
-
-                    <div className="pt-6 flex flex-wrap gap-4 items-center justify-center">
-                      {myProfile.status === 1 ? (
-                        <button className="px-12 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1">
-                          Launch My Dashboard
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setViewingProfile(myProfile)}
-                            className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/[0.08] transition-all flex items-center gap-3"
-                          >
-                            <Eye size={18} className="text-yellow-400" /> View Details
-                          </button>
-                          <button
-                            onClick={() => setIsEditing(true)}
-                            className="px-8 py-4 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-yellow-500/20 transition-all flex items-center gap-3"
-                          >
-                            <Edit3 size={18} /> Edit Application
-                          </button>
-                        </>
-                      )}
+                      <Users className="text-yellow-400/20" size={28} />
                     </div>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              /* REGISTRATION FORM (Create or Edit) */
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-5xl mx-auto bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] border border-white/[0.08] shadow-2xl overflow-hidden mb-20"
-              >
-                <div className="px-8 sm:px-12 py-10 border-b border-white/[0.08] bg-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                  <div className="flex items-center gap-5 overflow-hidden">
-                    {isEditing ? (
-                      <button onClick={() => setIsEditing(false)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 text-white transition-all border border-white/[0.08]"><ArrowLeft size={20} /></button>
-                    ) : (
-                      <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center border border-yellow-400/20 shrink-0"><Plus className="text-yellow-400" size={28} /></div>
-                    )}
-                    <div className="min-w-0">
-                      <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{isEditing ? "Modify Application" : "Merchant Onboarding"}</h2>
-                      <p className="text-white mt-1 text-sm font-medium tracking-wide">{isEditing ? "Refine profile and trigger re-audit" : "Initiate enterprise partnership"}</p>
-                    </div>
-                  </div>
-                  {isEditing && (
-                    <div className="px-5 py-2.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2">
-                      <Clock size={12} /> Editing Mode
-                    </div>
-                  )}
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-8 sm:p-14 space-y-14">
-                  {/* Personal Info */}
-                  <div className="space-y-10 group">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 01. Contact Protocol</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <InputGroup label="First Name" name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="Legal name" icon={Users} required />
-                      <InputGroup label="Last Name" name="surname" value={formData.surname} onChange={handleInputChange} placeholder="Last name" icon={Users} required />
-                      <InputGroup label="Email Address" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="Business email" icon={Mail} required />
-                      <InputGroup label="Land Line" name="landline_number" value={formData.landline_number} onChange={handleInputChange} placeholder="Landline connection" icon={Phone} />
-
-                      <div className="space-y-2 group">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-                          <Phone size={12} className="text-yellow-400" /> Mobile Number <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="grid grid-cols-4 gap-3">
-                          <div className="col-span-1">
-                            <select
-                              name="country_code"
-                              value={formData.country_code}
-                              onChange={handleInputChange}
-                              className="w-full px-2 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-black text-[11px] focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-center appearance-none cursor-pointer"
-                            >
-                              <option value="IN" className="bg-[#0b1a3d]">+91 IN</option>
-                              <option value="UK" className="bg-[#0b1a3d]">+44 UK</option>
-                            </select>
-                          </div>
-                          <div className="col-span-3">
-                            <input
-                              type="text"
-                              name="mobile_number"
-                              value={formData.mobile_number}
-                              onChange={handleInputChange}
-                              placeholder="Main operator line"
-                              required
-                              className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
-                            />
-                          </div>
+                      <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
+                        <div>
+                          <p className="text-amber-400 text-sm font-bold tracking-wide">Pending</p>
+                          <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 0).length}</h3>
                         </div>
+                        <Clock className="text-amber-400/20" size={28} />
                       </div>
-
-                      <InputGroup label="Digital Presence" name="social_media_website_link" value={formData.social_media_website_link} onChange={handleInputChange} placeholder="Website or Social link" icon={Globe} />
+                      <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
+                        <div>
+                          <p className="text-emerald-400 text-sm font-bold tracking-wide">Approved</p>
+                          <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 1).length}</h3>
+                        </div>
+                        <CheckCircle className="text-emerald-400/20" size={28} />
+                      </div>
+                      <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl p-5 border border-white/[0.08] shadow-2xl flex items-center justify-between">
+                        <div>
+                          <p className="text-rose-400 text-sm font-bold tracking-wide">Declined</p>
+                          <h3 className="text-2xl font-bold mt-1 text-white tracking-tight">{merchantProfiles.filter(p => p.status === 2).length}</h3>
+                        </div>
+                        <AlertCircle className="text-rose-400/20" size={28} />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Store Details */}
-                  <div className="space-y-10 pt-10 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 02. Establishment Profile</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <InputGroup label="Trading Name" name="store_name" value={formData.store_name} onChange={handleInputChange} placeholder="Licensed name" icon={Store} required />
-                      <InputGroup label="Brand identity" name="brand_name" value={formData.brand_name} onChange={handleInputChange} placeholder="Public brand name" icon={Briefcase} required />
-
-                      <SelectGroup label="Business Category" name="business_type" value={formData.business_type} onChange={handleInputChange} options={[{ value: "Restaurant", label: "Restaurant" }, { value: "Bakery", label: "Bakery" }, { value: "Cafe", label: "Cafe" }]} icon={Briefcase} required />
-                      <SelectGroup
-                        label="Cuisine Topology"
-                        name="cuisine_type"
-                        value={formData.cuisine_type}
-                        onChange={handleInputChange}
-                        options={[
-                          { value: "0", label: "Indian" },
-                          { value: "1", label: "Afghan" },
-                          { value: "2", label: "Pakistani" },
-                          { value: "3", label: "Chinese" },
-                          { value: "4", label: "Italian" },
-                          { value: "5", label: "Thai" },
-                          { value: "6", label: "Mexican" },
-                          { value: "7", label: "Fried Chicken" }
-                        ]}
-                        icon={Store}
-                        required
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30" size={20} />
+                      <input
+                        type="text"
+                        placeholder="Search by store, name or email..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-14 pr-6 py-4 bg-[#0b1a3d]/40 backdrop-blur-xl border-2 border-white/[0.08] rounded-2xl text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 shadow-2xl transition-all font-bold"
                       />
+                    </div>
 
-                      <SelectGroup label="Network Scope" name="number_of_locations" value={formData.number_of_locations} onChange={handleInputChange} options={[{ value: "1", label: "Single Unit" }, { value: "2-5", label: "2-5 Units" }, { value: "5+", label: "5+ Units" }]} icon={Building2} required />
-                      <InputGroup label="Floor / Unit" name="floor_suite" value={formData.floor_suite} onChange={handleInputChange} placeholder="e.g. Ground Floor, Suite 402" icon={Building2} />
-
-                      <div className="md:col-span-2">
-                        <InputGroup label="Operational Headquarters" name="store_address" value={formData.store_address} onChange={handleInputChange} placeholder="Full physical location address" icon={MapPin} required />
+                    <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-white/5 text-left border-b border-white/[0.08]">
+                              <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Business</th>
+                              <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Applicant</th>
+                              <th className="px-8 py-4 text-xs font-bold text-white tracking-wide">Status</th>
+                              <th className="px-8 py-4 text-xs font-bold text-white tracking-wide text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {filteredProfiles.length === 0 ? (
+                              <tr>
+                                <td colSpan="4" className="px-10 py-20 text-center opacity-30 text-xs font-bold tracking-wide">No Records Found</td>
+                              </tr>
+                            ) : (
+                              filteredProfiles.map((p) => (
+                                <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                                  <td className="px-8 py-6">
+                                    <div className="flex items-center gap-4">
+                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg text-white ${p.status === 1 ? 'bg-emerald-500' : p.status === 2 ? 'bg-rose-500' : 'bg-amber-500'}`}>
+                                        {p.store_name?.charAt(0).toUpperCase()}
+                                      </div>
+                                      <p className="font-black text-lg tracking-tight text-white uppercase">{p.store_name}</p>
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                    <p className="font-black text-white tracking-tight">{p.first_name} {p.surname}</p>
+                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-0.5">{p.email}</p>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                    <div className="flex items-center gap-3">
+                                      <span className={`px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest flex items-center gap-2 ${p.status === 0 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : p.status === 1 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+                                        {p.status === 0 && <Clock size={10} />}
+                                        {p.status === 1 && <CheckCircle size={10} />}
+                                        {p.status === 2 && <X size={10} />}
+                                        {p.status === 0 ? "Pending" : p.status === 1 ? "Approved" : "Declined"}
+                                      </span>
+                                      <button onClick={() => setViewingProfile(p)} className="p-2 bg-white/5 hover:bg-yellow-500/20 text-white/30 hover:text-yellow-400 rounded-xl transition-all border border-white/[0.08]"><Eye size={14} /></button>
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                    <div className="flex items-center justify-center gap-3">
+                                      {p.status === 0 && (
+                                        <>
+                                          <button onClick={() => handleUpdateStatus(p.id, 1)} className="p-2.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-xl transition-all shadow-lg"><Check size={20} className="font-black" /></button>
+                                          <button onClick={() => setRejectingId(p.id)} className="p-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white rounded-xl transition-all shadow-lg"><X size={20} className="font-black" /></button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
+                ) : myProfile && !isEditing ? (
+                  /* COMPACT USER VIEW: STATUS SCREEN */
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex-1 flex items-center justify-center py-10"
+                  >
+                    <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] p-10 md:p-14 border border-white/[0.08] shadow-2xl relative overflow-hidden w-full max-w-4xl text-center">
+                      <div className="absolute top-0 right-0 w-80 h-80 bg-yellow-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
 
-                  {/* Compliance */}
-                  <div className="space-y-10 pt-10 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 03. Regulatory Compliance</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <FileUpload label="Food Business License" name="food_business_license" value={formData.food_business_license} onChange={handleInputChange} icon={Shield} required />
-                      <FileUpload label="Hygiene Certificate" name="food_hygiene_certificate" value={formData.food_hygiene_certificate} onChange={handleInputChange} icon={CheckCircle} required />
-                      <FileUpload label="Business Registration" name="business_registration_certificate" value={formData.business_registration_certificate} onChange={handleInputChange} icon={Briefcase} required />
-                      <InputGroup label="VAT Identifer" name="vat_registration_number" value={formData.vat_registration_number} onChange={handleInputChange} placeholder="Tax Identifier" icon={Hash} />
-                    </div>
-                  </div>
-
-                  {/* Financial */}
-                  <div className="space-y-10 pt-10 border-t border-white/[0.08]">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 04. Financial Settlement</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                      <InputGroup label="Account Holder" name="bank_account_name" value={formData.bank_account_name} onChange={handleInputChange} placeholder="Beneficiary name" icon={Users} required />
-                      <InputGroup label="Account Number" name="bank_account_number" value={formData.bank_account_number} onChange={handleInputChange} placeholder="Primary digits" icon={Hash} required />
-                      <InputGroup label="Sort Code" name="bank_sort_code" value={formData.bank_sort_code} onChange={handleInputChange} placeholder="Branch identifier" icon={Building2} required />
-                      <FileUpload label="Bank Verification" name="bank_statement_file" value={formData.bank_statement_file} onChange={handleInputChange} icon={Download} required />
-                    </div>
-                  </div>
-                   <div className="pt-10 flex flex-col sm:flex-row justify-between items-center gap-8 border-t border-white/[0.08]">
-                    <div className="flex items-start gap-4 max-w-xl text-xs font-medium text-white/50 italic">
-                      <AlertCircle className="shrink-0 text-yellow-500" size={18} />
-                      <p>By submitting, you certify that all enterprise data provided is legally accurate for audit.</p>
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full sm:w-auto px-16 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:opacity-50"
-                    >
-                      {submitting ? (
-                        <div className="flex items-center gap-3">
-                          <Loader2 className="animate-spin" size={20} />
-                          Transmitting...
+                      <div className="relative flex flex-col items-center space-y-10">
+                        <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center border shadow-2xl ${myProfile.status === 0 ? 'bg-amber-500/10 border-amber-500/30' : myProfile.status === 1 ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
+                          {myProfile.status === 0 && <Clock size={48} className="text-amber-500" />}
+                          {myProfile.status === 1 && <CheckCircle size={48} className="text-emerald-500" />}
+                          {myProfile.status === 2 && <AlertCircle size={48} className="text-rose-500" />}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <Send size={18} className="font-bold" />
-                          {isEditing ? "Re-submit Portal" : "Submit Global Application"}
+
+                        <div className="space-y-4">
+                          <h2 className={`text-3xl md:text-4xl font-bold tracking-tight leading-tight ${myProfile.status === 1 ? 'text-emerald-400' : myProfile.status === 2 ? 'text-rose-400' : 'text-white'}`}>
+                            {myProfile.status === 0 ? "Application Under Review" : myProfile.status === 1 ? "Partner Verified" : "Application Declined"}
+                          </h2>
+                          <p className="text-white text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
+                            {myProfile.status === 0 && <>Your request is being processed. Our compliance team is auditing your details. Acceptance expected within <span className="text-yellow-400 font-bold">24 Hours</span>.</>}
+                            {myProfile.status === 1 && <>Congratulations! <span className="font-bold text-white">{myProfile.store_name}</span> is now a verified partner. Launch your dashboard to begin operations.</>}
+                            {myProfile.status === 2 && <>Unfortunately, your application for <span className="font-bold text-white">{myProfile.store_name}</span> was not successful. Review our feedback below.</>}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-center gap-4">
+                          <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/[0.08] flex flex-col items-start min-w-[160px]">
+                            <span className="text-xs font-bold text-white tracking-wide">Reference</span>
+                            <span className="font-bold text-sm text-yellow-400 tracking-tight">#ZBR-{myProfile.id.toString().padStart(4, '0')}</span>
+                          </div>
+                          <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/[0.08] flex flex-col items-start min-w-[160px]">
+                            <span className="text-xs font-bold text-white tracking-wide">Business</span>
+                            <span className="font-bold text-sm tracking-tight text-white">{myProfile.store_name}</span>
+                          </div>
+                        </div>
+
+                        {myProfile.status === 2 && myProfile.rejection_reason && (
+                          <div className="w-full max-w-lg px-6 py-5 bg-rose-500/10 rounded-2xl border border-rose-500/20 text-center">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 block mb-2">Audit Feedback</span>
+                            <p className="text-sm font-bold text-rose-100 italic leading-relaxed">"{myProfile.rejection_reason}"</p>
+                          </div>
+                        )}
+
+                        <div className="pt-6 flex flex-wrap gap-4 items-center justify-center">
+                          {myProfile.status === 1 ? (
+                            <button className="px-12 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1">
+                              Launch My Dashboard
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => setViewingProfile(myProfile)}
+                                className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/[0.08] transition-all flex items-center gap-3"
+                              >
+                                <Eye size={18} className="text-yellow-400" /> View Details
+                              </button>
+                              <button
+                                onClick={() => setIsEditing(true)}
+                                className="px-8 py-4 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-yellow-500/20 transition-all flex items-center gap-3"
+                              >
+                                <Edit3 size={18} /> Edit Application
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* REGISTRATION FORM (Create or Edit) */
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-5xl mx-auto bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] border border-white/[0.08] shadow-2xl overflow-hidden mb-20"
+                  >
+                    <div className="px-8 sm:px-12 py-10 border-b border-white/[0.08] bg-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                      <div className="flex items-center gap-5 overflow-hidden">
+                        {isEditing ? (
+                          <button onClick={() => setIsEditing(false)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 text-white transition-all border border-white/[0.08]"><ArrowLeft size={20} /></button>
+                        ) : (
+                          <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center border border-yellow-400/20 shrink-0"><Plus className="text-yellow-400" size={28} /></div>
+                        )}
+                        <div className="min-w-0">
+                          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{isEditing ? "Modify Application" : "Merchant Onboarding"}</h2>
+                          <p className="text-white mt-1 text-sm font-medium tracking-wide">{isEditing ? "Refine profile and trigger re-audit" : "Initiate enterprise partnership"}</p>
+                        </div>
+                      </div>
+                      {isEditing && (
+                        <div className="px-5 py-2.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2">
+                          <Clock size={12} /> Editing Mode
                         </div>
                       )}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            )}
-            </>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-8 sm:p-14 space-y-14">
+                      {/* Personal Info */}
+                      <div className="space-y-10 group">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 01. Contact Protocol</h3>
+                          <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                          <InputGroup label="First Name" name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="Legal name" icon={Users} required />
+                          <InputGroup label="Last Name" name="surname" value={formData.surname} onChange={handleInputChange} placeholder="Last name" icon={Users} required />
+                          <InputGroup label="Email Address" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="Business email" icon={Mail} required />
+                          <InputGroup label="Land Line" name="landline_number" value={formData.landline_number} onChange={handleInputChange} placeholder="Landline connection" icon={Phone} />
+
+                          <div className="space-y-2 group">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
+                              <Phone size={12} className="text-yellow-400" /> Mobile Number <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="grid grid-cols-4 gap-3">
+                              <div className="col-span-1">
+                                <select
+                                  name="country_code"
+                                  value={formData.country_code}
+                                  onChange={handleInputChange}
+                                  className="w-full px-2 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-black text-[11px] focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-center appearance-none cursor-pointer"
+                                >
+                                  <option value="IN" className="bg-[#0b1a3d]">+91 IN</option>
+                                  <option value="UK" className="bg-[#0b1a3d]">+44 UK</option>
+                                </select>
+                              </div>
+                              <div className="col-span-3">
+                                <input
+                                  type="text"
+                                  name="mobile_number"
+                                  value={formData.mobile_number}
+                                  onChange={handleInputChange}
+                                  placeholder="Main operator line"
+                                  required
+                                  className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <InputGroup label="Digital Presence" name="social_media_website_link" value={formData.social_media_website_link} onChange={handleInputChange} placeholder="Website or Social link" icon={Globe} />
+                        </div>
+                      </div>
+
+                      {/* Store Details */}
+                      <div className="space-y-10 pt-10 border-t border-white/[0.08]">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 02. Establishment Profile</h3>
+                          <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                          <InputGroup label="Trading Name" name="store_name" value={formData.store_name} onChange={handleInputChange} placeholder="Licensed name" icon={Store} required />
+                          <InputGroup label="Brand identity" name="brand_name" value={formData.brand_name} onChange={handleInputChange} placeholder="Public brand name" icon={Briefcase} required />
+
+                          <SelectGroup label="Business Category" name="business_type" value={formData.business_type} onChange={handleInputChange} options={[{ value: "Restaurant", label: "Restaurant" }, { value: "Bakery", label: "Bakery" }, { value: "Cafe", label: "Cafe" }]} icon={Briefcase} required />
+                          <SelectGroup
+                            label="Cuisine Type"
+                            name="cuisine_type"
+                            value={formData.cuisine_type}
+                            onChange={handleInputChange}
+                            options={[
+                              { value: "0", label: "Indian" },
+                              { value: "1", label: "Afghan" },
+                              { value: "2", label: "Pakistani" },
+                              { value: "3", label: "Chinese" },
+                              { value: "4", label: "Italian" },
+                              { value: "5", label: "Thai" },
+                              { value: "6", label: "Mexican" },
+                              { value: "7", label: "Fried Chicken" }
+                            ]}
+                            icon={Store}
+                            required
+                          />
+
+                          <SelectGroup label="Network Scope" name="number_of_locations" value={formData.number_of_locations} onChange={handleInputChange} options={[{ value: "1", label: "Single Unit" }, { value: "2-5", label: "2-5 Units" }, { value: "5+", label: "5+ Units" }]} icon={Building2} required />
+                          <InputGroup label="Floor / Unit" name="floor_suite" value={formData.floor_suite} onChange={handleInputChange} placeholder="e.g. Ground Floor, Suite 402" icon={Building2} />
+
+                          <div className="md:col-span-2">
+                            <InputGroup label="Operational Headquarters" name="store_address" value={formData.store_address} onChange={handleInputChange} placeholder="Full physical location address" icon={MapPin} required />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compliance */}
+                      <div className="space-y-10 pt-10 border-t border-white/[0.08]">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 03. Regulatory Compliance</h3>
+                          <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                          <FileUpload label="Food Business License" name="food_business_license" value={formData.food_business_license} onChange={handleInputChange} icon={Shield} required />
+                          <FileUpload label="Hygiene Certificate" name="food_hygiene_certificate" value={formData.food_hygiene_certificate} onChange={handleInputChange} icon={CheckCircle} required />
+                          <FileUpload label="Business Registration" name="business_registration_certificate" value={formData.business_registration_certificate} onChange={handleInputChange} icon={Briefcase} required />
+                          <InputGroup label="VAT Identifer" name="vat_registration_number" value={formData.vat_registration_number} onChange={handleInputChange} placeholder="Tax Identifier" icon={Hash} />
+                        </div>
+                      </div>
+
+                      {/* Financial */}
+                      <div className="space-y-10 pt-10 border-t border-white/[0.08]">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-400 shrink-0">Section 04. Financial Settlement</h3>
+                          <div className="h-px w-full bg-gradient-to-r from-yellow-400/20 to-transparent"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                          <InputGroup label="Account Holder" name="bank_account_name" value={formData.bank_account_name} onChange={handleInputChange} placeholder="Beneficiary name" icon={Users} required />
+                          <InputGroup label="Account Number" name="bank_account_number" value={formData.bank_account_number} onChange={handleInputChange} placeholder="Primary digits" icon={Hash} required />
+                          <InputGroup label="Sort Code" name="bank_sort_code" value={formData.bank_sort_code} onChange={handleInputChange} placeholder="Branch identifier" icon={Building2} required />
+                          <FileUpload label="Bank Verification" name="bank_statement_file" value={formData.bank_statement_file} onChange={handleInputChange} icon={Download} required />
+                        </div>
+                      </div>
+                      <div className="pt-10 flex flex-col sm:flex-row justify-between items-center gap-8 border-t border-white/[0.08]">
+                        <div className="flex items-start gap-4 max-w-xl text-xs font-medium text-white/50 italic">
+                          <AlertCircle className="shrink-0 text-yellow-500" size={18} />
+                          <p>By submitting, you certify that all enterprise data provided is legally accurate for audit.</p>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="w-full sm:w-auto px-16 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:opacity-50"
+                        >
+                          {submitting ? (
+                            <div className="flex items-center gap-3">
+                              <Loader2 className="animate-spin" size={20} />
+                              Transmitting...
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <Send size={18} className="font-bold" />
+                              {isEditing ? "Re-submit Portal" : "Submit Global Application"}
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </motion.div>
+                )}
+              </>
             )}
           </div>
         </main>

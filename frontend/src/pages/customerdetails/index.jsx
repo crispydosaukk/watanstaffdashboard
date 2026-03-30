@@ -85,14 +85,14 @@ const CustomerDetails = () => {
                                         <UserCheck className="text-yellow-400" size={24} />
                                     </div>
                                     <div className="min-w-0">
-                                        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Customer Details</h1>
+                                        <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg truncate whitespace-nowrap">Customer Details</h1>
                                         <p className="text-white/60 mt-2 text-sm font-medium tracking-wide whitespace-nowrap">View customers who have ordered from you</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={fetchCustomers}
                                     disabled={loading}
-                                    className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-xl text-white font-black uppercase tracking-widest text-[11px] rounded-xl border border-white/[0.08] shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-white/5 hover:bg-white/10 backdrop-blur-xl text-white font-black tracking-widest text-[16px] rounded-xl border border-white/[0.08] shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                                     Refresh
@@ -160,7 +160,7 @@ const CustomerDetails = () => {
                             {/* Desktop Table View */}
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-white/10">
-                                     <thead className="bg-[#0b1a3d]/40 text-white text-sm font-black tracking-wide">
+                                    <thead className="bg-[#0b1a3d]/40 text-white text-sm font-black tracking-wide">
                                         <tr>
                                             <th className="px-8 py-5 text-left border-b border-white/[0.08]">#</th>
                                             <th className="px-8 py-5 text-left border-b border-white/[0.08]">Customer</th>
@@ -212,7 +212,7 @@ const CustomerDetails = () => {
                                                         </div>
                                                     </td>
 
-                                                     <td className="px-8 py-6">
+                                                    <td className="px-8 py-6">
                                                         <div className="flex flex-col gap-1.5">
                                                             {customer.email && (
                                                                 <div className="flex items-center gap-2 text-sm text-white/80 font-medium tracking-tight">
@@ -232,7 +232,7 @@ const CustomerDetails = () => {
                                                         </div>
                                                     </td>
 
-                                                     <td className="px-8 py-6 text-center">
+                                                    <td className="px-8 py-6 text-center">
                                                         {Number(customer.live_orders) > 0 ? (
                                                             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse backdrop-blur-md">
                                                                 <TrendingUp size={12} />
@@ -354,18 +354,18 @@ const CustomerDetails = () => {
                                 </div>
 
                                 {/* Contact Information */}
-                                 <div className="mb-10">
-                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><Phone size={12} className="text-yellow-500" /> Communication Hub</h5>
+                                <div className="mb-10">
+                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><Phone size={12} className="text-yellow-500" /> Communication Details</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         {selectedCustomer.mobile_number && (
                                             <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                                                <p className="text-xs font-medium text-white tracking-wide">Mobile String</p>
+                                                <p className="text-xs font-medium text-white tracking-wide">Mobile Number</p>
                                                 <p className="text-base font-bold text-white mt-1">{selectedCustomer.mobile_number}</p>
                                             </div>
                                         )}
                                         {selectedCustomer.email && (
                                             <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                                                <p className="text-xs font-medium text-white tracking-wide">Virtual Endpoint</p>
+                                                <p className="text-xs font-medium text-white tracking-wide">Customer Email</p>
                                                 <p className="text-base font-bold text-white mt-1 truncate">{selectedCustomer.email}</p>
                                             </div>
                                         )}
@@ -373,7 +373,7 @@ const CustomerDetails = () => {
                                 </div>
 
                                 {/* Order Statistics */}
-                                 <div className="mb-10">
+                                <div className="mb-10">
                                     <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><ShoppingBag size={12} className="text-yellow-500" /> Assets & Activity</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                         <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">

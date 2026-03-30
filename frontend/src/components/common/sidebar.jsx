@@ -88,6 +88,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "Restaurant Profile", to: "/restuarent", icon: iconRestaurant(), perm: "restaurant" },
       { label: "Customer Info", to: "/customerinfo", icon: iconCustomer(), perm: "customer_info" },
       { label: "Customer Details", to: "/customerdetails", icon: iconCustomerDetails(), perm: "customer_details" },
+      { label: "Table Reservations", to: "/table-reservations", icon: iconReservation(), perm: "table_reservations" },
       { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
       { label: "Restaurant Registration", to: "/restaurantregistration", icon: iconStorePlus(), perm: "restaurant_registration" },
       { label: "Order Management", to: "/orders", icon: iconOrders(), perm: "order_management" },
@@ -424,6 +425,18 @@ function iconTag() {
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M7 7h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function iconReservation() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M3 9h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8 14h3m-3 3.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="17" cy="16" r="2.5" stroke="currentColor" strokeWidth="1.4" />
     </svg>
   );
 }

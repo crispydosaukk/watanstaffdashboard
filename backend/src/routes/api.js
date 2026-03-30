@@ -25,6 +25,7 @@ import {
 } from "../controllers/api/notificationListController.js";
 import { getAppSettings } from "../controllers/api/settingsController.js";
 import { getActiveOffers } from "../controllers/api/offerController.js";
+import { reserveTable } from "../controllers/api/tableReservationController.js";
 
 
 const router = express.Router();
@@ -74,5 +75,8 @@ router.post("/loyalty/redeem", auth, redeemLoyaltyToWallet);
 
 // PROMOTIONAL OFFERS
 router.get("/offers", getActiveOffers);
+
+// TABLE RESERVATIONS
+router.post("/table-reservation", auth, reserveTable);
 
 export default router;

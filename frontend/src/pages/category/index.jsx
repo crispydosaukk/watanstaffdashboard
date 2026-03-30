@@ -402,7 +402,7 @@ export default function Category() {
   const onDragEnd = (result) => {
     if (!result.destination) return;
     const items = Array.from(categories);
-    
+
     const startIndex = (currentPage - 1) * itemsPerPage;
     const actualSourceIdx = startIndex + result.source.index;
     const actualDestIdx = startIndex + result.destination.index;
@@ -447,7 +447,7 @@ export default function Category() {
     if (total <= 1) return null;
     return (
       <div className="flex items-center justify-center gap-2 mt-8 mb-4">
-        <button 
+        <button
           disabled={current === 1}
           onClick={() => onPageChange(current - 1)}
           className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
@@ -465,7 +465,7 @@ export default function Category() {
             </button>
           ))}
         </div>
-        <button 
+        <button
           disabled={current === total}
           onClick={() => onPageChange(current + 1)}
           className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
@@ -504,8 +504,8 @@ export default function Category() {
                     <Zap className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Categories</h1>
-                    <p className="text-white mt-1.5 text-sm font-medium tracking-wide leading-none">Manage menu categories and sorting</p>
+                    <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Categories</h1>
+                    <p className="text-white mt-1.5 text-sm font-medium tracking-wide leading-none">Manage categories — drag to reorder, toggle visibility, edit or delete.</p>
                   </div>
                 </div>
 
@@ -575,40 +575,40 @@ export default function Category() {
                                       className={`grid grid-cols-[80px_140px_1fr_150px_200px] items-center ${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-yellow-500/50 z-[9999]" : ""}`}
                                       style={{ ...dragProvided.draggableProps.style }}
                                     >
-                                    <div {...dragProvided.dragHandleProps} className="px-6 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
-                                      <GripVertical size={20} />
-                                    </div>
-                                    <div className="px-6 py-5 flex items-center">
-                                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
-                                        {item.image ? (
-                                          <img src={`${API_BASE}/uploads/${item.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
-                                        ) : (
-                                          <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">NO IMAGE</div>
-                                        )}
+                                      <div {...dragProvided.dragHandleProps} className="px-6 py-5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
+                                        <GripVertical size={20} />
                                       </div>
-                                    </div>
-                                    <div className="px-6 py-5 flex items-center">
-                                      <div className="min-w-0">
-                                        <div className="text-base font-bold text-white tracking-tight truncate max-w-xs">{item.name}</div>
-                                      </div>
-                                    </div>
-                                    <div className="px-6 py-5 flex items-center justify-center">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
-                                          <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
-                                          <div className={`w-12 h-6 rounded-full transition-colors ${item.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
-                                          <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${item.status === 1 ? 'translate-x-6' : ''}`}></div>
+                                      <div className="px-6 py-5 flex items-center">
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
+                                          {item.image ? (
+                                            <img src={`${API_BASE}/uploads/${item.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">NO IMAGE</div>
+                                          )}
                                         </div>
-                                        <span className={`text-[10px] font-bold tracking-wide transition-colors ${item.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
-                                          {item.status === 1 ? 'Active' : 'Inactive'}
-                                        </span>
                                       </div>
-                                    </div>
-                                    <div className="px-6 py-5 flex items-center justify-end gap-3">
-                                      <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
-                                      <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
-                                      <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
-                                    </div>
+                                      <div className="px-6 py-5 flex items-center">
+                                        <div className="min-w-0">
+                                          <div className="text-base font-semibold text-white tracking-tight truncate max-w-xs">{item.name}</div>
+                                        </div>
+                                      </div>
+                                      <div className="px-6 py-5 flex items-center justify-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
+                                            <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
+                                            <div className={`w-12 h-6 rounded-full transition-colors ${item.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                                            <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${item.status === 1 ? 'translate-x-6' : ''}`}></div>
+                                          </div>
+                                          <span className={`text-[10px] font-bold tracking-wide transition-colors ${item.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
+                                            {item.status === 1 ? 'Active' : 'Inactive'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="px-6 py-5 flex items-center justify-end gap-3">
+                                        <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
+                                        <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
+                                        <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
+                                      </div>
                                     </div>
                                   );
 

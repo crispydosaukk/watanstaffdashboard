@@ -127,7 +127,7 @@ export default function CustomerInfo() {
                     <Users className="text-yellow-400" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Customer Information</h1>
+                    <h1 className="text-2xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-lg leading-none">Customer Information</h1>
                     <p className="text-white/60 mt-2 text-sm font-medium tracking-wide">View and manage restaurant customer profiles</p>
                   </div>
                 </div>
