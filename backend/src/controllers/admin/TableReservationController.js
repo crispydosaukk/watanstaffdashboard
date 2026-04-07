@@ -33,9 +33,9 @@ export const updateReservationStatus = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Get Customer Info for Notification
+    // 1️⃣ Get Customer & Reservation Info for Notification
     const [[resData]] = await pool.query(
-      "SELECT customer_id, customer_name, table_number FROM table_reservations WHERE id = ?",
+      "SELECT customer_id, customer_name, table_number, reservation_date, reservation_time FROM table_reservations WHERE id = ?",
       [id]
     );
 
@@ -47,8 +47,14 @@ export const updateReservationStatus = async (req, res) => {
 
     // 3️⃣ Notify Customer
     if (resData?.customer_id) {
+        const formattedDate = resData.reservation_date ? new Date(resData.reservation_date).toLocaleDateString() : "";
+        const formattedTime = (resData.reservation_time || "").slice(0, 5);
+
         const statusMap = {
-          confirmed: { title: "✅ Table Confirmed", body: `Your reservation for table ${resData.table_number || "request"} is confirmed!` },
+          confirmed: { 
+            title: "✅ Table Confirmed", 
+            body: `Your reservation for table ${resData.table_number || "request"} on ${formattedDate} at ${formattedTime} is confirmed!` 
+          },
           seated:    { title: "🍴 You're Seated",  body: "Welcome to ZingBite! Enjoy your meal." },
           completed: { title: "✨ Thank You",      body: "We hope you enjoyed your visit. See you again soon!" },
           cancelled: { title: "❌ Table Cancelled", body: "Your reservation has been cancelled." },
@@ -63,7 +69,13 @@ export const updateReservationStatus = async (req, res) => {
               userId: resData.customer_id,
               title: notif.title,
               body: notif.body,
-              data: { type: "RESERVATION_UPDATE", res_id: String(id), status }
+              data: { 
+                type: "RESERVATION_UPDATE", 
+                res_id: String(id), 
+                status,
+                reservation_date: resData.reservation_date,
+                reservation_time: resData.reservation_time
+              }
             });
           } catch (e) {
             console.error("Customer notification failed:", e.message);
