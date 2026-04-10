@@ -1,5 +1,6 @@
 import db from "../../config/db.js";
 import { sendNotification } from "../../utils/sendNotification.js";
+import Stripe from "stripe";
 
 // ----------------- ORDER NUMBER GENERATOR ----------------- //
 function generateOrderNumber(restaurantName = "") {
@@ -636,7 +637,8 @@ export const updateOrderStatus = async (req, res) => {
 
     // 1️⃣ CHECK CURRENT STATUS & CUSTOMER INFO
     const [orders] = await conn.query(
-      `SELECT id, order_status, customer_id, wallet_amount, loyalty_amount FROM orders WHERE order_number = ?`,
+      `SELECT id, order_status, customer_id, wallet_amount, loyalty_amount, grand_total, payment_mode, payment_request_id 
+       FROM orders WHERE order_number = ?`,
       [order_number]
     );
 
@@ -682,6 +684,45 @@ export const updateOrderStatus = async (req, res) => {
           ]
         );
       }
+
+      // --- New Stripe Refund Logic for Cancel/Reject ---
+      const totalPaidAmount = orders.reduce((sum, o) => sum + Number(o.grand_total), 0);
+      const firstOrder = orders[0];
+      const pi_id = firstOrder.payment_request_id;
+      const paymentMode = Number(firstOrder.payment_mode);
+      let stripeRefundId = null;
+
+      if (paymentMode === 1 && pi_id && totalPaidAmount > 0) {
+        const [settingsRows] = await conn.query("SELECT stripe_secret_key FROM settings LIMIT 1");
+        const secretKey = settingsRows[0]?.stripe_secret_key;
+
+        if (secretKey) {
+          const stripe = new Stripe(secretKey);
+          try {
+            const refund = await stripe.refunds.create({
+              payment_intent: pi_id,
+              amount: Math.round(totalPaidAmount * 100),
+            });
+            stripeRefundId = refund.id;
+          } catch (stripeErr) {
+            console.error("Auto Stripe refund error on cancel/reject:", stripeErr.message);
+          }
+        }
+      }
+
+      // Record in order_refunds table
+      await conn.query(
+        `INSERT INTO order_refunds 
+         (order_number, payment_intent_id, refund_id, amount, status) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          order_number,
+          pi_id || null,
+          stripeRefundId || null,
+          totalRefund + totalPaidAmount,
+          'processed'
+        ]
+      );
 
       // 3️⃣ VOID EARNED LOYALTY (Remove pending points so they don't get free points)
       await conn.query(

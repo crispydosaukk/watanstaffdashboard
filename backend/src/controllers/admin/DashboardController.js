@@ -1,5 +1,5 @@
-
 import db from "../../config/db.js";
+import Stripe from "stripe";
 
 export const getDashboardStats = async (req, res) => {
     try {
@@ -564,6 +564,116 @@ export const getOrderDetails = async (req, res) => {
     }
 };
 
+export const getFinanceSummary = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const roleId = req.user.role_id;
+        const roleName = req.user.role || req.user.role_title || null;
+        const isSuperAdmin = (Number(roleId) === 6) || (typeof roleName === "string" && roleName.toLowerCase() === "super admin");
+
+        const { startDate, endDate, restaurantId, search, page = 1, limit = 20 } = req.query;
+
+        let orderWhere = isSuperAdmin ? "1=1" : "o.user_id = ?";
+        let effectiveParams = isSuperAdmin ? [] : [userId];
+
+        if (isSuperAdmin && restaurantId && restaurantId !== "all") {
+            orderWhere = "o.user_id = ?";
+            effectiveParams = [restaurantId];
+        }
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const startStr = startDate || todayStr;
+        const endStr = endDate || startStr;
+
+        const conn = await db.getConnection();
+        try {
+            // Summary Stats: Gross Sales, Refunds, Net
+            const statsQuery = `
+                SELECT
+                    SUM(CASE WHEN o.order_status NOT IN (2,5,6) THEN o.grand_total ELSE 0 END) as gross_intake,
+                    SUM(CASE WHEN o.order_status IN (2,5,6) THEN o.grand_total ELSE 0 END) as refund_outflow,
+                    COUNT(DISTINCT CASE WHEN o.order_status NOT IN (2,5,6) THEN o.order_number END) as total_sales_count,
+                    COUNT(DISTINCT CASE WHEN o.order_status IN (2,5,6) THEN o.order_number END) as total_refund_count
+                FROM orders o
+                WHERE ${orderWhere}
+                  AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+            `;
+            const [[summary]] = await conn.query(statsQuery, [...effectiveParams, startStr, endStr]);
+
+            const grossIntake = Number(summary?.gross_intake || 0);
+            const refundOutflow = Number(summary?.refund_outflow || 0);
+            const netLiquidity = grossIntake - refundOutflow;
+
+            // Transaction list (grouped by order_number)
+            let searchWhere = "";
+            const searchParams = [];
+            if (search) {
+                searchWhere = " AND (o.order_number LIKE ? OR c.full_name LIKE ?)";
+                searchParams.push(`%${search}%`, `%${search}%`);
+            }
+
+            const offset = (Number(page) - 1) * Number(limit);
+
+            const txQuery = `
+                SELECT
+                    o.order_number,
+                    MAX(c.full_name) as customer_name,
+                    MAX(o.created_at) as created_at,
+                    SUM(o.grand_total) as amount,
+                    MAX(o.order_status) as order_status,
+                    MAX(o.payment_mode) as payment_mode
+                FROM orders o
+                LEFT JOIN customers c ON o.customer_id = c.id
+                WHERE ${orderWhere}
+                  AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+                  ${searchWhere}
+                GROUP BY o.order_number
+                ORDER BY MAX(o.created_at) DESC
+                LIMIT ? OFFSET ?
+            `;
+
+            const txParams = [...effectiveParams, startStr, endStr, ...searchParams, Number(limit), offset];
+            const [transactions] = await conn.query(txQuery, txParams);
+
+            // Count total for pagination
+            const countQuery = `
+                SELECT COUNT(DISTINCT o.order_number) as total
+                FROM orders o
+                LEFT JOIN customers c ON o.customer_id = c.id
+                WHERE ${orderWhere}
+                  AND DATE(o.created_at) >= ? AND DATE(o.created_at) <= ?
+                  ${searchWhere}
+            `;
+            const [[countRes]] = await conn.query(countQuery, [...effectiveParams, startStr, endStr, ...searchParams]);
+            const totalCount = countRes?.total || 0;
+
+            return res.json({
+                status: 1,
+                data: {
+                    gross_intake: grossIntake,
+                    refund_outflow: refundOutflow,
+                    net_liquidity: netLiquidity,
+                    total_sales_count: summary?.total_sales_count || 0,
+                    total_refund_count: summary?.total_refund_count || 0,
+                    transactions,
+                    pagination: {
+                        total: totalCount,
+                        page: Number(page),
+                        limit: Number(limit),
+                        totalPages: Math.ceil(totalCount / Number(limit))
+                    }
+                }
+            });
+        } finally {
+            conn.release();
+        }
+    } catch (error) {
+        console.error("Finance summary error:", error);
+        return res.status(500).json({ status: 0, message: "Server error" });
+    }
+};
+
 export const getRestaurantsList = async (req, res) => {
     try {
         const query = `SELECT user_id, restaurant_name FROM restaurant_details ORDER BY restaurant_name ASC`;
@@ -573,5 +683,116 @@ export const getRestaurantsList = async (req, res) => {
         return res.json({ status: 1, data: rows });
     } catch (error) {
         return res.status(500).json({ status: 0, message: "Server error" });
+    }
+};
+
+export const refundOrder = async (req, res) => {
+    const conn = await db.getConnection();
+    try {
+        const { order_number } = req.body;
+        if (!order_number) {
+            return res.status(400).json({ status: 0, message: "Order number is required" });
+        }
+
+        await conn.beginTransaction();
+
+        // 1. Fetch Order Details
+        const [orders] = await conn.query(
+            "SELECT id, grand_total, payment_request_id, customer_id, wallet_amount, loyalty_amount, order_status, payment_mode FROM orders WHERE order_number = ?",
+            [order_number]
+        );
+
+        if (!orders.length) {
+            await conn.rollback();
+            return res.status(404).json({ status: 0, message: "Order not found" });
+        }
+
+        const firstRow = orders[0];
+        const currentStatus = Number(firstRow.order_status);
+
+        // If status is already refunded (6), don't process
+        if (currentStatus === 6) {
+            await conn.rollback();
+            return res.status(400).json({ status: 0, message: "Order is already refunded" });
+        }
+
+        const totalPaidAmount = orders.reduce((sum, o) => sum + Number(o.grand_total), 0);
+        const pi_id = firstRow.payment_request_id;
+        const paymentMode = Number(firstRow.payment_mode); // Assume 1 is Online
+
+        // 2. Process Stripe Refund if applicable
+        let stripeRefundId = null;
+        if (paymentMode === 1 && pi_id && totalPaidAmount > 0) {
+            const [settings] = await conn.query("SELECT stripe_secret_key FROM settings LIMIT 1");
+            const secretKey = settings[0]?.stripe_secret_key;
+
+            if (!secretKey) {
+                await conn.rollback();
+                return res.status(500).json({ status: 0, message: "Stripe is not configured in settings." });
+            }
+
+            const stripe = new Stripe(secretKey);
+            try {
+                const refund = await stripe.refunds.create({
+                    payment_intent: pi_id,
+                    amount: Math.round(totalPaidAmount * 100), // convert to pence
+                });
+                stripeRefundId = refund.id;
+            } catch (stripeErr) {
+                console.error("Stripe refund error:", stripeErr);
+                await conn.rollback();
+                return res.status(500).json({ status: 0, message: `Stripe Refund Error: ${stripeErr.message}` });
+            }
+        }
+
+        // 3. Internal Refund (Wallet/Loyalty restored to customer)
+        const totalWalletLoyalty = orders.reduce((sum, o) => sum + (Number(o.wallet_amount) + Number(o.loyalty_amount)), 0);
+        if (totalWalletLoyalty > 0) {
+            await conn.query(
+                "UPDATE customer_wallets SET balance = balance + ? WHERE customer_id = ?",
+                [totalWalletLoyalty, firstRow.customer_id]
+            );
+
+            const [[wRow]] = await conn.query("SELECT balance FROM customer_wallets WHERE customer_id = ?", [firstRow.customer_id]);
+
+            await conn.query(
+                `INSERT INTO wallet_transactions
+                 (customer_id, transaction_type, amount, balance_after, source, description, created_at)
+                 VALUES (?, 'CREDIT', ?, ?, 'REFUND', ?, NOW())`,
+                [
+                    firstRow.customer_id,
+                    totalWalletLoyalty,
+                    wRow?.balance || 0,
+                    `Full refund for order ${order_number}`
+                ]
+            );
+        }
+
+        // 4. Record the refund in order_refunds table
+        await conn.query(
+            `INSERT INTO order_refunds 
+             (order_number, payment_intent_id, refund_id, amount, status) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [order_number, pi_id || null, stripeRefundId || null, totalPaidAmount + totalWalletLoyalty, 'processed']
+        );
+
+        // 5. Update Order Status to 6 (Refunded)
+        await conn.query("UPDATE orders SET order_status = 6 WHERE order_number = ?", [order_number]);
+
+        // 6. Void any loyalty earnings for this order
+        await conn.query(
+            "DELETE FROM loyalty_earnings WHERE order_id IN (SELECT id FROM orders WHERE order_number = ?)",
+            [order_number]
+        );
+
+        await conn.commit();
+        return res.json({ status: 1, message: "Order refunded successfully" });
+
+    } catch (err) {
+        if (conn) await conn.rollback();
+        console.error("Refund implementation error:", err);
+        return res.status(500).json({ status: 0, message: "Critical error during refund execution." });
+    } finally {
+        if (conn) conn.release();
     }
 };

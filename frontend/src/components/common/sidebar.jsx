@@ -92,7 +92,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
       { label: "Restaurant Registration", to: "/restaurantregistration", icon: iconStorePlus(), perm: "restaurant_registration" },
       { label: "Order Management", to: "/orders", icon: iconOrders(), perm: "order_management" },
-      { label: "Financial Ledger", to: "/finance", icon: iconFinance(), perm: "finance_management" },
+      { label: "Finance Management", to: "/finance", icon: iconFinance(), perm: "finance_management" },
     ],
     []
   );

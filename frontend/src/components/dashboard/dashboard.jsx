@@ -15,6 +15,7 @@ import ReadyInModal from "../common/ReadyInModal.jsx";
 import DateTimeRangeModal from "../common/DateTimeRangeModal.jsx";
 import api from "../../api.js";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePopup } from "../../context/PopupContext";
 
 // --- Components ---
 
@@ -65,20 +66,20 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
       )}
     </div>
 
-      <div className="relative z-10 mt-auto">
-        <h3 className="text-xl sm:text-3xl font-semibold text-white drop-shadow-lg tracking-tight truncate">{value}</h3>
-        <div className="mt-1 sm:mt-2 text-left">
-          <p className="text-[12px] sm:text-sm font-medium text-white tracking-wider leading-tight mb-1 sm:mb-1.5">{title}</p>
-          <p className="text-[10px] sm:text-xs font-normal text-white/90">{subtext}</p>
-        </div>
+    <div className="relative z-10 mt-auto">
+      <h3 className="text-xl sm:text-3xl font-semibold text-white drop-shadow-lg tracking-tight truncate">{value}</h3>
+      <div className="mt-1 sm:mt-2 text-left">
+        <p className="text-[12px] sm:text-sm font-medium text-white tracking-wider leading-tight mb-1 sm:mb-1.5">{title}</p>
+        <p className="text-[10px] sm:text-xs font-normal text-white/90">{subtext}</p>
       </div>
+    </div>
 
     {/* Decorative Glow */}
     <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors" />
   </motion.div>
 );
 
-const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdateStatus, onReadyClick }) => {
+const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdateStatus, onReadyClick, onConfirmCollection }) => {
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -251,7 +252,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             )}
                             {Number(item.order_status) === 3 && (
                               <button
-                                onClick={() => onUpdateStatus(item.order_number, 4)}
+                                onClick={() => onConfirmCollection ? onConfirmCollection(item.order_number) : onUpdateStatus(item.order_number, 4)}
                                 className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-lg transition-all flex items-center gap-1.5 border border-yellow-500/20 shadow-md active:scale-95"
                                 title="Mark Collected"
                               >
@@ -290,7 +291,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
   );
 };
 
-const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => {
+const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onConfirmCollection }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -472,7 +473,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick }) => 
             )}
             {Number(order.order_status) === 3 && (
               <button
-                onClick={() => onUpdateStatus(order.order_number, 4)}
+                onClick={() => onConfirmCollection ? onConfirmCollection(order.order_number) : onUpdateStatus(order.order_number, 4)}
                 className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
               >
                 <CheckCircle size={16} /> Mark Collected
@@ -1075,6 +1076,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
 // --- Main Dashboard ---
 
 export default function Dashboard() {
+  const { showPopup } = usePopup();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stats, setStats] = useState({
     total_bookings: 0,
@@ -1178,6 +1180,42 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Failed to update status", error);
+    }
+  };
+
+  const confirmCollection = async (orderNumber) => {
+    try {
+      showPopup({
+        title: "Loading...",
+        message: "Fetching order details...",
+        type: "info"
+      });
+      const res = await api.get(`/dashboard/order-details/${encodeURIComponent(orderNumber)}`);
+      if (res.data.status === 1) {
+        const items = res.data.data;
+        showPopup({
+          title: "Confirm Collection",
+          message: (
+            <div className="text-sm font-medium text-white/80 mt-2 space-y-3 text-left">
+              <p className="text-white/60 mb-4">Are you sure you want to mark order <strong className="text-yellow-400 font-black">#{orderNumber}</strong> as collected?</p>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                {items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-start gap-2 text-xs">
+                    <span className="text-white/40 font-black">{item.quantity}x</span>
+                    <span className="text-white font-medium flex-1 truncate">{item.product_name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+          type: "confirm",
+          onConfirm: () => updateOrderStatus(orderNumber, 4)
+        });
+      } else {
+        showPopup({ title: "Error", message: "Failed to fetch order details", type: "error" });
+      }
+    } catch (err) {
+      showPopup({ title: "Error", message: "Failed to fetch order details", type: "error" });
     }
   };
 
@@ -1407,7 +1445,7 @@ export default function Dashboard() {
         )}
         {status === 3 && (
           <button
-            onClick={() => updateOrderStatus(order.order_number, 4)}
+            onClick={() => confirmCollection(order.order_number)}
             className="p-2 bg-yellow-500/20 hover:bg-yellow-500/40 rounded-lg text-yellow-400 transition-all shadow-md active:scale-95"
             title="Mark Collected"
           >
@@ -1906,6 +1944,7 @@ export default function Dashboard() {
           <OrderDetailsModal
             order={selectedOrder}
             onUpdateStatus={updateOrderStatus}
+            onConfirmCollection={confirmCollection}
             onReadyClick={(num) => {
               setOrderForReady(num);
               setIsReadyModalOpen(true);
@@ -1923,6 +1962,7 @@ export default function Dashboard() {
             items={detailModal.items}
             type={detailModal.type}
             onUpdateStatus={updateOrderStatus}
+            onConfirmCollection={confirmCollection}
             onReadyClick={(num) => {
               setOrderForReady(num);
               setIsReadyModalOpen(true);

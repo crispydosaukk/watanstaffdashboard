@@ -6,8 +6,8 @@ export async function createOffer(payload, targets) {
     await conn.beginTransaction();
 
     const [offerRes] = await conn.query(
-      "INSERT INTO promotional_offers (title, description, banner_image, status) VALUES (?, ?, ?, ?)",
-      [payload.title, payload.description, payload.banner_image, payload.status || 'active']
+      "INSERT INTO promotional_offers (user_id, title, description, banner_image, status) VALUES (?, ?, ?, ?, ?)",
+      [payload.user_id, payload.title, payload.description, payload.banner_image, payload.status || 'active']
     );
     const offerId = offerRes.insertId;
 
@@ -29,10 +29,16 @@ export async function createOffer(payload, targets) {
   }
 }
 
-export async function updateOffer(id, payload, targets) {
+export async function updateOffer(id, user_id, payload, targets) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    // Verify ownership if user_id is provided
+    if (user_id) {
+       const [rows] = await conn.query("SELECT id FROM promotional_offers WHERE id = ? AND user_id = ?", [id, user_id]);
+       if (rows.length === 0) throw new Error("Unauthorized to update this offer");
+    }
 
     await conn.query(
       "UPDATE promotional_offers SET title = ?, description = ?, banner_image = COALESCE(?, banner_image), status = ? WHERE id = ?",
@@ -61,10 +67,20 @@ export async function updateOffer(id, payload, targets) {
   }
 }
 
-export async function getAllOffers() {
+export async function getAllOffers(userId = null) {
   const conn = await pool.getConnection();
   try {
-    const [offers] = await conn.query("SELECT * FROM promotional_offers ORDER BY created_at DESC");
+    let query = "SELECT * FROM promotional_offers";
+    let params = [];
+    
+    if (userId) {
+      query += " WHERE user_id = ?";
+      params.push(userId);
+    }
+    
+    query += " ORDER BY created_at DESC";
+    
+    const [offers] = await conn.query(query, params);
     
     // For each offer, fetch its targets
     for (let offer of offers) {
@@ -81,22 +97,22 @@ export async function getAllOffers() {
   }
 }
 
-export async function updateOfferStatus(id, status) {
+export async function updateOfferStatus(id, user_id, status) {
   const conn = await pool.getConnection();
   try {
-    await conn.query("UPDATE promotional_offers SET status = ? WHERE id = ?", [status, id]);
-    return true;
+    const [res] = await conn.query("UPDATE promotional_offers SET status = ? WHERE id = ? AND user_id = ?", [status, id, user_id]);
+    return res.affectedRows > 0;
   } finally {
     conn.release();
   }
 }
 
-export async function deleteOffer(id) {
+export async function deleteOffer(id, user_id) {
   const conn = await pool.getConnection();
   try {
     // Targets will be deleted automatically due to ON DELETE CASCADE
-    await conn.query("DELETE FROM promotional_offers WHERE id = ?", [id]);
-    return true;
+    const [res] = await conn.query("DELETE FROM promotional_offers WHERE id = ? AND user_id = ?", [id, user_id]);
+    return res.affectedRows > 0;
   } finally {
     conn.release();
   }

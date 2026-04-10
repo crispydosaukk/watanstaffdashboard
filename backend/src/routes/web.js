@@ -14,7 +14,7 @@ import {
   importGlobalProducts
 } from "../controllers/admin/ProductController.js";
 
-import { getDashboardStats, getOrderDetails, getRestaurantsList } from "../controllers/admin/DashboardController.js";
+import { getDashboardStats, getOrderDetails, getRestaurantsList, getFinanceSummary, refundOrder } from "../controllers/admin/DashboardController.js";
 
 import {
   index as listPermissions,
@@ -160,6 +160,8 @@ router.post("/settings", auth, saveSettings);
 router.get("/dashboard/restaurants", auth, getRestaurantsList);
 router.get("/dashboard-stats", auth, getDashboardStats);
 router.get("/dashboard/order-details/:order_number", auth, getOrderDetails);
+router.get("/finance-summary", auth, getFinanceSummary);
+router.post("/order/refund", auth, refundOrder);
 
 
 const merchantUploadFields = upload.fields([

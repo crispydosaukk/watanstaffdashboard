@@ -2,7 +2,14 @@ import * as OfferModel from "../../models/PromotionalOfferModel.js";
 
 export async function index(req, res) {
   try {
-    const data = await OfferModel.getAllOffers();
+    const roleId = req.user.role_id;
+    const roleName = req.user.role || req.user.role_title || "";
+    const isSuperAdmin = (Number(roleId) === 6) || (roleName.toLowerCase() === "super admin");
+
+    // If not super admin, filter by the current user's ID
+    const userId = isSuperAdmin ? null : req.user.id;
+    
+    const data = await OfferModel.getAllOffers(userId);
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -12,7 +19,7 @@ export async function index(req, res) {
 export async function store(req, res) {
   try {
     const { title, description, status, targets } = req.body;
-    // targets should be an array like [{type: 'product', id: 101}, ...]
+    const userId = req.user.id;
     
     let banner_image = null;
     if (req.file) {
@@ -22,6 +29,7 @@ export async function store(req, res) {
     const parsedTargets = targets ? JSON.parse(targets) : [];
 
     const offerId = await OfferModel.createOffer({
+      user_id: userId,
       title,
       description,
       banner_image,
@@ -37,6 +45,7 @@ export async function store(req, res) {
 export async function update(req, res) {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
     const { title, description, status, targets } = req.body;
     
     let banner_image = null;
@@ -46,7 +55,7 @@ export async function update(req, res) {
 
     const parsedTargets = targets ? JSON.parse(targets) : null;
 
-    await OfferModel.updateOffer(id, {
+    await OfferModel.updateOffer(id, userId, {
       title,
       description,
       banner_image,
@@ -62,8 +71,10 @@ export async function update(req, res) {
 export async function toggleStatus(req, res) {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
     const { status } = req.body;
-    await OfferModel.updateOfferStatus(id, status);
+    const success = await OfferModel.updateOfferStatus(id, userId, status);
+    if (!success) return res.status(403).json({ message: "Unauthorized or not found" });
     res.json({ message: "Status updated" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -73,7 +84,9 @@ export async function toggleStatus(req, res) {
 export async function destroy(req, res) {
   try {
     const { id } = req.params;
-    await OfferModel.deleteOffer(id);
+    const userId = req.user.id;
+    const success = await OfferModel.deleteOffer(id, userId);
+    if (!success) return res.status(403).json({ message: "Unauthorized or not found" });
     res.json({ message: "Offer deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });

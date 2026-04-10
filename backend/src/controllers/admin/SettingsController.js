@@ -54,6 +54,8 @@ export const saveSettings = async (req, res) => {
       loyalty_available_after_hours,
       loyalty_expiry_days,
       earn_per_order_amount,
+      stripe_publishable_key,
+      stripe_secret_key,
     } = req.body || {};
 
     const updated = await upsertSettingsModel({
@@ -67,6 +69,8 @@ export const saveSettings = async (req, res) => {
       loyalty_available_after_hours,
       loyalty_expiry_days,
       earn_per_order_amount,
+      stripe_publishable_key,
+      stripe_secret_key,
     });
 
     return res.json({

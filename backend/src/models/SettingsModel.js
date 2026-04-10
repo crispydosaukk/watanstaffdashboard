@@ -14,7 +14,9 @@ export async function getSettingsModel() {
        loyalty_redeem_value,
        loyalty_available_after_hours,
        loyalty_expiry_days,
-       earn_per_order_amount
+       earn_per_order_amount,
+       stripe_publishable_key,
+       stripe_secret_key
      FROM settings
      ORDER BY id ASC
      LIMIT 1`
@@ -34,6 +36,8 @@ export async function getSettingsModel() {
       loyalty_redeem_value: 1.0,
       loyalty_available_after_hours: 24,
       loyalty_expiry_days: 30,
+      stripe_publishable_key: null,
+      stripe_secret_key: null,
     };
   }
 
@@ -51,6 +55,8 @@ export async function upsertSettingsModel({
   loyalty_available_after_hours,
   loyalty_expiry_days,
   earn_per_order_amount,
+  stripe_publishable_key,
+  stripe_secret_key,
 }) {
   const signup =
     signup_bonus_amount !== undefined && signup_bonus_amount !== ""
@@ -122,6 +128,8 @@ export async function upsertSettingsModel({
            loyalty_available_after_hours = ?,
            loyalty_expiry_days = ?,
            earn_per_order_amount = ?,
+           stripe_publishable_key = ?,
+           stripe_secret_key = ?,
            updated_at = NOW()
        WHERE id = ?`,
       [
@@ -135,6 +143,8 @@ export async function upsertSettingsModel({
         availableHours,
         expiryDays,
         earnPerOrder,
+        stripe_publishable_key,
+        stripe_secret_key,
         id,
       ]
     );
@@ -151,7 +161,9 @@ export async function upsertSettingsModel({
          loyalty_redeem_value,
          loyalty_available_after_hours,
          loyalty_expiry_days,
-         earn_per_order_amount
+         earn_per_order_amount,
+         stripe_publishable_key,
+         stripe_secret_key
        FROM settings
        WHERE id = ?`,
       [id]
@@ -170,8 +182,10 @@ export async function upsertSettingsModel({
         loyalty_redeem_value,
         loyalty_available_after_hours,
         loyalty_expiry_days,
-        earn_per_order_amount)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        earn_per_order_amount,
+        stripe_publishable_key,
+        stripe_secret_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         signup,
         referral,
@@ -183,6 +197,8 @@ export async function upsertSettingsModel({
         availableHours,
         expiryDays,
         earnPerOrder,
+        stripe_publishable_key,
+        stripe_secret_key,
       ]
     );
 
@@ -198,7 +214,9 @@ export async function upsertSettingsModel({
          loyalty_redeem_value,
          loyalty_available_after_hours,
          loyalty_expiry_days,
-         earn_per_order_amount
+         earn_per_order_amount,
+         stripe_publishable_key,
+         stripe_secret_key
        FROM settings
        WHERE id = ?`,
       [result.insertId]

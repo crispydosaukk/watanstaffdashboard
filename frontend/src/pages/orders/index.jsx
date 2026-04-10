@@ -26,6 +26,7 @@ const statusConfig = (status) => {
     case 3: return { text: "Ready", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: ShoppingBag };
     case 4: return { text: "Collected", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: CheckCircle };
     case 5: return { text: "Cancelled", color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20", icon: XCircle };
+    case 6: return { text: "Refunded", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: AlertCircle };
     default: return { text: "Unknown", color: "text-white/40", bg: "bg-white/5", border: "border-white/10", icon: AlertCircle };
   }
 };
@@ -174,6 +175,27 @@ export default function Orders() {
     } catch (error) { showPopup({ title: "Update Failed", message: "Error", type: "error" }); }
   };
 
+  const confirmCollection = (order) => {
+    showPopup({
+      title: "Confirm Collection",
+      message: (
+        <div className="text-sm font-medium text-white/80 mt-2 space-y-3 text-left">
+          <p className="text-white/60 mb-4">Are you sure you want to mark order <strong className="text-yellow-400 font-black">#{order.order_number}</strong> as collected?</p>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="flex justify-between items-start gap-2 text-xs">
+                <span className="text-white/40 font-black">{item.quantity}x</span>
+                <span className="text-white font-medium flex-1 truncate">{item.product_name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+      type: "confirm",
+      onConfirm: () => updateOrderStatus(order.order_number, 4)
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
@@ -226,6 +248,7 @@ export default function Orders() {
                   <option value="1" className="bg-[#0b1a3d]">Accepted</option>
                   <option value="3" className="bg-[#0b1a3d]">Ready</option>
                   <option value="4" className="bg-[#0b1a3d]">Finalized</option>
+                  <option value="6" className="bg-[#0b1a3d]">Refunded</option>
                 </select>
 
                 <div className="relative group/date">
@@ -289,7 +312,7 @@ export default function Orders() {
                               </div>
                             )}
                             {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><ChefHat size={18} /> Mark Ready</button>}
-                            {order.order_status === 3 && <button onClick={() => updateOrderStatus(order.order_number, 4)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><PackageCheck size={18} /> Collected</button>}
+                            {order.order_status === 3 && <button onClick={() => confirmCollection(order)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><PackageCheck size={18} /> Collected</button>}
                           </div>
                         </div>
                       </div>

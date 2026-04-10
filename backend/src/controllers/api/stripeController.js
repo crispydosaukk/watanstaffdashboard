@@ -1,38 +1,20 @@
 import Stripe from "stripe";
 import db from "../../config/db.js";
 
-const getStripeKeys = async (restaurant_id) => {
-  if (restaurant_id) {
-    try {
-      const [rows] = await db.query(
-        "SELECT id, user_id, restaurant_name, stripe_secret_key, stripe_publishable_key FROM restaurant_details WHERE id = ? OR user_id = ? ORDER BY (stripe_secret_key IS NOT NULL) DESC, id ASC LIMIT 2",
-        [restaurant_id, restaurant_id]
-      );
+const getStripeKeys = async () => {
+  try {
+    const [rows] = await db.query(
+      "SELECT stripe_publishable_key, stripe_secret_key FROM settings LIMIT 1"
+    );
 
-      if (rows.length) {
-        const bestMatch = rows[0];
-
-        if (bestMatch.stripe_secret_key) {
-          return {
-            secret: bestMatch.stripe_secret_key,
-            publishable: bestMatch.stripe_publishable_key
-          };
-        }
-      }
-    } catch (e) {
-      console.error("Stripe keys DB error:", e);
-    }
-  }
-
-  if (restaurant_id) {
-    const envSecret = process.env[`RESTAURANT_${restaurant_id}_STRIPE_SECRET`];
-    const envPub = process.env[`RESTAURANT_${restaurant_id}_STRIPE_PUBLISHABLE`];
-    if (envSecret) {
+    if (rows.length && rows[0].stripe_secret_key) {
       return {
-        secret: envSecret,
-        publishable: envPub
+        secret: rows[0].stripe_secret_key,
+        publishable: rows[0].stripe_publishable_key
       };
     }
+  } catch (e) {
+    console.error("Stripe global keys DB error:", e);
   }
 
   return { secret: null, publishable: null };
@@ -49,7 +31,7 @@ export const createPaymentIntent = async (req, res) => {
       });
     }
 
-    const { secret, publishable } = await getStripeKeys(restaurant_id);
+    const { secret, publishable } = await getStripeKeys();
 
     if (!secret) {
       return res.status(500).json({
@@ -96,7 +78,7 @@ export const getRestaurantStripeKey = async (req, res) => {
       return res.status(400).json({ status: 0, message: "restaurant_id is required" });
     }
 
-    const { publishable } = await getStripeKeys(restaurant_id);
+    const { publishable } = await getStripeKeys();
 
     if (!publishable) {
       return res.json({

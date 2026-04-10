@@ -11,7 +11,13 @@ function buildImageUrl(req, raw) {
 
 export async function getActiveOffers(req, res) {
   try {
-    const allOffers = await OfferModel.getAllOffers();
+    const { user_id } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({ status: 0, message: "user_id is required" });
+    }
+
+    const allOffers = await OfferModel.getAllOffers(user_id);
     const activeOffers = allOffers.filter(offer => offer.status === 'active');
 
     // Build full URLs for images and resolve target metadata

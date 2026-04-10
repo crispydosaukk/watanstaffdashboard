@@ -27,6 +27,10 @@ export default function Settings() {
     loyalty_redeem_value: "",
     loyalty_available_after_hours: "",
     loyalty_expiry_days: "",
+
+    // ✅ Payment settings
+    stripe_publishable_key: "",
+    stripe_secret_key: "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -62,6 +66,9 @@ export default function Settings() {
           loyalty_redeem_value: s.loyalty_redeem_value ?? "",
           loyalty_available_after_hours: s.loyalty_available_after_hours ?? "",
           loyalty_expiry_days: s.loyalty_expiry_days ?? "",
+
+          stripe_publishable_key: s.stripe_publishable_key ?? "",
+          stripe_secret_key: s.stripe_secret_key ?? "",
         });
       }
     } catch (err) {
@@ -94,6 +101,9 @@ export default function Settings() {
           loyalty_redeem_value: s.loyalty_redeem_value ?? "",
           loyalty_available_after_hours: s.loyalty_available_after_hours ?? "",
           loyalty_expiry_days: s.loyalty_expiry_days ?? "",
+
+          stripe_publishable_key: s.stripe_publishable_key ?? "",
+          stripe_secret_key: s.stripe_secret_key ?? "",
         });
 
         showPopup({
@@ -372,6 +382,51 @@ export default function Settings() {
                               onChange={handleChange}
                               placeholder="30"
                               className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION 4: PAYMENT GATEWAY (STRIPE) */}
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
+                        <CreditCard className="text-yellow-400" size={24} />
+                        <div>
+                          <h3 className="text-lg font-bold text-white tracking-tight">Payment Gateway (Stripe)</h3>
+                          <p className="text-white mt-1 text-sm font-medium tracking-wide">Configure global Stripe keys for all platform transactions</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Stripe Publishable Key */}
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium tracking-wide text-white ml-1">Stripe Publishable Key</label>
+                          <div className="relative group">
+                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                            <input
+                              type="text"
+                              name="stripe_publishable_key"
+                              value={form.stripe_publishable_key}
+                              onChange={handleChange}
+                              placeholder="pk_test_..."
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Stripe Secret Key */}
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium tracking-wide text-white ml-1">Stripe Secret Key</label>
+                          <div className="relative group">
+                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400 transition-colors" size={18} />
+                            <input
+                              type="password"
+                              name="stripe_secret_key"
+                              value={form.stripe_secret_key}
+                              onChange={handleChange}
+                              placeholder="sk_test_..."
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
