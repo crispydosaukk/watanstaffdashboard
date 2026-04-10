@@ -69,7 +69,8 @@ export function getSafePath() {
     { perm: "table_reservations", path: "/table-reservations" },
     { perm: "settings", path: "/settings" },
     { perm: "restaurant_registration", path: "/restaurantregistration" },
-    { perm: "promotional_offers", path: "/offers" }
+    { perm: "promotional_offers", path: "/offers" },
+    { perm: "finance_management", path: "/finance" }
   ];
 
   for (const item of map) {

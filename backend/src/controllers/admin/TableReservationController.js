@@ -47,40 +47,38 @@ export const updateReservationStatus = async (req, res) => {
 
     // 3️⃣ Notify Customer
     if (resData?.customer_id) {
-        const formattedDate = resData.reservation_date ? new Date(resData.reservation_date).toLocaleDateString() : "";
-        const formattedTime = (resData.reservation_time || "").slice(0, 5);
+      const formattedDate = resData.reservation_date ? new Date(resData.reservation_date).toLocaleDateString() : "";
+      const formattedTime = (resData.reservation_time || "").slice(0, 5);
 
-        const statusMap = {
-          confirmed: { 
-            title: "✅ Table Confirmed", 
-            body: `Your reservation for table ${resData.table_number || "request"} on ${formattedDate} at ${formattedTime} is confirmed!` 
-          },
-          seated:    { title: "🍴 You're Seated",  body: "Welcome to ZingBite! Enjoy your meal." },
-          completed: { title: "✨ Thank You",      body: "We hope you enjoyed your visit. See you again soon!" },
-          cancelled: { title: "❌ Table Cancelled", body: "Your reservation has been cancelled." },
-          no_show:   { title: "⚠️ No Show",        body: "We missed you today!" }
-        };
+      const statusMap = {
+        confirmed: {
+          title: "✅ Table Confirmed",
+          body: `Your reservation for table ${resData.table_number || "request"} on ${formattedDate} at ${formattedTime} is confirmed!`
+        },
+        seated: { title: "🍴 You're Seated", body: "Welcome to ZingBite! Enjoy your meal." },
+        completed: { title: "✨ Thank You", body: "We hope you enjoyed your visit. See you again soon!" },
+        cancelled: { title: "❌ Table Cancelled", body: "Your reservation has been cancelled." },
+        no_show: { title: "⚠️ No Show", body: "We missed you today!" }
+      };
 
-        if (statusMap[status]) {
-          const notif = statusMap[status];
-          try {
-            await sendNotification({
-              userType: "customer",
-              userId: resData.customer_id,
-              title: notif.title,
-              body: notif.body,
-              data: { 
-                type: "RESERVATION_UPDATE", 
-                res_id: String(id), 
-                status,
-                reservation_date: resData.reservation_date,
-                reservation_time: resData.reservation_time
-              }
-            });
-          } catch (e) {
-            console.error("Customer notification failed:", e.message);
-          }
+      if (statusMap[status]) {
+        const notif = statusMap[status];
+        try {
+          await sendNotification({
+            userType: "customer",
+            userId: resData.customer_id,
+            title: notif.title,
+            body: notif.body,
+            data: {
+              type: "RESERVATION_UPDATE",
+              res_id: String(id),
+              status
+            }
+          });
+        } catch (e) {
+          console.error("Customer notification failed:", e.message);
         }
+      }
     }
 
     res.json({ status: 1, message: "Reservation status updated." });
@@ -147,7 +145,7 @@ export const getReservationSettings = async (req, res) => {
         `);
         return getReservationSettings(req, res); // Recurse once
       } catch (err2) {
-         console.error("Failed to create settings table:", err2);
+        console.error("Failed to create settings table:", err2);
       }
     }
     console.error("Error in getReservationSettings:", error);
@@ -165,14 +163,14 @@ export const updateReservationSettings = async (req, res) => {
        SET is_enabled = ?, monday = ?, tuesday = ?, wednesday = ?, thursday = ?, friday = ?, saturday = ?, sunday = ?
        WHERE user_id = ?`,
       [
-        is_enabled ? 1 : 0, 
-        monday ? 1 : 0, 
-        tuesday ? 1 : 0, 
-        wednesday ? 1 : 0, 
-        thursday ? 1 : 0, 
-        friday ? 1 : 0, 
-        saturday ? 1 : 0, 
-        sunday ? 1 : 0, 
+        is_enabled ? 1 : 0,
+        monday ? 1 : 0,
+        tuesday ? 1 : 0,
+        wednesday ? 1 : 0,
+        thursday ? 1 : 0,
+        friday ? 1 : 0,
+        saturday ? 1 : 0,
+        sunday ? 1 : 0,
         userId
       ]
     );

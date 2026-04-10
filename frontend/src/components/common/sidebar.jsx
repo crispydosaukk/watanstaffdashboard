@@ -92,6 +92,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
       { label: "Restaurant Registration", to: "/restaurantregistration", icon: iconStorePlus(), perm: "restaurant_registration" },
       { label: "Order Management", to: "/orders", icon: iconOrders(), perm: "order_management" },
+      { label: "Financial Ledger", to: "/finance", icon: iconFinance(), perm: "finance_management" },
     ],
     []
   );
@@ -440,3 +441,12 @@ function iconReservation() {
     </svg>
   );
 }
+
+function iconFinance() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21h4M7 21h10M8 12h7M12 21V7a2 2 0 0 1 2-2h1" />
+    </svg>
+  );
+}
+

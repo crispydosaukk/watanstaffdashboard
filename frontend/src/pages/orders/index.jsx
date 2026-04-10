@@ -64,6 +64,12 @@ const OrderDetailsModal = ({ order, onClose }) => {
               </div>
             </div>
           </div>
+          {order.allergy_note && (
+            <div className="bg-rose-500/10 p-5 sm:p-6 rounded-2xl border border-rose-500/20">
+              <h3 className="text-sm font-bold text-rose-500 mb-2 flex items-center gap-2"><AlertCircle size={14} /> Food Allergies</h3>
+              <p className="text-sm font-bold text-rose-200">{order.allergy_note}</p>
+            </div>
+          )}
           <div>
             <h3 className="text-sm font-bold text-white/50 mb-6">Payload Manifest</h3>
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/5">
@@ -245,6 +251,11 @@ export default function Orders() {
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xl font-bold text-white tracking-tight truncate leading-none">{order.order_number}</h4>
                             <div className="text-xs font-medium text-white/30 tracking-wide mt-2">{new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} • {order.items.length} Items</div>
+                            {order.allergy_note && (
+                              <div className="mt-3 inline-flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
+                                <AlertCircle size={12} /> Food Allergy Alert
+                              </div>
+                            )}
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide border ${status.bg} ${status.color} ${status.border}`}>{status.text}</span>

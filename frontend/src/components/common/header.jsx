@@ -280,7 +280,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   const [locationName, setLocationName] = useState("");
   const [coords, setCoords] = useState(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [newOrderToast, setNewOrderToast] = useState(null); // For toaster
+  const [activeToasts, setActiveToasts] = useState([]); // For toaster array
   const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
   const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
   const [generalNotifications, setGeneralNotifications] = useState([]);
@@ -418,15 +418,15 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
       setOrders((prev) => {
         // If we have more new orders than before, triggers toast & sound
-        if (newOrders.length > prev.length) {
-          const latestOrder = newOrders[0]; 
-
-          // Sound
+        const newlyAdded = newOrders.filter(no => !prev.find(po => po.order_number === no.order_number));
+        if (newlyAdded.length > 0) {
           const audio = new Audio("/message.mp3");
-          audio.play().catch((err) => console.log("Audio play failed:", err));
+          audio.play().catch(err => console.log("Audio play failed:", err));
 
-          // Toast
-          setNewOrderToast(latestOrder);
+          setActiveToasts(currentToasts => {
+            const additions = newlyAdded.filter(add => !currentToasts.find(ct => ct.order_number === add.order_number));
+            return [...additions, ...currentToasts];
+          });
         }
         return newOrders;
       });
@@ -447,22 +447,25 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
       setReservations(prev => {
         // If we have more pending reservations than before
-        if (pendingRows.length > prev.length) {
-          const latest = pendingRows[0];
-          
-          // Sound
+        const newlyAdded = pendingRows.filter(nr => !prev.find(pr => pr.id === nr.id));
+        if (newlyAdded.length > 0) {
           const audio = new Audio("/message.mp3");
           audio.play().catch(() => {});
 
-          // Toast Alert
-          setNewOrderToast({
+          const newResToasts = newlyAdded.map(latest => ({
              ...latest,
              isReservation: true,
              order_number: `Res #${latest.id}`,
              customer_name: latest.customer_name,
              body: `Table request for ${latest.party_size} persons`,
              items: [], // no food items
-             order_total: 0
+             order_total: 0,
+             toastId: `res_${latest.id}`
+          }));
+
+          setActiveToasts(currentToasts => {
+            const additions = newResToasts.filter(add => !currentToasts.find(ct => ct.toastId === add.toastId));
+            return [...additions, ...currentToasts];
           });
         }
         return pendingRows;
@@ -482,23 +485,23 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
       const newNotifs = res.data.data.filter(n => !n.is_read);
 
       setGeneralNotifications(prev => {
-        // If we have more unread notifs than before, or a newer max ID
-        const hasNew = newNotifs.length > prev.length || (newNotifs.length > 0 && Math.max(...newNotifs.map(n => n.id)) > (prev.length > 0 ? Math.max(...prev.map(n => n.id)) : 0));
-
-        if (hasNew) {
+        // If we have more unread notifs than before
+        const newlyAdded = newNotifs.filter(nn => !prev.find(pn => pn.id === nn.id));
+        if (newlyAdded.length > 0) {
           const audio = new Audio("/message.mp3");
           audio.play().catch(e => { });
 
-          // Trigger popup for new registration just like orders
-          const latest = newNotifs[0];
-          if (latest) {
-            setNewOrderToast({
+          const newRegToasts = newlyAdded.map(latest => ({
               ...latest,
               isRegistration: true,
               items: [], // Registration doesn't have items
-              order_total: 0
-            });
-          }
+              order_total: 0,
+              toastId: `reg_${latest.id}`
+          }));
+          setActiveToasts(currentToasts => {
+            const additions = newRegToasts.filter(add => !currentToasts.find(ct => ct.toastId === add.toastId));
+            return [...additions, ...currentToasts];
+          });
         }
         return newNotifs;
       });
@@ -519,11 +522,30 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Play sound every 45 seconds if there are new orders or reservations
+  useEffect(() => {
+    let soundInterval;
+    const hasUnread = orders.length > 0 || reservations.length > 0;
+    if (hasUnread) {
+      soundInterval = setInterval(() => {
+        const audio = new Audio("/message.mp3");
+        audio.play().catch(() => {});
+      }, 45000);
+    }
+    return () => {
+      if (soundInterval) clearInterval(soundInterval);
+    };
+  }, [orders.length, reservations.length]);
+
+  const closeToast = (idToClose) => {
+    setActiveToasts(current => current.filter(t => (t.toastId || t.order_number) !== idToClose));
+  };
+
   const handleRegistrationStatusUpdate = async (notif, status) => {
     try {
       const profileId = notif.order_number.replace('#ZBR-', '');
       await api.put(`/merchant-profile/update-status/${profileId}`, { status });
-      setNewOrderToast(null);
+      closeToast(notif.toastId || notif.order_number);
       fetchGeneralNotifications();
     } catch {
       alert("Failed to update merchant status");
@@ -544,8 +566,9 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
         ready_in_minutes: Number(minutes),
       });
       setIsReadyModalOpen(false);
+      
+      closeToast(selectedOrderForReady.toastId || selectedOrderForReady.order_number); // Close popup after action
       setSelectedOrderForReady(null);
-      setNewOrderToast(null); // Close popup after action
       fetchNewOrders();
     } catch { alert("Failed to accept order"); }
   };
@@ -557,7 +580,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
       } else {
         await api.post("/mobile/orders/update-status", { order_number: order.order_number, status: 2 });
       }
-      setNewOrderToast(null);
+      closeToast(order.toastId || order.order_number);
       fetchNewOrders();
       fetchNewReservations();
     } catch {
@@ -566,7 +589,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   };
 
   const handleGoToReservation = (res) => {
-    setNewOrderToast(null);
+    closeToast(res.toastId || res.order_number);
     setSelectedQuickRes(res); // Open the modal directly
   };
 
@@ -779,6 +802,15 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                               ))}
                             </div>
 
+                            {order.allergy_note && (
+                              <div className="bg-rose-500/10 p-3 mb-4 rounded-xl border border-rose-500/20 flex flex-col gap-1.5">
+                                <span className="text-[10px] text-rose-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                  <AlertCircle size={12} /> Food Allergies
+                                </span>
+                                <p className="text-[11px] text-rose-200 font-medium leading-snug">{order.allergy_note}</p>
+                              </div>
+                            )}
+
                             {/* Payment Summary */}
                             {(order.wallet_total > 0 || order.loyalty_total > 0) && (
                               <div className="flex flex-wrap gap-2 mb-4">
@@ -884,119 +916,121 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
       </header>
 
-      {/* 🛎️ Global Order Toaster (Swiggy/Zomato style) */}
-      <AnimatePresence>
-        {newOrderToast && (
-          <motion.div
-            initial={{ opacity: 0, x: 50, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, x: 0, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className="fixed bottom-6 right-6 z-[100] w-full max-w-sm sm:max-w-md"
-          >
-            <div className="bg-[#0b1a3d]/95 backdrop-blur-2xl border-2 border-yellow-500/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.2)] overflow-hidden">
-              <div className="p-4 sm:p-5">
-                <div className="flex items-start gap-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-yellow-500 border border-yellow-500/30 shadow-inner">
-                      <Bell size={24} className="animate-bounce" />
-                    </div>
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border border-white/20"></span>
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start font-sans">
-                      <div>
-                        <h4 className="text-white font-bold text-base tracking-tight leading-tight">
-                          {newOrderToast.isRegistration ? "New Registration!" : newOrderToast.isReservation ? "New Reservation!" : "Incoming Order!"}
-                        </h4>
-                        <p className="text-yellow-400 text-xs font-bold leading-none mt-1 uppercase tracking-widest flex items-center gap-1">
-                          {newOrderToast.isRegistration || newOrderToast.isReservation ? newOrderToast.order_number : `#${newOrderToast.order_number}`}
-                        </p>
+      {/* 🛎️ Global Order Toaster (Swiggy/Zomato style) nested list */}
+      <div className="fixed bottom-6 right-6 z-[100] w-full max-w-sm sm:max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar flex flex-col gap-4 pointer-events-none p-2" suppressScrollX={true}>
+        <AnimatePresence>
+          {activeToasts.map((toast) => {
+            const tId = toast.toastId || toast.order_number;
+            return (
+              <motion.div
+                key={tId}
+                initial={{ opacity: 0, x: 50, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, x: 0, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                className="pointer-events-auto bg-[#0b1a3d]/95 backdrop-blur-2xl border-2 border-yellow-500/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.2)] overflow-hidden shrink-0"
+              >
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-yellow-500 border border-yellow-500/30 shadow-inner">
+                        <Bell size={24} className="animate-bounce" />
                       </div>
-                      <button
-                        onClick={() => setNewOrderToast(null)}
-                        className="p-1 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors"
-                      >
-                        <X size={18} />
-                      </button>
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border border-white/20"></span>
+                      </span>
                     </div>
 
-                    <div className="mt-3 space-y-1 max-h-24 overflow-y-auto pr-2 custom-scrollbar">
-                      {newOrderToast.isRegistration || newOrderToast.isReservation ? (
-                        <p className="text-white/80 text-sm font-medium leading-relaxed">
-                          {newOrderToast.body}
-                        </p>
-                      ) : (
-                        newOrderToast.items.map((item, i) => (
-                          <p key={i} className="text-white/80 text-sm font-medium line-clamp-1">
-                            <span className="text-yellow-400 mr-1.5">{item.quantity}x</span> {item.name}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start font-sans">
+                        <div>
+                          <h4 className="text-white font-bold text-base tracking-tight leading-tight">
+                            {toast.isRegistration ? "New Registration!" : toast.isReservation ? "New Reservation!" : "Incoming Order!"}
+                          </h4>
+                          <p className="text-yellow-400 text-xs font-bold leading-none mt-1 uppercase tracking-widest flex items-center gap-1">
+                            {toast.isRegistration || toast.isReservation ? toast.order_number : `#${toast.order_number}`}
                           </p>
-                        ))
-                      )}
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">
-                          {newOrderToast.isRegistration || newOrderToast.isReservation ? "Action" : "Amount Paid"}
-                        </span>
-                        <span className="text-lg font-black text-white">
-                          {newOrderToast.isRegistration || newOrderToast.isReservation ? "Review" : `£${Number(newOrderToast.order_total).toFixed(2)}`}
-                        </span>
+                        </div>
+                        <button
+                          onClick={() => closeToast(tId)}
+                          className="p-1 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
                       </div>
-                      <div className="flex gap-2">
-                        {newOrderToast.isRegistration ? (
+
+                      <div className="mt-3 space-y-1 max-h-24 overflow-y-auto pr-2 custom-scrollbar">
+                        {toast.isRegistration || toast.isReservation ? (
+                          <p className="text-white/80 text-sm font-medium leading-relaxed">
+                            {toast.body}
+                          </p>
+                        ) : (
                           <>
+                            {toast.items.map((item, i) => (
+                              <p key={i} className="text-white/80 text-sm font-medium line-clamp-1">
+                                <span className="text-yellow-400 mr-1.5">{item.quantity}x</span> {item.name}
+                              </p>
+                            ))}
+                            {toast.allergy_note && (
+                              <div className="mt-2 p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                                <span className="text-[9px] text-rose-400 font-bold uppercase tracking-widest block mb-0.5">Alert:</span>
+                                <p className="text-[10px] text-rose-200 font-medium leading-tight">{toast.allergy_note}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] text-white/40 uppercase font-bold tracking-widest">
+                            {toast.isRegistration || toast.isReservation ? "Action" : "Amount Paid"}
+                          </span>
+                          <span className="text-lg font-black text-white">
+                            {toast.isRegistration || toast.isReservation ? "Review" : `£${Number(toast.order_total).toFixed(2)}`}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          {toast.isRegistration ? (
+                            <>
+                              <button
+                                onClick={() => handleRegistrationStatusUpdate(toast, 1)}
+                                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                onClick={() => handleRegistrationStatusUpdate(toast, 2)}
+                                className="px-4 py-2 bg-white/10 hover:bg-rose-500 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          ) : toast.isReservation ? (
                             <button
-                              onClick={() => handleRegistrationStatusUpdate(newOrderToast, 1)}
-                              className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
+                              onClick={() => handleGoToReservation(toast)}
+                              className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
+                            >
+                              View Booking
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAccept(toast)}
+                              className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
                             >
                               Accept
                             </button>
-                            <button
-                              onClick={() => handleRegistrationStatusUpdate(newOrderToast, 2)}
-                              className="px-4 py-2 bg-white/10 hover:bg-rose-500 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        ) : newOrderToast.isReservation ? (
-                          <button
-                            onClick={() => handleGoToReservation(newOrderToast)}
-                            className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
-                          >
-                            View Booking
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setShowNotifications(true);
-                              setNewOrderToast(null);
-                            }}
-                            className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
-                          >
-                            View Details
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              {/* Progress bar for auto-close */}
-              <motion.div
-                initial={{ width: "100%" }}
-                animate={{ width: "0%" }}
-                transition={{ duration: 6, ease: "linear" }}
-                className="h-1 bg-yellow-500/50"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
       {/* Global Quick Reservation Modal (Appears directly from toaster/bell) */}
       <AnimatePresence>
         {selectedQuickRes && (

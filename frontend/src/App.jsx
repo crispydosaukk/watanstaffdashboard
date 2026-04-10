@@ -15,6 +15,7 @@ import CustomerDetails from "./pages/customerdetails/index.jsx";
 import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
 import OffersPage from "./pages/offers/index.jsx";
 import TableReservations from "./pages/tablereservations/index.jsx";
+import FinanceManagement from "./pages/financemanagement/index.jsx";
 import { getSafePath } from "./utils/perm";
 
 function PrivateRoute({ children }) {
@@ -172,6 +173,17 @@ export default function App() {
             <PrivateRoute>
               <RequirePerm perm="table_reservations">
                 <TableReservations />
+              </RequirePerm>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/finance"
+          element={
+            <PrivateRoute>
+              <RequirePerm perm="finance_management">
+                <FinanceManagement />
               </RequirePerm>
             </PrivateRoute>
           }
