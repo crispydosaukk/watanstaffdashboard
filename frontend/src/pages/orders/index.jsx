@@ -61,6 +61,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
               <h3 className="text-sm font-bold text-yellow-500 mb-6 flex items-center gap-2"><Truck size={14} /> Logistics Matrix</h3>
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Type</span><span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${order.instore === 1 ? "bg-yellow-500/10 text-yellow-500" : "bg-purple-500/10 text-purple-400"}`}>{order.instore === 1 ? "INSTORE" : "KERBSIDE"}</span></div>
+                {order.takeaway_time && <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Scheduled</span><span className="text-sm font-bold text-amber-400">{order.takeaway_time}</span></div>}
                 <div className="flex justify-between items-center"><span className="text-xs font-bold text-white/50">Status</span><span className={`text-[10px] font-bold uppercase tracking-widest ${statusInfo.color}`}>{statusInfo.text}</span></div>
               </div>
             </div>
@@ -308,7 +309,14 @@ export default function Orders() {
                         </div>
                         <div className="p-6 bg-white/[0.01]">
                           <div className="flex justify-between items-center mb-6">
-                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide ${order.instore === 1 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'Instore' : 'Kerbside'}</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide ${order.instore === 1 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'Instore' : 'Kerbside'}</span>
+                              {order.takeaway_time && (
+                                <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide flex items-center gap-1">
+                                  <Clock size={10} /> {order.takeaway_time}
+                                </span>
+                              )}
+                            </div>
                             <div className="text-right">
                               <p className="text-[10px] font-bold text-white/20 tracking-wide leading-none mb-1">Total</p>
                               <p className="text-2xl font-bold text-white tracking-tight leading-none">£{safeNumber(order.grand_total).toFixed(2)}</p>

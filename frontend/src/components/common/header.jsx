@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Check, Navigation, Phone, Mail, Calendar, MessageSquare, AlertCircle } from "lucide-react";
+import { Search, Bell, Menu, User, LogOut, Settings, ChevronDown, X, MapPin, Check, Navigation, Phone, Mail, Calendar, MessageSquare, AlertCircle, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../api.js";
 import ReadyInModal from "./ReadyInModal.jsx";
@@ -780,8 +780,13 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <div className="flex justify-between items-start mb-3">
                               <div>
                                 <p className="font-bold text-white text-sm sm:text-base mb-1">Order #{order.order_number}</p>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold rounded uppercase tracking-wider">New</span>
+                                  {order.takeaway_time && (
+                                    <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[10px] font-bold rounded flex items-center gap-1">
+                                      <Clock size={10} /> {order.takeaway_time}
+                                    </span>
+                                  )}
                                   <p className="text-[10px] text-white/40 uppercase font-medium">Just now</p>
                                 </div>
                               </div>
@@ -953,9 +958,16 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                           <h4 className="text-white font-bold text-base tracking-tight leading-tight">
                             {toast.isRegistration ? "New Registration!" : toast.isReservation ? "New Reservation!" : "Incoming Order!"}
                           </h4>
-                          <p className="text-yellow-400 text-xs font-bold leading-none mt-1 uppercase tracking-widest flex items-center gap-1">
-                            {toast.isRegistration || toast.isReservation ? toast.order_number : `#${toast.order_number}`}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-yellow-400 text-xs font-bold leading-none uppercase tracking-widest">
+                              {toast.isRegistration || toast.isReservation ? toast.order_number : `#${toast.order_number}`}
+                            </p>
+                            {toast.takeaway_time && (
+                              <span className="px-1.5 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[9px] font-black uppercase rounded flex items-center gap-1">
+                                <Clock size={10} /> {toast.takeaway_time}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <button
                           onClick={() => closeToast(tId)}

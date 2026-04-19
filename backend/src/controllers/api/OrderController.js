@@ -104,6 +104,7 @@ export const createOrder = async (req, res) => {
       wallet_used,
       loyalty_used,
       order_source,
+      takeaway_time,
     } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -308,8 +309,8 @@ export const createOrder = async (req, res) => {
         (user_id, order_number, customer_id, product_id, payment_mode, payment_request_id,
          product_name, special_instruction, price, discount_amount, vat, gross_total,
          wallet_amount, loyalty_amount, quantity, grand_total, order_status,
-         delivery_estimate_time, car_color, reg_number, owner_name, mobile_number, instore, allergy_note, order_source)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         delivery_estimate_time, car_color, reg_number, owner_name, mobile_number, instore, allergy_note, order_source, takeaway_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       const values = [
@@ -338,6 +339,7 @@ export const createOrder = async (req, res) => {
         instore || 0,
         allergy_note || null,
         order_source || 'App',
+        takeaway_time || null,
       ];
 
       const [orderInsertRes] = await conn.query(sql, values);
@@ -527,6 +529,7 @@ export const getCustomerOrders = async (req, res) => {
         SUM(quantity) AS items_count,
         MIN(order_status) AS status,
         MAX(created_at) AS created_at,
+        MAX(takeaway_time) AS takeaway_time,
         MAX(delivery_estimate_time) AS delivery_estimate_time
       FROM orders
       WHERE customer_id = ?
@@ -590,6 +593,8 @@ export const getOrder = async (req, res) => {
       delivery_estimate_time: rows
         .map(r => r.delivery_estimate_time)
         .filter(Boolean)[0] || null,
+
+      takeaway_time: rows[0].takeaway_time || null,
 
       created_at: rows[0].created_at,
 
