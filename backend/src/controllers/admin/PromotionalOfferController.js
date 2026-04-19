@@ -8,7 +8,7 @@ export async function index(req, res) {
 
     // If not super admin, filter by the current user's ID
     const userId = isSuperAdmin ? null : req.user.id;
-    
+
     const data = await OfferModel.getAllOffers(userId);
     res.json(data);
   } catch (err) {
@@ -20,7 +20,7 @@ export async function store(req, res) {
   try {
     const { title, description, status, targets } = req.body;
     const userId = req.user.id;
-    
+
     let banner_image = null;
     if (req.file) {
       banner_image = req.file.filename;
@@ -47,7 +47,7 @@ export async function update(req, res) {
     const { id } = req.params;
     const userId = req.user.id;
     const { title, description, status, targets } = req.body;
-    
+
     let banner_image = null;
     if (req.file) {
       banner_image = req.file.filename;

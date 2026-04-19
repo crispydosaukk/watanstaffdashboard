@@ -23,7 +23,7 @@ export async function getActiveOffers(req, res) {
     // Build full URLs for images and resolve target metadata
     const data = await Promise.all(activeOffers.map(async (offer) => {
       let cleanImage = offer.banner_image ? offer.banner_image.replace(/^\/?uploads\//, "") : null;
-      
+
       // Resolve Target Metadata (Products and Categories)
       const resolvedTargets = await Promise.all((offer.targets || []).map(async (t) => {
         if (t.type === 'product') {

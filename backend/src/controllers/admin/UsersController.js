@@ -75,14 +75,11 @@ export const create = async (req, res) => {
     return res.status(201).json({ message: "User created", id: ins.insertId });
   } catch (e) {
     await conn.rollback();
-    console.error("users.create:", e);
-
     if (e?.code === "ER_DUP_ENTRY") {
+      console.log(`[Validation] User creation failed: Email ${email} already exists.`);
       return res.status(409).json({ message: "Email already exists" });
     }
-    if (e?.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(422).json({ message: "Invalid role_id (FK failed)" });
-    }
+    console.error("users.create Error:", e.message || e);
     return res.status(500).json({ message: "Server error" });
   } finally {
     conn.release();

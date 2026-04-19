@@ -36,8 +36,8 @@ export async function updateOffer(id, user_id, payload, targets) {
 
     // Verify ownership if user_id is provided
     if (user_id) {
-       const [rows] = await conn.query("SELECT id FROM promotional_offers WHERE id = ? AND user_id = ?", [id, user_id]);
-       if (rows.length === 0) throw new Error("Unauthorized to update this offer");
+      const [rows] = await conn.query("SELECT id FROM promotional_offers WHERE id = ? AND user_id = ?", [id, user_id]);
+      if (rows.length === 0) throw new Error("Unauthorized to update this offer");
     }
 
     await conn.query(
@@ -72,16 +72,16 @@ export async function getAllOffers(userId = null) {
   try {
     let query = "SELECT * FROM promotional_offers";
     let params = [];
-    
+
     if (userId) {
       query += " WHERE user_id = ?";
       params.push(userId);
     }
-    
+
     query += " ORDER BY created_at DESC";
-    
+
     const [offers] = await conn.query(query, params);
-    
+
     // For each offer, fetch its targets
     for (let offer of offers) {
       const [targets] = await conn.query(
@@ -90,7 +90,7 @@ export async function getAllOffers(userId = null) {
       );
       offer.targets = targets;
     }
-    
+
     return offers;
   } finally {
     conn.release();

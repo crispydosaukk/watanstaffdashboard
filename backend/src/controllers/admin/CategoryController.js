@@ -291,7 +291,10 @@ export const integrateCategory = async (req, res) => {
 
     if (existingCat) {
       await conn.rollback();
-      return res.status(409).json({ message: "This restaurant already has this category" });
+      console.log(`[Integration] Blocked: Target user ${targetUserId} already has category "${sourceCat.category_name}"`);
+      return res.status(409).json({ 
+        message: `Conflict: This restaurant already has a category named "${sourceCat.category_name}".` 
+      });
     }
 
     // 3. Create the category for the target restaurant

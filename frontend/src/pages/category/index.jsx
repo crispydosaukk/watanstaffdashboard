@@ -162,6 +162,19 @@ export default function Category() {
         setSelectedSourceCat(null);
         setTargetRestaurantId("");
         setIntegrateSearch("");
+        // Refresh the categories list to show the new data immediately
+        fetch(`${API}/category`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) =>
+            setCategories(
+              Array.isArray(data)
+                ? [...data].sort((a, b) => a.sort_order - b.sort_order)
+                : []
+            )
+          )
+          .catch((err) => console.error("Error refreshing categories:", err));
       } else {
         showPopup({ title: "Integration Failed", message: data.message, type: "error" });
       }
@@ -783,7 +796,7 @@ export default function Category() {
                     className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500/20 mb-8"
                   >
                     <option value="">Select destination...</option>
-                    {restaurants.map(r => <option key={r.id} value={r.id}>{r.restaurant_name}</option>)}
+                    {restaurants.map(r => <option key={r.user_id} value={r.user_id}>{r.restaurant_name}</option>)}
                   </select>
                   <div className="mt-auto p-6 bg-white/[0.03] border border-white/[0.05] rounded-2xl">
                     <div className="flex justify-between items-center mb-6">
