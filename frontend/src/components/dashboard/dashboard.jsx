@@ -36,7 +36,7 @@ const ChartCard = ({ title, subtitle, children, delay, className = "" }) => (
   </motion.div>
 );
 
-const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeClick, trend }) => (
+const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeClick, trend, badge }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -44,8 +44,16 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
     className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/[0.08] bg-[#0b1a3d]/60 backdrop-blur-xl shadow-2xl group hover:bg-[#0b1a3d]/80 transition-all duration-300 flex flex-col justify-between h-full min-h-[140px] sm:min-h-[170px]"
   >
     <div className="relative z-10 flex justify-between items-start mb-2">
-      <div className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl backdrop-blur-md inline-block shadow-inner ${colorClass}`}>
+      <div className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl backdrop-blur-md inline-block shadow-inner ${colorClass} relative`}>
         <Icon size={18} className="sm:size-[22px] text-white" />
+        {badge > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-5 w-5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-5 w-5 bg-gradient-to-br from-rose-500 to-rose-600 text-[10px] items-center justify-center font-black text-white leading-none shadow-lg border border-rose-400/50">
+              {badge}
+            </span>
+          </span>
+        )}
       </div>
       {(onEyeClick || trend) && (
         <div className="flex flex-col items-end gap-1.5">
@@ -197,6 +205,11 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             {item.order_source === 'Dashboard' && (
                               <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-[9px] font-black border border-white/20" title="Dashboard Order">
                                 D
+                              </div>
+                            )}
+                            {item.takeaway_time && (
+                              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-black uppercase tracking-wider animate-pulse ml-2">
+                                <Clock size={10} /> {item.takeaway_time}
                               </div>
                             )}
                           </div>
@@ -1126,9 +1139,35 @@ export default function Dashboard() {
 
   const ordersPerPage = 10;
 
+  const upcomingOrders = React.useMemo(() => {
+    if (!stats.recent_orders) return [];
+    const now = new Date();
+    return stats.recent_orders.filter(o => {
+      // Status 1 is "Accepted". We only care about Accepted pre-orders that aren't "Ready" (3) or "Collected" (4)
+      if (!o.takeaway_time || Number(o.order_status) >= 3) return false;
+      
+      try {
+        // Handle both "17:00" and "2024-04-20 17:00" formats
+        let scheduleDate;
+        if (o.takeaway_time.includes(':') && !o.takeaway_time.includes('-')) {
+            const [hours, minutes] = o.takeaway_time.split(':');
+            scheduleDate = new Date();
+            scheduleDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        } else {
+            scheduleDate = new Date(o.takeaway_time);
+        }
+        
+        const diffMs = scheduleDate - now;
+        const diffMins = diffMs / (1000 * 60);
+        // Alert if due within the next 90 minutes (or overdue by 30 mins)
+        return diffMins > -30 && diffMins < 90;
+      } catch (e) { return false; }
+    });
+  }, [stats.recent_orders]);
+
   useEffect(() => {
     fetchStats();
-  }, [dateRange, selectedRestaurant]); // Refetch when range or restaurant changes
+  }, [dateRange, selectedRestaurant]); 
 
   useEffect(() => {
     // Fetch restaurants once if we don't have them (and ideally if super admin, but we can just fetch)
@@ -1160,6 +1199,38 @@ export default function Dashboard() {
   };
 
   const updateOrderStatus = async (orderNumber, status, readyInMinutes = null) => {
+    const order = stats.recent_orders?.find(o => o.order_number === orderNumber) || 
+                  detailModal.items?.find(o => o.order_number === orderNumber) ||
+                  (selectedOrder?.order_number === orderNumber ? selectedOrder : null);
+
+    // Safeguard: Warning if marking Ready/Collected much earlier than scheduled
+    if (order && order.takeaway_time && (status === 3 || status === 4)) {
+      const now = new Date();
+      let scheduleDate;
+      if (order.takeaway_time.includes(':') && !order.takeaway_time.includes('-')) {
+          const [hours, minutes] = order.takeaway_time.split(':');
+          scheduleDate = new Date();
+          scheduleDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      } else {
+          scheduleDate = new Date(order.takeaway_time);
+      }
+
+      const diffMins = (scheduleDate - now) / (1000 * 60);
+      if (diffMins > 30) {
+        showPopup({
+          title: "Early Action Warning",
+          message: `This order is scheduled for ${order.takeaway_time}. Are you sure you want to mark it as ${status === 3 ? 'READY' : 'COLLECTED'} more than 30 minutes early?`,
+          type: "confirm",
+          onConfirm: () => performStatusUpdate(orderNumber, status, readyInMinutes)
+        });
+        return;
+      }
+    }
+
+    performStatusUpdate(orderNumber, status, readyInMinutes);
+  };
+
+  const performStatusUpdate = async (orderNumber, status, readyInMinutes = null) => {
     try {
       await api.post("/mobile/orders/update-status", {
         order_number: orderNumber,
@@ -1180,6 +1251,21 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Failed to update status", error);
+    }
+  };
+
+  const handleReadyClick = (orderNumber) => {
+    // Attempt to find the order to check for takeaway_time
+    const order = stats.recent_orders?.find(o => o.order_number === orderNumber) || 
+                  detailModal.items?.find(o => o.order_number === orderNumber) ||
+                  (selectedOrder?.order_number === orderNumber ? selectedOrder : null);
+
+    if (order && order.takeaway_time) {
+       // It's a pre-order! Accept it immediately without modal
+       updateOrderStatus(orderNumber, 1, 0);
+    } else {
+       setOrderForReady(orderNumber);
+       setIsReadyModalOpen(true);
     }
   };
 
@@ -1416,10 +1502,7 @@ export default function Dashboard() {
         {status === 0 && (
           <>
             <button
-              onClick={() => {
-                setOrderForReady(order.order_number);
-                setIsReadyModalOpen(true);
-              }}
+              onClick={() => handleReadyClick(order.order_number)}
               className="p-2 bg-yellow-500/15 hover:bg-yellow-500/30 rounded-lg text-yellow-400 transition-all border border-yellow-500/20 active:scale-95"
               title="Accept"
             >
@@ -1553,17 +1636,39 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Stats Grid - Row 1 */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
-              <StatCard
-                title="Pending Orders"
-                value={stats.pending_orders}
-                subtext="To Be Confirmed"
-                icon={Clock}
-                colorClass="bg-amber-500/20 border border-amber-400/30"
-                delay={0}
-                onEyeClick={() => openDetailModal('pending', 'Pending Orders')}
-              />
+              {upcomingOrders.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full mb-8 bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-rose-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 backdrop-blur-md shadow-xl"
+                >
+                   <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/30">
+                     <AlertCircle className="text-amber-400 animate-pulse" size={24} />
+                   </div>
+                   <div className="flex-1 text-center sm:text-left">
+                     <h4 className="text-amber-400 font-black text-sm uppercase tracking-widest">Action Required: Upcoming Scheduled Orders</h4>
+                     <p className="text-white/60 text-xs mt-1 font-medium">You have <span className="text-white font-bold">{upcomingOrders.length} order(s)</span> due for preparation soon. Please start them to ensure on-time delivery.</p>
+                   </div>
+                   <button 
+                    onClick={() => openDetailModal('pending', 'Pending Orders')}
+                    className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-amber-900/20 active:scale-95 whitespace-nowrap"
+                   >
+                     View Orders
+                   </button>
+                </motion.div>
+              )}
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <StatCard
+                  title="Pending Orders"
+                  value={stats.pending_orders}
+                  subtext="To Be Confirmed"
+                  icon={Clock}
+                  colorClass="bg-amber-500/20 border border-amber-400/30"
+                  delay={0}
+                  onEyeClick={() => openDetailModal('pending', 'Pending Orders')}
+                  badge={upcomingOrders.length}
+                />
               <StatCard
                 title="Total Bookings"
                 value={stats.total_bookings}
@@ -1860,6 +1965,11 @@ export default function Dashboard() {
                               {new Date(order.created_at).toLocaleDateString()}
                               <br />
                               <span className="text-xs text-white/40">{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              {order.takeaway_time && (
+                                <div className="mt-1 flex items-center gap-1 text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit animate-pulse">
+                                  <Clock size={10} /> {order.takeaway_time}
+                                </div>
+                              )}
                             </td>
                             <td className="px-6 py-4 text-center">
                               <OrderActions order={order} />
@@ -1945,10 +2055,7 @@ export default function Dashboard() {
             order={selectedOrder}
             onUpdateStatus={updateOrderStatus}
             onConfirmCollection={confirmCollection}
-            onReadyClick={(num) => {
-              setOrderForReady(num);
-              setIsReadyModalOpen(true);
-            }}
+            onReadyClick={(num) => handleReadyClick(num)}
             onClose={() => setSelectedOrder(null)}
           />
         )}
@@ -1963,10 +2070,7 @@ export default function Dashboard() {
             type={detailModal.type}
             onUpdateStatus={updateOrderStatus}
             onConfirmCollection={confirmCollection}
-            onReadyClick={(num) => {
-              setOrderForReady(num);
-              setIsReadyModalOpen(true);
-            }}
+            onReadyClick={(num) => handleReadyClick(num)}
             onClose={() => setDetailModal({ ...detailModal, isOpen: false })}
           />
         )}

@@ -19,65 +19,56 @@ function buildPhotoUrl(req, raw) {
 export const getRestaurants = async (req, res) => {
   const { lat, lng } = req.query;
 
-  let query;
-  let queryParams = [];
-
-  if (lat && lng) {
-    // Haversine formula to calculate distance and sort
-    query = `
-      SELECT
-        id,
-        user_id,
-        restaurant_name AS name,
-        restaurant_photo AS photo,
-        restaurant_address AS address,
-        instore,
-        kerbside,
-        food_type,
-        is_halal,
-        latitude,
-        longitude,
-        ( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) AS distance
-      FROM restaurant_details
-      ORDER BY distance ASC
-    `;
-    queryParams = [lat, lng, lat];
-  } else {
-    query = `
-      SELECT
-        id,
-        user_id,
-        restaurant_name AS name,
-        restaurant_photo AS photo,
-        restaurant_address AS address,
-        instore,
-        kerbside,
-        food_type,
-        is_halal,
-        latitude,
-        longitude
-      FROM restaurant_details
-      ORDER BY id DESC
-    `;
-  }
-
   try {
-    const [results] = await db.query(query, queryParams);
+    const query = `
+      SELECT
+        rd.id,
+        rd.user_id,
+        rd.restaurant_name AS name,
+        rd.restaurant_photo AS photo,
+        rd.restaurant_address AS address,
+        rd.instore,
+        rd.kerbside,
+        rd.food_type,
+        rd.is_halal,
+        rd.latitude,
+        rd.longitude
+        ${lat && lng ? `, ( 6371 * acos( cos( radians(${db.escape(lat)}) ) * cos( radians( rd.latitude ) ) * cos( radians( rd.longitude ) - radians(${db.escape(lng)}) ) + sin( radians(${db.escape(lat)}) ) * sin( radians( rd.latitude ) ) ) ) AS distance` : ""}
+      FROM restaurant_details rd
+      ${lat && lng ? "ORDER BY distance ASC" : "ORDER BY rd.id DESC"}
+    `;
 
-    const data = results.map(r => ({
-      id: r.id,
-      userid: r.user_id,
-      name: r.name,
-      address: r.address,
-      photo: buildPhotoUrl(req, r.photo),
-      instore: !!r.instore,
-      kerbside: !!r.kerbside,
-      food_type: r.food_type,
-      is_halal: !!r.is_halal,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      distance: r.distance ? parseFloat(r.distance.toFixed(2)) : null
-    }));
+    const [results] = await db.query(query);
+    const [timingsResults] = await db.query("SELECT restaurant_id, day, opening_time, closing_time, is_active FROM restaurant_timings");
+
+    const timingsMap = {};
+    timingsResults.forEach(t => {
+      if (!timingsMap[t.restaurant_id]) timingsMap[t.restaurant_id] = [];
+      timingsMap[t.restaurant_id].push({
+        day: t.day,
+        opening_time: t.opening_time,
+        closing_time: t.closing_time,
+        is_active: t.is_active
+      });
+    });
+
+    const data = results.map(r => {
+      return {
+        id: r.id,
+        userid: r.user_id,
+        name: r.name,
+        address: r.address,
+        photo: buildPhotoUrl(req, r.photo),
+        instore: !!r.instore,
+        kerbside: !!r.kerbside,
+        food_type: r.food_type,
+        is_halal: !!r.is_halal,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        distance: r.distance ? parseFloat(r.distance.toFixed(2)) : null,
+        timings: timingsMap[r.id] || []
+      };
+    });
 
     return res.json({ status: 1, data });
   } catch (err) {
@@ -113,6 +104,11 @@ export const getRestaurantById = async (req, res) => {
       cuisineTypeArr = [r.cuisine_type];
     }
 
+    const [timingRows] = await db.query(
+      "SELECT day, opening_time, closing_time, is_active FROM restaurant_timings WHERE restaurant_id = ?",
+      [r.id]
+    );
+
     const restaurant = {
       id: r.id,
       userid: r.user_id,
@@ -135,6 +131,7 @@ export const getRestaurantById = async (req, res) => {
       restaurant_instagram: r.restaurant_instagram || null,
       restaurant_twitter: r.restaurant_twitter || null,
       restaurant_tiktok: r.restaurant_tiktok || null,
+      timings: timingRows || []
     };
 
     return res.json({ status: 1, data: [restaurant] });

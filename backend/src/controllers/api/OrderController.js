@@ -645,7 +645,7 @@ export const updateOrderStatus = async (req, res) => {
 
     // 1️⃣ CHECK CURRENT STATUS & CUSTOMER INFO
     const [orders] = await conn.query(
-      `SELECT id, order_status, customer_id, wallet_amount, loyalty_amount, grand_total, payment_mode, payment_request_id 
+      `SELECT id, order_status, customer_id, wallet_amount, loyalty_amount, grand_total, payment_mode, payment_request_id, takeaway_time 
        FROM orders WHERE order_number = ?`,
       [order_number]
     );
@@ -741,10 +741,18 @@ export const updateOrderStatus = async (req, res) => {
 
     // 4️⃣ UPDATE STATUS ON ORDERS TABLE
     let readyAt = null;
+    let takeawayTime = firstRow.takeaway_time || null;
+
     if (newStatus === 1) {
-      const minutes = Number(ready_in_minutes || 0);
-      const d = new Date(Date.now() + minutes * 60000);
-      readyAt = d.toISOString().slice(0, 19).replace("T", " ");
+      if (takeawayTime) {
+        // For pre-orders, we can either keep the takeaway_time or set a specific ready time.
+        // For now, let's keep it as the estimated time.
+        readyAt = takeawayTime; 
+      } else {
+        const minutes = Number(ready_in_minutes || 0);
+        const d = new Date(Date.now() + minutes * 60000);
+        readyAt = d.toISOString().slice(0, 19).replace("T", " ");
+      }
     }
 
     await conn.query(
@@ -754,7 +762,12 @@ export const updateOrderStatus = async (req, res) => {
 
     // 5️⃣ NOTIFICATION LOGIC (Same as before)
     const statusMap = {
-      1: { title: "✅ Order Accepted", body: `Your order will be ready in ${ready_in_minutes} minutes` },
+      1: { 
+        title: "✅ Order Accepted", 
+        body: takeawayTime 
+          ? `Your order ${order_number} has been accepted for pickup at ${takeawayTime}.`
+          : `Your order will be ready in ${ready_in_minutes} minutes` 
+      },
       2: { title: "❌ Order Rejected", body: `Your order ${order_number} was rejected and amount refunded.` },
       3: { title: "🍳 Order Ready", body: `Your order ${order_number} is ready for pickup` },
       4: { title: "🚗 Order Collected", body: `Thank you! Enjoy your food!` },

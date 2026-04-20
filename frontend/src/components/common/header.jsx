@@ -559,21 +559,28 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
   };
 
   const handleAccept = (order) => {
-    setSelectedOrderForReady(order);
-    setIsReadyModalOpen(true);
+    if (order.takeaway_time) {
+      // If it's a pre-order, skip the "Ready In" modal and confirm immediately
+      setSelectedOrderForReady(order);
+      confirmAccept(0, order); // Pass 0 as placeholder, confirmAccept will use order from arg if provided or state
+    } else {
+      setSelectedOrderForReady(order);
+      setIsReadyModalOpen(true);
+    }
   };
 
-  const confirmAccept = async (minutes) => {
-    if (!selectedOrderForReady) return;
+  const confirmAccept = async (minutes, orderToUse = null) => {
+    const targetOrder = orderToUse || selectedOrderForReady;
+    if (!targetOrder) return;
     try {
       await api.post("/mobile/orders/update-status", {
-        order_number: selectedOrderForReady.order_number,
+        order_number: targetOrder.order_number,
         status: 1,
         ready_in_minutes: Number(minutes),
       });
       setIsReadyModalOpen(false);
       
-      closeToast(selectedOrderForReady.toastId || selectedOrderForReady.order_number); // Close popup after action
+      closeToast(targetOrder.toastId || targetOrder.order_number); // Close popup after action
       setSelectedOrderForReady(null);
       fetchNewOrders();
     } catch { alert("Failed to accept order"); }
