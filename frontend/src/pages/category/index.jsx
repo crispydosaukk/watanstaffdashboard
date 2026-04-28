@@ -441,13 +441,13 @@ export default function Category() {
             <div className="flex items-center gap-3 mt-4">
               <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
                 <input type="checkbox" className="sr-only" checked={status} readOnly />
-                <div className={`w-10 h-5 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                <div className={`w-10 h-5 rounded-full transition-colors ${status ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                 <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-5' : ''}`}></div>
               </div>
               <span className={`text-[10px] font-bold transition-colors ${status ? 'text-yellow-400' : 'text-white/30'}`}>
                 {status ? 'Active' : 'Inactive'}
               </span>
-              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto transition-all active:scale-90 hover:bg-yellow-500/10"><Pencil size={14} /></button>
+              <button onClick={() => handleEdit(item)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 ml-auto transition-all active:scale-90 hover:bg-[#D0B079]/10"><Pencil size={14} /></button>
               <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500 transition-all active:scale-90 hover:bg-rose-500/10"><Trash2 size={14} /></button>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function Category() {
         <button
           disabled={current === 1}
           onClick={() => onPageChange(current - 1)}
-          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-[#D0B079]/10 hover:text-[#D0B079] transition-all active:scale-90"
         >
           <GripVertical className="rotate-90" size={16} />
         </button>
@@ -472,7 +472,7 @@ export default function Category() {
             <button
               key={i + 1}
               onClick={() => onPageChange(i + 1)}
-              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-yellow-500 text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
+              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-[#D0B079] text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
             >
               {i + 1}
             </button>
@@ -481,7 +481,7 @@ export default function Category() {
         <button
           disabled={current === total}
           onClick={() => onPageChange(current + 1)}
-          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-[#D0B079]/10 hover:text-[#D0B079] transition-all active:scale-90"
         >
           <GripVertical className="-rotate-90" size={16} />
         </button>
@@ -490,7 +490,7 @@ export default function Category() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <style>{`
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -529,24 +529,24 @@ export default function Category() {
                       placeholder="Search categories..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-4 py-3 text-sm font-medium text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-4 py-3 text-sm font-medium text-white placeholder-white/10 focus:outline-none focus:border-[#D0B079]/40 transition-all"
                     />
                   </div>
 
                   <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
                     {isSuperAdmin && (
-                      <button onClick={() => setShowIntegrateModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                      <button onClick={() => setShowIntegrateModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
                         <Zap size={18} /> Integrate Menu
                       </button>
                     )}
 
-                    <button onClick={() => setShowSearchModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                    <button onClick={() => setShowSearchModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
                       <Globe size={18} /> Global Search
                     </button>
 
                     <button
                       onClick={() => { setIsEdit(false); setForm({ id: null, name: "", image: null, oldImage: "" }); setShowModal(true); }}
-                      className="px-8 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
+                      className="px-8 py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all transform active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
                     >
                       <Plus size={18} /> New Category
                     </button>
@@ -585,7 +585,7 @@ export default function Category() {
                                     <div
                                       ref={dragProvided.innerRef}
                                       {...dragProvided.draggableProps}
-                                      className={`grid grid-cols-[80px_140px_1fr_150px_200px] items-center ${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-yellow-500/50 z-[9999]" : ""}`}
+                                      className={`grid grid-cols-[80px_140px_1fr_150px_200px] items-center ${item.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-[#D0B079]/50 z-[9999]" : ""}`}
                                       style={{ ...dragProvided.draggableProps.style }}
                                     >
                                       <div {...dragProvided.dragHandleProps} className="px-6 py-2.5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
@@ -609,7 +609,7 @@ export default function Category() {
                                         <div className="flex flex-col items-center gap-1">
                                           <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(item)}>
                                             <input type="checkbox" className="sr-only" checked={item.status === 1} readOnly />
-                                            <div className={`w-10 h-5 rounded-full transition-colors ${item.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                                            <div className={`w-10 h-5 rounded-full transition-colors ${item.status === 1 ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                                             <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${item.status === 1 ? 'translate-x-5' : ''}`}></div>
                                           </div>
                                           <span className={`text-[9px] font-bold tracking-wide transition-colors ${item.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
@@ -618,8 +618,8 @@ export default function Category() {
                                         </div>
                                       </div>
                                       <div className="px-6 py-2.5 flex items-center justify-end gap-3">
-                                        <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-500 hover:bg-yellow-500/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
-                                        <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Pencil size={16} /></button>
+                                        <button onClick={() => handleImportProducts(item.name, item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-[#D0B079] hover:bg-[#D0B079]/10 transition-all active:scale-90" title="Import Logic"><Upload size={16} /></button>
+                                        <button onClick={() => handleEdit(item)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-[#D0B079]/10 transition-all active:scale-90"><Pencil size={16} /></button>
                                         <button onClick={() => handleDelete(item.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
                                       </div>
                                     </div>
@@ -674,14 +674,14 @@ export default function Category() {
                     value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                     placeholder="Enter category name..."
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm font-black text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all shadow-xl"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm font-black text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all shadow-xl"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-white/40 mb-3">Category Image</label>
                   <div
                     onClick={() => document.getElementById('imageUp').click()}
-                    className="aspect-video bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
+                    className="aspect-video bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#D0B079]/50 transition-all overflow-hidden relative group"
                   >
                     <input type="file" id="imageUp" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
                     {previewUrl || form.oldImage ? (
@@ -698,7 +698,7 @@ export default function Category() {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <button type="submit" className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10">
+                  <button type="submit" className="w-full py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10">
                     {isEdit ? "Update Category" : "Save Category"}
                   </button>
                 </div>
@@ -713,7 +713,7 @@ export default function Category() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh]">
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-yellow-500/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
+                  <div className="p-2 bg-[#D0B079]/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
                   <h2 className="text-xl font-bold text-white tracking-tight">Global Category Search</h2>
                 </div>
                 <button onClick={() => setShowSearchModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
@@ -723,7 +723,7 @@ export default function Category() {
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={18} />
                   <input
                     autoFocus
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-14 pr-6 py-4 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all shadow-xl"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-14 pr-6 py-4 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all shadow-xl"
                     placeholder="Search global categories..."
                     value={globalSearchQuery}
                     onChange={e => setGlobalSearchQuery(e.target.value)}
@@ -742,7 +742,7 @@ export default function Category() {
                         <div className="text-[10px] font-medium text-white/20 mt-0.5">{cat.restaurant_name}</div>
                       </div>
                     </div>
-                    <button onClick={() => handleAddGlobalCategory(cat)} className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 rounded-xl shadow-lg border border-white/20 hover:scale-105 transition-all transform active:scale-95"><Plus size={20} /></button>
+                    <button onClick={() => handleAddGlobalCategory(cat)} className="p-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 rounded-xl shadow-lg border border-white/20 hover:scale-105 transition-all transform active:scale-95"><Plus size={20} /></button>
                   </div>
                 ))}
               </div>
@@ -756,7 +756,7 @@ export default function Category() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2.5rem] shadow-2xl max-w-4xl w-full flex flex-col max-h-[85vh]">
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-yellow-500/10 rounded-xl"><Zap size={20} className="text-yellow-400" /></div>
+                  <div className="p-2 bg-[#D0B079]/10 rounded-xl"><Zap size={20} className="text-yellow-400" /></div>
                   <h2 className="text-xl font-bold text-white tracking-tight">Restaurant Integration</h2>
                 </div>
                 <button onClick={() => setShowIntegrateModal(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
@@ -767,7 +767,7 @@ export default function Category() {
                   <div className="relative group mb-6">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={16} />
                     <input
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/40 transition-all"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-11 pr-4 py-3 text-sm font-black text-white placeholder-white/20 focus:outline-none focus:border-[#D0B079]/40 transition-all"
                       placeholder="Scan all categories..."
                       value={integrateSearch}
                       onChange={e => setIntegrateSearch(e.target.value)}
@@ -775,7 +775,7 @@ export default function Category() {
                   </div>
                   <div className="space-y-3">
                     {integrateResults.map((cat, i) => (
-                      <div key={i} onClick={() => setSelectedSourceCat(cat)} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${selectedSourceCat?.id === cat.id ? 'bg-yellow-500/20 border-yellow-500/50 shadow-lg' : 'bg-white/5 border-white/[0.05] hover:border-white/20'}`}>
+                      <div key={i} onClick={() => setSelectedSourceCat(cat)} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${selectedSourceCat?.id === cat.id ? 'bg-[#D0B079]/20 border-[#D0B079]/50 shadow-lg' : 'bg-white/5 border-white/[0.05] hover:border-white/20'}`}>
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-black/20 shrink-0">
                           {cat.image ? <img src={`${API_BASE}/uploads/${cat.image}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-white/10">VOID</div>}
                         </div>
@@ -793,7 +793,7 @@ export default function Category() {
                   <select
                     value={targetRestaurantId}
                     onChange={e => setTargetRestaurantId(e.target.value)}
-                    className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500/20 mb-8"
+                    className="w-full bg-[#0b1a3d] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white appearance-none focus:outline-none focus:ring-2 focus:ring-[#D0B079]/20 mb-8"
                   >
                     <option value="">Select destination...</option>
                     {restaurants.map(r => <option key={r.user_id} value={r.user_id}>{r.restaurant_name}</option>)}
@@ -806,7 +806,7 @@ export default function Category() {
                     <button
                       disabled={integrating}
                       onClick={handleIntegrate}
-                      className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all transform active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 border border-white/10"
+                      className="w-full py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all transform active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 border border-white/10"
                     >
                       {integrating ? <Loader2 className="animate-spin" size={18} /> : <Zap size={18} />}
                       {integrating ? "Processing..." : "Start Menu Integration"}

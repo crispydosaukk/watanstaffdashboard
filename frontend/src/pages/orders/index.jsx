@@ -21,7 +21,7 @@ function safeNumber(value) {
 const statusConfig = (status) => {
   switch (status) {
     case 0: return { text: "Placed", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: AlertCircle };
-    case 1: return { text: "Accepted", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", icon: Clock };
+    case 1: return { text: "Accepted", color: "text-yellow-400", bg: "bg-[#D0B079]/10", border: "border-[#D0B079]/20", icon: Clock };
     case 2: return { text: "Rejected", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", icon: XCircle };
     case 3: return { text: "Ready", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: ShoppingBag };
     case 4: return { text: "Collected", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: CheckCircle };
@@ -42,7 +42,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
         <div className="p-6 sm:p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center">
           <div className="min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
-              <ShoppingBag className="text-yellow-500 shrink-0" size={24} /> Order #{order.order_number}
+              <ShoppingBag className="text-[#D0B079] shrink-0" size={24} /> Order #{order.order_number}
             </h2>
             <p className="text-xs font-medium text-white/50 mt-1">Transmission: {new Date(order.created_at).toLocaleString('en-GB')}</p>
           </div>
@@ -51,16 +51,16 @@ const OrderDetailsModal = ({ order, onClose }) => {
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <div className="bg-white/5 p-5 sm:p-6 rounded-2xl border border-white/[0.08]">
-              <h3 className="text-sm font-bold text-yellow-500 mb-6 flex items-center gap-2"><User size={14} /> Identity Profile</h3>
+              <h3 className="text-sm font-bold text-[#D0B079] mb-6 flex items-center gap-2"><User size={14} /> Identity Profile</h3>
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Node</span><span className="text-sm font-bold text-white">{order.customer_name || "Guest"}</span></div>
                 <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Comm</span><span className="text-sm font-bold text-white">{order.mobile_number || "-"}</span></div>
               </div>
             </div>
             <div className="bg-white/5 p-5 sm:p-6 rounded-2xl border border-white/[0.08]">
-              <h3 className="text-sm font-bold text-yellow-500 mb-6 flex items-center gap-2"><Truck size={14} /> Logistics Matrix</h3>
+              <h3 className="text-sm font-bold text-[#D0B079] mb-6 flex items-center gap-2"><Truck size={14} /> Logistics Matrix</h3>
               <div className="space-y-4">
-                <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Type</span><span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${order.instore === 1 ? "bg-yellow-500/10 text-yellow-500" : "bg-purple-500/10 text-purple-400"}`}>{order.instore === 1 ? "INSTORE" : "KERBSIDE"}</span></div>
+                <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Type</span><span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest ${order.instore === 1 ? "bg-[#D0B079]/10 text-[#D0B079]" : "bg-purple-500/10 text-purple-400"}`}>{order.instore === 1 ? "INSTORE" : "KERBSIDE"}</span></div>
                 {order.takeaway_time && <div className="flex justify-between border-b border-white/[0.05] pb-3"><span className="text-xs font-bold text-white/50">Scheduled</span><span className="text-sm font-bold text-amber-400">{order.takeaway_time}</span></div>}
                 <div className="flex justify-between items-center"><span className="text-xs font-bold text-white/50">Status</span><span className={`text-[10px] font-bold uppercase tracking-widest ${statusInfo.color}`}>{statusInfo.text}</span></div>
               </div>
@@ -80,10 +80,10 @@ const OrderDetailsModal = ({ order, onClose }) => {
                 <tbody className="divide-y divide-white/[0.08]">
                   {items.map((item, i) => (
                     <tr key={i} className="hover:bg-white/5 transition-colors">
-                      <td className="px-6 py-4"><span className="text-xl font-bold text-yellow-500">{safeNumber(item.quantity)}<span className="text-[9px] ml-0.5">X</span></span></td>
+                      <td className="px-6 py-4"><span className="text-xl font-bold text-[#D0B079]">{safeNumber(item.quantity)}<span className="text-[9px] ml-0.5">X</span></span></td>
                       <td className="px-6 py-4">
                         <p className="text-sm font-bold text-white leading-tight">{item.product_name}</p>
-                        {item.special_instruction && <div className="mt-1 text-[8px] font-bold text-yellow-500 uppercase tracking-widest">Note: {item.special_instruction}</div>}
+                        {item.special_instruction && <div className="mt-1 text-[8px] font-bold text-[#D0B079] uppercase tracking-widest">Note: {item.special_instruction}</div>}
                       </td>
                       <td className="px-6 py-4 text-right text-white font-bold text-sm">£{(safeNumber(item.price) * safeNumber(item.quantity)).toFixed(2)}</td>
                     </tr>
@@ -95,7 +95,7 @@ const OrderDetailsModal = ({ order, onClose }) => {
         </div>
         <div className="p-6 sm:p-8 bg-white/5 border-t border-white/[0.08] flex items-center justify-between">
           <div className="text-xs font-bold text-white/50">Nodes Active: {items.length}</div>
-          <div className="text-3xl font-bold text-yellow-500 tracking-tight shadow-yellow-500/20">£{safeNumber(order.grand_total).toFixed(2)}</div>
+          <div className="text-3xl font-bold text-[#D0B079] tracking-tight shadow-[#D0B079]/20">£{safeNumber(order.grand_total).toFixed(2)}</div>
         </div>
       </motion.div>
     </motion.div>
@@ -208,7 +208,7 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 pt-24 min-h-0 relative">
@@ -234,19 +234,19 @@ export default function Orders() {
                   <label className="flex items-center gap-3 cursor-pointer px-3">
                     <div className="relative">
                       <input type="checkbox" className="sr-only" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-                      <div className={`w-10 h-5 rounded-full transition-colors ${autoRefresh ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                      <div className={`w-10 h-5 rounded-full transition-colors ${autoRefresh ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                       <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${autoRefresh ? 'translate-x-5' : ''}`}></div>
                     </div>
                     <span className="text-xs font-bold text-white/60 tracking-wide">Live Sync</span>
                   </label>
                   <div className="w-px h-6 bg-white/10"></div>
-                  <button onClick={loadOrders} className="p-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 rounded-2xl transition-all border border-yellow-500/30 active:scale-90"><RefreshCw size={16} /></button>
+                  <button onClick={loadOrders} className="p-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] rounded-2xl transition-all border border-[#D0B079]/30 active:scale-90"><RefreshCw size={16} /></button>
                 </div>
               </div>
 
               {/* Filters Area */}               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-10 h-min">
                 <div className="relative group"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={14} />
-                  <input placeholder="Transmission ID..." value={searchOrder} onChange={e => setSearchOrder(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-xs font-bold text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/40 transition-all" /></div>
+                  <input placeholder="Transmission ID..." value={searchOrder} onChange={e => setSearchOrder(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-xs font-bold text-white placeholder-white/20 focus:outline-none focus:border-[#D0B079]/40 transition-all" /></div>
 
                 <select value={filterPayment} onChange={e => setFilterPayment(e.target.value)} className="bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 text-xs font-bold text-white appearance-none focus:outline-none">
                   <option value="all" className="bg-[#0b1a3d]">Payments: All</option>
@@ -263,13 +263,13 @@ export default function Orders() {
                 </select>
 
                 <div className="relative group/date">
-                   <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-yellow-500/50 group-focus-within/date:text-yellow-400 transition-all pointer-events-none" size={14} />
-                   <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 pr-10 text-xs font-bold text-white focus:outline-none focus:border-yellow-500/40 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                   <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-[#D0B079]/50 group-focus-within/date:text-yellow-400 transition-all pointer-events-none" size={14} />
+                   <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 pr-10 text-xs font-bold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                 </div>
                 
                 <div className="relative group/date">
-                   <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-yellow-500/50 group-focus-within/date:text-yellow-400 transition-all pointer-events-none" size={14} />
-                   <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 pr-10 text-xs font-bold text-white focus:outline-none focus:border-yellow-500/40 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
+                   <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-[#D0B079]/50 group-focus-within/date:text-yellow-400 transition-all pointer-events-none" size={14} />
+                   <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="w-full bg-white/5 border border-white/[0.08] rounded-xl px-4 py-3.5 pr-10 text-xs font-bold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                 </div>
               </div>
 
@@ -300,7 +300,7 @@ export default function Orders() {
                           {order.items.map((item, idx) => (
                             <div key={idx} className="flex justify-between items-start gap-4">
                               <div className="flex gap-3 items-start min-w-0">
-                                <span className="text-base font-bold text-yellow-400 bg-yellow-500/10 px-2.5 py-1 rounded-xl border border-yellow-500/20 shrink-0">{safeNumber(item.quantity)}<span className="text-[8px] ml-0.5 font-bold">X</span></span>
+                                <span className="text-base font-bold text-yellow-400 bg-[#D0B079]/10 px-2.5 py-1 rounded-xl border border-[#D0B079]/20 shrink-0">{safeNumber(item.quantity)}<span className="text-[8px] ml-0.5 font-bold">X</span></span>
                                 <span className="text-sm font-bold text-white mt-1 leading-snug truncate">{item.product_name}</span>
                               </div>
                               <span className="text-xs font-bold text-white/20 mt-1">£{safeNumber(item.price).toFixed(2)}</span>
@@ -310,7 +310,7 @@ export default function Orders() {
                         <div className="p-6 bg-white/[0.01]">
                           <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-2">
-                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide ${order.instore === 1 ? 'bg-yellow-500/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'Instore' : 'Kerbside'}</span>
+                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide ${order.instore === 1 ? 'bg-[#D0B079]/10 text-yellow-400' : 'bg-purple-500/10 text-purple-400'}`}>{order.instore === 1 ? 'Instore' : 'Kerbside'}</span>
                               {order.takeaway_time && (
                                 <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide flex items-center gap-1">
                                   <Clock size={10} /> {order.takeaway_time}
@@ -325,12 +325,12 @@ export default function Orders() {
                           <div className="space-y-3">
                             {order.order_status === 0 && (
                               <div className="grid grid-cols-2 gap-3">
-                                <button onClick={() => { setOrderForReady(order.order_number); setIsReadyModalOpen(true); }} className="py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/10">Accept</button>
+                                <button onClick={() => { setOrderForReady(order.order_number); setIsReadyModalOpen(true); }} className="py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/10">Accept</button>
                                 <button onClick={() => updateOrderStatus(order.order_number, 2)} className="py-3.5 bg-white/5 border border-white/10 text-white font-bold text-xs rounded-xl hover:text-rose-500 transition-all">Reject</button>
                               </div>
                             )}
-                            {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><ChefHat size={18} /> Mark Ready</button>}
-                            {order.order_status === 3 && <button onClick={() => confirmCollection(order)} className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><PackageCheck size={18} /> Collected</button>}
+                            {order.order_status === 1 && <button onClick={() => updateOrderStatus(order.order_number, 3)} className="w-full py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><ChefHat size={18} /> Mark Ready</button>}
+                            {order.order_status === 3 && <button onClick={() => confirmCollection(order)} className="w-full py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-sm rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"><PackageCheck size={18} /> Collected</button>}
                           </div>
                         </div>
                       </div>
@@ -350,7 +350,7 @@ export default function Orders() {
                 <div className="flex justify-center items-center gap-3 mb-10 overflow-x-auto no-scrollbar py-4">
                   <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">PREV</button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
-                    <button key={num} onClick={() => setCurrentPage(num)} className={`w-10 h-10 rounded-xl font-black text-[10px] transition-all ${currentPage === num ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428] scale-110 shadow-xl' : 'bg-white/5 text-white/40 border border-white/10'}`}>{num}</button>
+                    <button key={num} onClick={() => setCurrentPage(num)} className={`w-10 h-10 rounded-xl font-black text-[10px] transition-all ${currentPage === num ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-[#071428] scale-110 shadow-xl' : 'bg-white/5 text-white/40 border border-white/10'}`}>{num}</button>
                   ))}
                   <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30">NEXT</button>
                 </div>

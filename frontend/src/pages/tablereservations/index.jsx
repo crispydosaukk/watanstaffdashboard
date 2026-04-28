@@ -14,7 +14,7 @@ import { usePopup } from "../../context/PopupContext";
 const STATUS_META = {
   pending: { label: "Pending", color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", dot: "bg-amber-400" },
   confirmed: { label: "Confirmed", color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", dot: "bg-emerald-400" },
-  seated: { label: "Seated", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20", dot: "bg-yellow-400" },
+  seated: { label: "Seated", color: "text-yellow-400", bg: "bg-[#D0B079]/10", border: "border-[#D0B079]/20", dot: "bg-yellow-400" },
   completed: { label: "Completed", color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", dot: "bg-sky-400" },
   cancelled: { label: "Cancelled", color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", dot: "bg-rose-400" },
   no_show: { label: "No Show", color: "text-white/30", bg: "bg-white/5", border: "border-white/10", dot: "bg-white/30" },
@@ -186,7 +186,7 @@ export default function TableReservations() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`px-5 py-2.5 rounded-2xl border transition-all flex items-center gap-2 active:scale-95 font-bold text-sm ${showSettings ? "bg-yellow-500 text-slate-900 border-yellow-500" : "bg-white/5 hover:bg-white/10 text-white/60 border-white/10"}`}
+                  className={`px-5 py-2.5 rounded-2xl border transition-all flex items-center gap-2 active:scale-95 font-bold text-sm ${showSettings ? "bg-[#D0B079] text-slate-900 border-[#D0B079]" : "bg-white/5 hover:bg-white/10 text-white/60 border-white/10"}`}
                 >
                   <Settings size={14} className={loadingSettings ? "animate-spin" : ""} />
                   Availability preferences
@@ -194,7 +194,7 @@ export default function TableReservations() {
                 <button
                   onClick={fetchReservations}
                   disabled={loading}
-                  className="px-5 py-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 rounded-2xl border border-yellow-500/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                  className="px-5 py-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] rounded-2xl border border-[#D0B079]/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                   Refresh
@@ -209,15 +209,15 @@ export default function TableReservations() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="mb-8 p-6 bg-[#0b1a3d]/60 backdrop-blur-xl border border-yellow-500/20 rounded-3xl shadow-2xl relative overflow-hidden"
+                  className="mb-8 p-6 bg-[#0b1a3d]/60 backdrop-blur-xl border border-[#D0B079]/20 rounded-3xl shadow-2xl relative overflow-hidden"
                 >
                   {/* Background Glow */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[80px] -mr-32 -mt-32 rounded-full" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-[#D0B079]/5 blur-[80px] -mr-32 -mt-32 rounded-full" />
 
                   <div className="relative z-10">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 pb-6 border-b border-white/5">
                       <div className="flex items-center gap-4">
-                        <div className={`p-4 rounded-2xl border transition-all duration-500 ${settings.is_enabled ? "bg-yellow-500/20 border-yellow-500/40" : "bg-rose-500/10 border-rose-500/20"}`}>
+                        <div className={`p-4 rounded-2xl border transition-all duration-500 ${settings.is_enabled ? "bg-[#D0B079]/20 border-[#D0B079]/40" : "bg-rose-500/10 border-rose-500/20"}`}>
                           {settings.is_enabled ? <ToggleRight className="text-yellow-400" size={24} /> : <ToggleLeft className="text-rose-400" size={24} />}
                         </div>
                         <div>
@@ -232,7 +232,7 @@ export default function TableReservations() {
                         </span>
                         <button
                           onClick={() => handleToggleSetting('is_enabled')}
-                          className={`relative w-14 h-8 rounded-full transition-all duration-300 ${settings.is_enabled ? "bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.3)]" : "bg-white/10"}`}
+                          className={`relative w-14 h-8 rounded-full transition-all duration-300 ${settings.is_enabled ? "bg-[#D0B079] shadow-[0_0_15px_rgba(234,179,8,0.3)]" : "bg-white/10"}`}
                         >
                           <motion.div
                             animate={{ x: settings.is_enabled ? 26 : 4 }}
@@ -250,12 +250,12 @@ export default function TableReservations() {
                           onClick={() => handleToggleSetting(day)}
                           className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 group ${!settings.is_enabled ? "opacity-60 cursor-not-allowed border-white/5 bg-white/5" :
                             settings[day]
-                              ? "bg-yellow-500/10 border-yellow-500/40 text-yellow-400 shadow-lg shadow-yellow-500/5 hover:border-yellow-500/60"
+                              ? "bg-[#D0B079]/10 border-[#D0B079]/40 text-yellow-400 shadow-lg shadow-[#D0B079]/5 hover:border-[#D0B079]/60"
                               : "bg-white/5 border-white/10 text-white/60 hover:border-white/20 hover:text-white/80"
                             }`}
                         >
                           <span className="text-[10px] font-semibold uppercase tracking-widest mb-2 leading-none">{day.charAt(0).toUpperCase() + day.slice(1, 3)}</span>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${settings[day] ? "bg-yellow-500 text-slate-900" : "bg-white/5 text-white/20"
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${settings[day] ? "bg-[#D0B079] text-slate-900" : "bg-white/5 text-white/20"
                             }`}>
                             <Calendar size={14} strokeWidth={2.5} />
                           </div>
@@ -267,7 +267,7 @@ export default function TableReservations() {
                       <button
                         onClick={handleSaveSettings}
                         disabled={savingSettings}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-sm rounded-2xl shadow-2xl shadow-[#D0B079]/20 active:scale-95 transition-all disabled:opacity-50"
                       >
                         {savingSettings ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
                         Update preference
@@ -308,7 +308,7 @@ export default function TableReservations() {
                   placeholder="Search by name, phone or table..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full bg-[#0b1a3d]/40 border border-white/[0.08] rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-yellow-500/40 transition-all"
+                  className="w-full bg-[#0b1a3d]/40 border border-white/[0.08] rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-[#D0B079]/40 transition-all"
                 />
               </div>
               <select
@@ -352,7 +352,7 @@ export default function TableReservations() {
                       <tr key={r.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/20 flex items-center justify-center text-yellow-500 font-semibold text-xs">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D0B079]/20 to-[#b8965f]/20 border border-[#D0B079]/20 flex items-center justify-center text-[#D0B079] font-semibold text-xs">
                               {r.customer_name?.[0]?.toUpperCase() || "G"}
                             </div>
                             <div>
@@ -363,7 +363,7 @@ export default function TableReservations() {
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2">
-                            <span className="px-3 py-1.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-xl text-[11px] font-semibold flex items-center gap-2">
+                            <span className="px-3 py-1.5 bg-[#D0B079]/10 text-yellow-400 border border-[#D0B079]/20 rounded-xl text-[11px] font-semibold flex items-center gap-2">
                               Table {r.table_number || "—"}
                               <span className="opacity-30">•</span>
                               <span className="text-white/60">{r.party_size} Persons</span>
@@ -381,7 +381,7 @@ export default function TableReservations() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setSelectedRes(r)}
-                              className="p-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 rounded-xl border border-yellow-500/20 transition-all shadow-lg shadow-yellow-500/5 group"
+                              className="p-2 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-yellow-400 rounded-xl border border-[#D0B079]/20 transition-all shadow-lg shadow-[#D0B079]/5 group"
                               title="View details"
                             >
                               <Eye size={16} strokeWidth={2.5} />
@@ -478,7 +478,7 @@ export default function TableReservations() {
                   <div className="pt-4">
                     <p className="text-xs font-bold text-white/30 mb-3 uppercase tracking-widest">Staff notes</p>
                     <textarea
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 focus:outline-none focus:border-yellow-500/40"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 focus:outline-none focus:border-[#D0B079]/40"
                       rows={2}
                       value={selectedRes.notes || ""}
                       placeholder="Internal staff notes..."
@@ -497,7 +497,7 @@ export default function TableReservations() {
                         disabled={updating}
                         onClick={() => handleUpdateStatus(selectedRes.id, s)}
                         className={`px-3 py-3.5 rounded-2xl text-[13px] font-bold uppercase tracking-wider transition-all border ${selectedRes.status === s
-                          ? 'bg-yellow-500 text-slate-900 border-yellow-500 shadow-lg shadow-yellow-500/20'
+                          ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-lg shadow-[#D0B079]/20'
                           : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10'
                           }`}
                       >
@@ -509,7 +509,7 @@ export default function TableReservations() {
 
                 <button
                   onClick={() => setSelectedRes(null)}
-                  className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-semibold text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all"
+                  className="w-full py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-semibold text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-[#D0B079]/20 active:scale-95 transition-all"
                 >
                   Close record
                 </button>

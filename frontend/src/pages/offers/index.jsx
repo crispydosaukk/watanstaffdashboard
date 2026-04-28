@@ -146,7 +146,7 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 pt-16 min-h-0 relative">
@@ -169,7 +169,7 @@ export default function OffersPage() {
                   </div>
                   <button
                     onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
-                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
+                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 rounded-xl font-bold text-base shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 active:scale-95"
                   >
                     <Plus size={16} /> Add New Offer
                   </button>
@@ -192,7 +192,7 @@ export default function OffersPage() {
                         <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-white/10" /></div>
                       )}
                       <div className="absolute top-4 right-4">
-                        <span className={`px-3 py-1 text-[10px] font-bold capitalize rounded-full border backdrop-blur-md ${offer.status === 'active' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-white/10 text-white/40 border-white/20'}`}>
+                        <span className={`px-3 py-1 text-[10px] font-bold capitalize rounded-full border backdrop-blur-md ${offer.status === 'active' ? 'bg-[#D0B079]/20 text-yellow-400 border-[#D0B079]/30' : 'bg-white/10 text-white/40 border-white/20'}`}>
                           {offer.status}
                         </span>
                       </div>
@@ -206,7 +206,7 @@ export default function OffersPage() {
                         <div className="flex items-center gap-3">
                           <div className="relative group/toggle cursor-pointer" onClick={() => handleToggle(offer)}>
                             <input type="checkbox" className="sr-only" checked={offer.status === 'active'} readOnly />
-                            <div className={`w-10 h-5 rounded-full transition-colors ${offer.status === 'active' ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                            <div className={`w-10 h-5 rounded-full transition-colors ${offer.status === 'active' ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                             <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${offer.status === 'active' ? 'translate-x-5' : ''}`}></div>
                           </div>
                           <span className={`text-[10px] font-bold tracking-wide transition-colors ${offer.status === 'active' ? 'text-yellow-400' : 'text-white/30'}`}>
@@ -214,7 +214,7 @@ export default function OffersPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => handleEdit(offer)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all"><Edit size={14} /></button>
+                          <button onClick={() => handleEdit(offer)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-yellow-400 hover:bg-[#D0B079]/10 transition-all"><Edit size={14} /></button>
                           <button onClick={() => handleDelete(offer.id)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all"><Trash2 size={14} /></button>
                         </div>
                       </div>
@@ -224,9 +224,9 @@ export default function OffersPage() {
 
                 <button
                   onClick={() => { setIsEdit(false); resetForm(); setShowModal(true); }}
-                  className="bg-white/[0.02] border-2 border-dashed border-white/10 rounded-[2rem] h-full min-h-[280px] flex flex-col items-center justify-center gap-4 group hover:bg-white/5 hover:border-yellow-500/30 transition-all"
+                  className="bg-white/[0.02] border-2 border-dashed border-white/10 rounded-[2rem] h-full min-h-[280px] flex flex-col items-center justify-center gap-4 group hover:bg-white/5 hover:border-[#D0B079]/30 transition-all"
                 >
-                  <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-yellow-500/10 transition-colors"><Plus className="text-white/20 group-hover:text-yellow-400" size={32} /></div>
+                  <div className="p-4 bg-white/5 rounded-2xl group-hover:bg-[#D0B079]/10 transition-colors"><Plus className="text-white/20 group-hover:text-yellow-400" size={32} /></div>
                   <span className="text-white/20 font-bold text-sm">Create Offer</span>
                 </button>
               </div>
@@ -259,7 +259,7 @@ export default function OffersPage() {
                   </div>
                   <div className="relative group">
                     <input type="file" id="offerBanner" className="hidden" accept="image/*" onChange={handleBannerChange} />
-                    <label htmlFor="offerBanner" className={`cursor-pointer min-h-[220px] rounded-[1.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden relative ${form.bannerPreview ? 'border-yellow-500/40' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+                    <label htmlFor="offerBanner" className={`cursor-pointer min-h-[220px] rounded-[1.5rem] border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden relative ${form.bannerPreview ? 'border-[#D0B079]/40' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
                       {form.bannerPreview ? (
                         <img src={form.bannerPreview} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />
                       ) : (
@@ -296,8 +296,8 @@ export default function OffersPage() {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-white">Target Items</label>
                     <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                      <button onClick={() => setSelectionTab("categories")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectionTab === 'categories' ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428]' : 'text-white/40'}`}>Categories</button>
-                      <button onClick={() => setSelectionTab("products")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectionTab === 'products' ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-[#071428]' : 'text-white/40'}`}>Products</button>
+                      <button onClick={() => setSelectionTab("categories")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectionTab === 'categories' ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-[#071428]' : 'text-white/40'}`}>Categories</button>
+                      <button onClick={() => setSelectionTab("products")} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${selectionTab === 'products' ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-[#071428]' : 'text-white/40'}`}>Products</button>
                     </div>
                   </div>
                   <div className="p-6 bg-white/[0.02] border border-white/10 rounded-[1.5rem] max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -306,7 +306,7 @@ export default function OffersPage() {
                         <div
                           key={item.id}
                           onClick={() => toggleTarget(selectionTab === 'categories' ? "target_categories" : "target_products", item.id)}
-                          className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${(selectionTab === 'categories' ? form.target_categories : form.target_products).includes(item.id) ? 'bg-yellow-500/10 border-yellow-400' : 'bg-white/5 border-white/10 opacity-40 hover:opacity-100'}`}
+                          className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${(selectionTab === 'categories' ? form.target_categories : form.target_products).includes(item.id) ? 'bg-[#D0B079]/10 border-yellow-400' : 'bg-white/5 border-white/10 opacity-40 hover:opacity-100'}`}
                         >
                           <div className="shrink-0">{selectionTab === 'categories' ? <Layers size={14} /> : <ShoppingBag size={14} />}</div>
                           <span className="text-xs font-bold truncate">{item.name}</span>
@@ -319,7 +319,7 @@ export default function OffersPage() {
 
               <div className="p-8 bg-white/5 border-t border-white/10 flex justify-end gap-4">
                 <button onClick={() => setShowModal(false)} className="px-8 py-4 text-xs font-bold text-white/40 hover:text-white transition-all">Cancel</button>
-                <button onClick={handleSubmit} disabled={loading} className="px-10 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-2xl font-bold text-xs shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50">
+                <button onClick={handleSubmit} disabled={loading} className="px-10 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 rounded-2xl font-bold text-xs shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50">
                   {loading ? "Saving..." : "Save Campaign"}
                 </button>
               </div>

@@ -9,7 +9,7 @@ function generateOrderNumber(restaurantName = "") {
   // Normalize name and remove the words 'crispy' and 'dosa' robustly (handles extra spaces/punctuation)
   let cleaned = nameStr
     .toLowerCase()
-    // remove joined/adjacent forms (ZINGBITE) and individual words
+    // remove joined/adjacent forms (WATANSTAFF) and individual words
     .replace(/crispy\s*dosa/gi, "")
     .replace(/crispy|dosa/gi, "")
     .replace(/[^a-z0-9\s]/gi, " ") // replace non-alphanum with space

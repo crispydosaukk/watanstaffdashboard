@@ -3,6 +3,19 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { can } from "../../utils/perm";
 import { usePopup } from "../../context/PopupContext";
 
+function isSuperAdmin() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const roleTitle = (user.role_title || user.role || "").toLowerCase();
+    return (
+      user.role_id === 6 ||
+      roleTitle.includes("super")
+    );
+  } catch {
+    return false;
+  }
+}
+
 /* Sidebar link item */
 const Item = ({ to = "#", icon, label }) => (
   <NavLink
@@ -13,7 +26,7 @@ const Item = ({ to = "#", icon, label }) => (
       transition-all duration-200 group relative
       ${
         isActive
-          ? "bg-yellow-400/15 text-yellow-300 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-yellow-400"
+          ? "bg-[#D0B079]/15 text-[#D0B079] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-[#D0B079]"
           : "text-white/85 hover:bg-white/8 hover:text-white"
       }`
     }
@@ -86,22 +99,9 @@ export default function Sidebar({ open, onClose }) {
     () => [
       { label: "Dashboard", to: "/dashboard", icon: iconDashboard(), perm: "dashboard" },
       { label: "Restaurant Profile", to: "/restuarent", icon: iconRestaurant(), perm: "restaurant" },
-      { label: "Customer Info", to: "/customerinfo", icon: iconCustomer(), perm: "customer_info" },
-      { label: "Customer Details", to: "/customerdetails", icon: iconCustomerDetails(), perm: "customer_details" },
-      { label: "Table Reservations", to: "/table-reservations", icon: iconReservation(), perm: "table_reservations" },
-      { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
-      { label: "Restaurant Registration", to: "/restaurantregistration", icon: iconStorePlus(), perm: "restaurant_registration" },
-      { label: "Order Management", to: "/orders", icon: iconOrders(), perm: "order_management" },
-      { label: "Finance Management", to: "/finance", icon: iconFinance(), perm: "finance_management" },
-    ],
-    []
-  );
-
-  const rawMenuManagementChildren = useMemo(
-    () => [
-      { label: "Category", to: "/category", icon: iconCategory(), perm: "category" },
-      { label: "Product", to: "/product", icon: iconProduct(), perm: "product" },
-      { label: "Promotional Offers", to: "/offers", icon: iconTag(), perm: "promotional_offers" },
+      { label: "Staff Management", to: "/staff", icon: iconUsers(), perm: "staff_management" },
+      // { label: "Customer Info", to: "/customerinfo", icon: iconCustomer(), perm: "customer_info" },
+      // { label: "Customer Details", to: "/customerdetails", icon: iconCustomerDetails(), perm: "customer_details" },
     ],
     []
   );
@@ -127,13 +127,6 @@ export default function Sidebar({ open, onClose }) {
     const q = debouncedQuery;
     return rawMenu.filter((m) => can(m.perm) && (!q || m.label.toLowerCase().includes(q)));
   }, [rawMenu, debouncedQuery]);
-
-  const filteredMenuManagement = useMemo(() => {
-    const q = debouncedQuery;
-    return rawMenuManagementChildren.filter(
-      (c) => can(c.perm) && (!q || c.label.toLowerCase().includes(q))
-    );
-  }, [rawMenuManagementChildren, debouncedQuery]);
 
   const filteredAccessChildren = useMemo(() => {
     const q = debouncedQuery;
@@ -182,7 +175,7 @@ export default function Sidebar({ open, onClose }) {
       >
         {/* Mobile Sidebar Header (Logo + Close) */}
         <div className="flex lg:hidden items-center justify-between px-4 pb-3 pt-10 border-b border-white/10">
-          <img src="/zingbitelogo.png" alt="Logo" className="h-20 w-auto object-contain" />
+          <img src="/watanstafflogo.png" alt="Logo" className="h-14 w-auto object-contain" />
           <button onClick={onClose} className="p-2 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -205,7 +198,7 @@ export default function Sidebar({ open, onClose }) {
               className="w-full text-[13px] rounded-xl pl-9 pr-4 py-2.5
                 bg-white/5 border border-white/[0.08]
                 text-white/80 placeholder:text-white/25
-                focus:outline-none focus:border-yellow-500/40 focus:bg-white/8
+                focus:outline-none focus:border-[#D0B079]/40 focus:bg-white/8
                 transition-all duration-200"
             />
           </div>
@@ -216,16 +209,10 @@ export default function Sidebar({ open, onClose }) {
             <Item key={m.label} to={m.to} label={m.label} icon={m.icon} />
           ))}
 
-          <Group
-            label="Menu Management"
-            icon={iconCategory()}
-            hidden={filteredMenuManagement.length === 0}
-            openProp={location.pathname.startsWith("/category") || location.pathname.startsWith("/product") || location.pathname.startsWith("/offers")}
-          >
-            {filteredMenuManagement.map((m) => (
-              <Item key={m.label} to={m.to} label={m.label} icon={m.icon} />
-            ))}
-          </Group>
+          {/* Super Admin Only: All Staff */}
+          {isSuperAdmin() && (
+            <Item to="/all-staff" label="All Staff" icon={iconAllStaff()} />
+          )}
 
           <Group
             label="Access Control"
@@ -248,7 +235,7 @@ export default function Sidebar({ open, onClose }) {
             </div>
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-white/90 truncate">{user?.name || "Admin"}</div>
-              <div className="text-[11px] text-white/40 truncate">{user?.email || "admin@crispy.dosa"}</div>
+              <div className="text-[11px] text-white/40 truncate">{user?.email || "admin@watanstaff.com"}</div>
             </div>
           </div>
 
@@ -281,6 +268,18 @@ export default function Sidebar({ open, onClose }) {
 }
 
 /* icons unchanged */
+function iconAllStaff() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="20" cy="5" r="2" fill="currentColor" className="text-[#D0B079]" />
+    </svg>
+  );
+}
+
 function iconDashboard() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
@@ -328,6 +327,16 @@ function iconUsersCog() {
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
       <path d="M12 14a5 5 0 0 0-9 3v3M21 20v-1a4 4 0 0 0-6.5-3.1M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M18.5 7.5l1 .6-1 1.7h-2l-1-1.7 1-.6V6h2v1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function iconUsers() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

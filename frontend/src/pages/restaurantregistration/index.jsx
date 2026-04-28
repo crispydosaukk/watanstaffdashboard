@@ -26,7 +26,7 @@ const InputGroup = ({ label, icon: Icon, value, onChange, placeholder, type = "t
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
+        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-sm"
       />
     </div>
   </div>
@@ -44,7 +44,7 @@ const SelectGroup = ({ label, icon: Icon, value, onChange, options, required = f
         value={value}
         onChange={onChange}
         required={required}
-        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all appearance-none cursor-pointer text-sm"
+        className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all appearance-none cursor-pointer text-sm"
       >
         <option value="" className="bg-[#0b1a3d]">Select...</option>
         {options.map(opt => (
@@ -80,8 +80,8 @@ const DetailRow = ({ label, value, icon: Icon, isFile = false, isCuisine = false
   }
 
   return (
-    <div className="flex items-center gap-4 p-5 bg-white/[0.03] rounded-2xl border border-white/[0.08] group hover:border-yellow-500/30 transition-all">
-      <div className="p-3 bg-yellow-500/10 rounded-xl group-hover:scale-110 transition-transform">
+    <div className="flex items-center gap-4 p-5 bg-white/[0.03] rounded-2xl border border-white/[0.08] group hover:border-[#D0B079]/30 transition-all">
+      <div className="p-3 bg-[#D0B079]/10 rounded-xl group-hover:scale-110 transition-transform">
         {Icon && <Icon className="text-yellow-400" size={20} />}
       </div>
       <div className="flex-1 min-w-0">
@@ -121,7 +121,7 @@ const FileUpload = ({ label, name, value, onChange, icon: Icon, required = false
       </label>
       <div
         onClick={() => fileInputRef.current?.click()}
-        className={`relative flex items-center gap-4 p-4 bg-white/[0.03] border-2 border-dashed ${value ? 'border-yellow-500/30 bg-yellow-500/5' : 'border-white/10'} rounded-2xl hover:border-yellow-500/50 transition-all cursor-pointer overflow-hidden group/upload`}
+        className={`relative flex items-center gap-4 p-4 bg-white/[0.03] border-2 border-dashed ${value ? 'border-[#D0B079]/30 bg-[#D0B079]/5' : 'border-white/10'} rounded-2xl hover:border-[#D0B079]/50 transition-all cursor-pointer overflow-hidden group/upload`}
       >
         <input
           type="file"
@@ -133,7 +133,7 @@ const FileUpload = ({ label, name, value, onChange, icon: Icon, required = false
         <div className="flex-1 min-w-0">
           {value ? (
             <div className="flex items-center gap-3 truncate">
-              <div className="p-2 bg-yellow-500/20 rounded-lg text-yellow-400">
+              <div className="p-2 bg-[#D0B079]/20 rounded-lg text-yellow-400">
                 <Check size={14} className="font-black" />
               </div>
               <span className="text-sm text-white font-black tracking-tight truncate">
@@ -144,7 +144,7 @@ const FileUpload = ({ label, name, value, onChange, icon: Icon, required = false
             <span className="text-sm text-white/20 font-black uppercase tracking-widest">Click to upload document</span>
           )}
         </div>
-        <div className="p-2 bg-white/5 group-hover/upload:bg-yellow-500/10 rounded-lg transition-colors">
+        <div className="p-2 bg-white/5 group-hover/upload:bg-[#D0B079]/10 rounded-lg transition-colors">
           <Plus className="text-white/20 group-hover/upload:text-yellow-400" size={16} />
         </div>
       </div>
@@ -354,7 +354,7 @@ export default function RestaurantRegistration() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30">
       <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -431,7 +431,7 @@ export default function RestaurantRegistration() {
                         placeholder="Search by store, name or email..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-14 pr-6 py-4 bg-[#0b1a3d]/40 backdrop-blur-xl border-2 border-white/[0.08] rounded-2xl text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 shadow-2xl transition-all font-bold"
+                        className="w-full pl-14 pr-6 py-4 bg-[#0b1a3d]/40 backdrop-blur-xl border-2 border-white/[0.08] rounded-2xl text-white placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 shadow-2xl transition-all font-bold"
                       />
                     </div>
 
@@ -474,7 +474,7 @@ export default function RestaurantRegistration() {
                                         {p.status === 2 && <X size={10} />}
                                         {p.status === 0 ? "Pending" : p.status === 1 ? "Approved" : "Declined"}
                                       </span>
-                                      <button onClick={() => setViewingProfile(p)} className="p-2 bg-white/5 hover:bg-yellow-500/20 text-white/30 hover:text-yellow-400 rounded-xl transition-all border border-white/[0.08]"><Eye size={14} /></button>
+                                      <button onClick={() => setViewingProfile(p)} className="p-2 bg-white/5 hover:bg-[#D0B079]/20 text-white/30 hover:text-yellow-400 rounded-xl transition-all border border-white/[0.08]"><Eye size={14} /></button>
                                     </div>
                                   </td>
                                   <td className="px-8 py-6">
@@ -503,7 +503,7 @@ export default function RestaurantRegistration() {
                     className="flex-1 flex items-center justify-center py-10"
                   >
                     <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] p-10 md:p-14 border border-white/[0.08] shadow-2xl relative overflow-hidden w-full max-w-4xl text-center">
-                      <div className="absolute top-0 right-0 w-80 h-80 bg-yellow-500/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                      <div className="absolute top-0 right-0 w-80 h-80 bg-[#D0B079]/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
 
                       <div className="relative flex flex-col items-center space-y-10">
                         <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center border shadow-2xl ${myProfile.status === 0 ? 'bg-amber-500/10 border-amber-500/30' : myProfile.status === 1 ? 'bg-emerald-500/10 border-emerald-400/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
@@ -543,7 +543,7 @@ export default function RestaurantRegistration() {
 
                         <div className="pt-6 flex flex-wrap gap-4 items-center justify-center">
                           {myProfile.status === 1 ? (
-                            <button className="px-12 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1">
+                            <button className="px-12 py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1">
                               Launch My Dashboard
                             </button>
                           ) : (
@@ -556,7 +556,7 @@ export default function RestaurantRegistration() {
                               </button>
                               <button
                                 onClick={() => setIsEditing(true)}
-                                className="px-8 py-4 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-yellow-500/20 transition-all flex items-center gap-3"
+                                className="px-8 py-4 bg-[#D0B079]/10 hover:bg-[#D0B079] text-[#D0B079] hover:text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-[#D0B079]/20 transition-all flex items-center gap-3"
                               >
                                 <Edit3 size={18} /> Edit Application
                               </button>
@@ -578,7 +578,7 @@ export default function RestaurantRegistration() {
                         {isEditing ? (
                           <button onClick={() => setIsEditing(false)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 text-white transition-all border border-white/[0.08]"><ArrowLeft size={20} /></button>
                         ) : (
-                          <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center border border-yellow-400/20 shrink-0"><Plus className="text-yellow-400" size={28} /></div>
+                          <div className="w-14 h-14 bg-[#D0B079]/10 rounded-2xl flex items-center justify-center border border-yellow-400/20 shrink-0"><Plus className="text-yellow-400" size={28} /></div>
                         )}
                         <div className="min-w-0">
                           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{isEditing ? "Modify Application" : "Merchant Onboarding"}</h2>
@@ -616,7 +616,7 @@ export default function RestaurantRegistration() {
                                   name="country_code"
                                   value={formData.country_code}
                                   onChange={handleInputChange}
-                                  className="w-full px-2 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-black text-[11px] focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-center appearance-none cursor-pointer"
+                                  className="w-full px-2 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-black text-[11px] focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-center appearance-none cursor-pointer"
                                 >
                                   <option value="IN" className="bg-[#0b1a3d]">+91 IN</option>
                                   <option value="UK" className="bg-[#0b1a3d]">+44 UK</option>
@@ -630,7 +630,7 @@ export default function RestaurantRegistration() {
                                   onChange={handleInputChange}
                                   placeholder="Main operator line"
                                   required
-                                  className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all text-sm"
+                                  className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-sm"
                                 />
                               </div>
                             </div>
@@ -711,13 +711,13 @@ export default function RestaurantRegistration() {
                       </div>
                       <div className="pt-10 flex flex-col sm:flex-row justify-between items-center gap-8 border-t border-white/[0.08]">
                         <div className="flex items-start gap-4 max-w-xl text-xs font-medium text-white/50 italic">
-                          <AlertCircle className="shrink-0 text-yellow-500" size={18} />
+                          <AlertCircle className="shrink-0 text-[#D0B079]" size={18} />
                           <p>By submitting, you certify that all enterprise data provided is legally accurate for audit.</p>
                         </div>
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="w-full sm:w-auto px-16 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:opacity-50"
+                          className="w-full sm:w-auto px-16 py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-sm rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:opacity-50"
                         >
                           {submitting ? (
                             <div className="flex items-center gap-3">
@@ -784,7 +784,7 @@ export default function RestaurantRegistration() {
                   <div>
                     <h3 className="text-3xl font-black uppercase tracking-tight text-white mb-1">{viewingProfile.store_name}</h3>
                     <div className="flex items-center gap-3">
-                      <span className="px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-yellow-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2">
+                      <span className="px-4 py-1.5 bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-full text-yellow-400 font-black text-[9px] uppercase tracking-widest flex items-center gap-2">
                         REF: #ZBR-{viewingProfile.id.toString().padStart(4, '0')}
                       </span>
                       <span className="text-white/30 font-bold text-xs uppercase tracking-widest">Enterprise Profile</span>
@@ -796,7 +796,7 @@ export default function RestaurantRegistration() {
                   {/* Sections */}
                   <div className="space-y-10">
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500">Business Details</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D0B079]">Business Details</h4>
                       <div className="grid grid-cols-1 gap-3">
                         <DetailRow label="Trading Name" value={viewingProfile.store_name} icon={Store} />
                         <DetailRow label="Brand Identity" value={viewingProfile.brand_name} icon={Briefcase} />
@@ -807,7 +807,7 @@ export default function RestaurantRegistration() {
                     </div>
 
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500">Contact Protocol</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D0B079]">Contact Protocol</h4>
                       <div className="grid grid-cols-1 gap-3">
                         <DetailRow label="Full Name" value={`${viewingProfile.first_name} ${viewingProfile.surname}`} icon={Users} />
                         <DetailRow label="Email Line" value={viewingProfile.email} icon={Mail} />
@@ -819,7 +819,7 @@ export default function RestaurantRegistration() {
 
                   <div className="space-y-10">
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500">Verification Vault</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D0B079]">Verification Vault</h4>
                       <div className="grid grid-cols-1 gap-3">
                         <DetailRow label="Food License" value={viewingProfile.food_business_license} isFile icon={Shield} />
                         <DetailRow label="Hygiene Cert" value={viewingProfile.food_hygiene_certificate} isFile icon={CheckCircle} />
@@ -829,7 +829,7 @@ export default function RestaurantRegistration() {
                     </div>
 
                     <div className="space-y-6">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500">Financial Node</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D0B079]">Financial Node</h4>
                       <div className="grid grid-cols-1 gap-3">
                         <DetailRow label="Account Name" value={viewingProfile.bank_account_name} icon={Users} />
                         <DetailRow label="Account Digits" value={viewingProfile.bank_account_number} icon={Hash} />

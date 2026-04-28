@@ -64,7 +64,7 @@ const CustomerDetails = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30">
+        <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30">
             <Header onToggleSidebar={() => setSidebarOpen((s) => !s)} />
             <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -92,7 +92,7 @@ const CustomerDetails = () => {
                                 <button
                                     onClick={fetchCustomers}
                                     disabled={loading}
-                                    className="w-full sm:w-auto px-5 py-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 font-bold rounded-2xl border border-yellow-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] font-bold rounded-2xl border border-[#D0B079]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                                 >
                                     <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                                     Refresh
@@ -107,7 +107,7 @@ const CustomerDetails = () => {
                                             <p className="text-sm font-medium tracking-wide text-white mb-1">Total Customers</p>
                                             <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg tracking-tight">{stats.total}</p>
                                         </div>
-                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                        <div className="p-3 bg-[#D0B079]/10 backdrop-blur-md rounded-xl border border-[#D0B079]/20">
                                             <Users className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
@@ -119,7 +119,7 @@ const CustomerDetails = () => {
                                             <p className="text-sm font-medium tracking-wide text-white mb-1">Active Orders</p>
                                             <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg tracking-tight">{stats.active}</p>
                                         </div>
-                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                        <div className="p-3 bg-[#D0B079]/10 backdrop-blur-md rounded-xl border border-[#D0B079]/20">
                                             <TrendingUp className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
@@ -131,7 +131,7 @@ const CustomerDetails = () => {
                                             <p className="text-sm font-medium tracking-wide text-white mb-1">Total Orders</p>
                                             <p className="text-3xl font-bold text-white mt-1 drop-shadow-lg tracking-tight">{stats.totalOrders}</p>
                                         </div>
-                                        <div className="p-3 bg-yellow-500/10 backdrop-blur-md rounded-xl border border-yellow-500/20">
+                                        <div className="p-3 bg-[#D0B079]/10 backdrop-blur-md rounded-xl border border-[#D0B079]/20">
                                             <ShoppingBag className="text-yellow-400" size={24} />
                                         </div>
                                     </div>
@@ -234,7 +234,7 @@ const CustomerDetails = () => {
 
                                                     <td className="px-8 py-6 text-center">
                                                         {Number(customer.live_orders) > 0 ? (
-                                                            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse backdrop-blur-md">
+                                                            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider bg-[#D0B079]/10 text-yellow-400 border border-[#D0B079]/20 animate-pulse backdrop-blur-md">
                                                                 <TrendingUp size={12} />
                                                                 {customer.live_orders} Active
                                                             </span>
@@ -253,7 +253,7 @@ const CustomerDetails = () => {
                                                     <td className="px-8 py-6 text-center">
                                                         <button
                                                             onClick={() => openCustomerDetails(customer)}
-                                                            className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 mx-auto"
+                                                            className="px-5 py-2.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 mx-auto"
                                                         >
                                                             <Eye size={14} />
                                                             View Details
@@ -287,7 +287,7 @@ const CustomerDetails = () => {
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
                                                     className={`w-9 h-9 flex items-center justify-center text-[11px] font-black rounded-xl transition-all backdrop-blur-md ${currentPage === page
-                                                        ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/20'
+                                                        ? 'bg-[#D0B079] text-white shadow-lg shadow-[#D0B079]/20'
                                                         : 'text-white/40 bg-white/5 border border-white/[0.08] hover:bg-white/10 hover:text-white'
                                                         }`}
                                                 >
@@ -355,7 +355,7 @@ const CustomerDetails = () => {
 
                                 {/* Contact Information */}
                                 <div className="mb-10">
-                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><Phone size={12} className="text-yellow-500" /> Communication Details</h5>
+                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><Phone size={12} className="text-[#D0B079]" /> Communication Details</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         {selectedCustomer.mobile_number && (
                                             <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
@@ -374,17 +374,17 @@ const CustomerDetails = () => {
 
                                 {/* Order Statistics */}
                                 <div className="mb-10">
-                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><ShoppingBag size={12} className="text-yellow-500" /> Assets & Activity</h5>
+                                    <h5 className="text-xs font-bold tracking-wide text-white mb-6 uppercase flex items-center gap-2"><ShoppingBag size={12} className="text-[#D0B079]" /> Assets & Activity</h5>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                        <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
+                                        <div className="p-6 bg-[#D0B079]/5 border border-[#D0B079]/10 rounded-2xl">
                                             <p className="text-xs font-medium text-white tracking-wide mb-1">Live Ops</p>
-                                            <p className="text-2xl font-bold text-yellow-500 leading-none">{Number(selectedCustomer.live_orders || 0)}</p>
+                                            <p className="text-2xl font-bold text-[#D0B079] leading-none">{Number(selectedCustomer.live_orders || 0)}</p>
                                         </div>
                                         <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
                                             <p className="text-xs font-medium text-white tracking-wide mb-1">Completed</p>
                                             <p className="text-2xl font-bold text-blue-400 leading-none">{Number(selectedCustomer.completed_orders || 0)}</p>
                                         </div>
-                                        <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
+                                        <div className="p-6 bg-[#D0B079]/5 border border-[#D0B079]/10 rounded-2xl">
                                             <p className="text-xs font-medium text-white tracking-wide mb-1">Total Payload</p>
                                             <p className="text-2xl font-bold text-yellow-600 leading-none">{Number(selectedCustomer.total_orders || 0)}</p>
                                         </div>

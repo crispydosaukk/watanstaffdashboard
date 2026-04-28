@@ -32,7 +32,7 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-yellow-500/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
       >
         <span className={selected.length ? "text-white" : "text-white/40"}>{labelText}</span>
         <ChevronDown size={16} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -56,9 +56,9 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
                     <div
                       key={opt.id}
                       onClick={() => onToggle(opt.id)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-yellow-500/10 text-yellow-500" : "hover:bg-white/10 text-white/80"}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-[#D0B079]/10 text-[#D0B079]" : "hover:bg-white/10 text-white/80"}`}
                     >
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-yellow-500 border-yellow-500" : "border-white/30"}`}>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-[#D0B079] border-[#D0B079]" : "border-white/30"}`}>
                         {active && <Check size={12} className="text-white" />}
                       </div>
                       <span className="text-sm font-medium">{opt.title}</span>
@@ -255,7 +255,7 @@ export default function Users() {
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
                 onClick={() => setOpenCreate(true)}
-                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-2xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 text-base"
+                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-2xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 text-base"
               >
                 <Plus size={20} strokeWidth={3} />
                 Add User
@@ -316,7 +316,7 @@ export default function Users() {
                         <td className="px-8 py-6 text-white/60 font-medium tracking-wide">{u.email}</td>
                         <td className="px-8 py-6">
                           {u.role_title ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-bold tracking-wide bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                            <span className="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-bold tracking-wide bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
                               {u.role_title}
                             </span>
                           ) : (
@@ -412,7 +412,7 @@ export default function Users() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       value={cName} onChange={(e) => setCName(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Enter full name"
                     />
                   </div>
@@ -423,7 +423,7 @@ export default function Users() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="name@example.com"
                     />
                   </div>
@@ -434,7 +434,7 @@ export default function Users() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="password" value={cPassword} onChange={(e) => setCPassword(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Set initial password"
                     />
                   </div>
@@ -454,7 +454,7 @@ export default function Users() {
                 <button
                   onClick={handleCreate}
                   disabled={!canSave || saving}
-                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                  className="px-8 py-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? "Creating..." : "Create User"}
                 </button>
@@ -491,7 +491,7 @@ export default function Users() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       value={eName} onChange={(e) => setEName(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Enter full name"
                     />
                   </div>
@@ -502,7 +502,7 @@ export default function Users() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="name@example.com"
                     />
                   </div>
@@ -513,7 +513,7 @@ export default function Users() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
                       type="password" value={ePassword} onChange={(e) => setEPassword(e.target.value)}
-                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Blank to keep current"
                     />
                   </div>
@@ -533,7 +533,7 @@ export default function Users() {
                 <button
                   onClick={handleUpdate}
                   disabled={!canUpdate || updating}
-                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                  className="px-8 py-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                 >
                   {updating ? "Saving..." : "Save Changes"}
                 </button>

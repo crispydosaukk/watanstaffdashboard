@@ -390,23 +390,23 @@ export default function ProductPage() {
                     <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-black rounded tracking-wider shadow-sm">Save {formatGBP(discAmt)}</span>
                   </div>
                   <div className="flex items-baseline gap-3">
-                    <span className="text-xl font-black text-yellow-500">{formatGBP(p.price)}</span>
+                    <span className="text-xl font-black text-[#D0B079]">{formatGBP(p.price)}</span>
                     <span className="text-sm font-bold text-white/50 line-through decoration-rose-500/60 decoration-2">{formatGBP(p.discountPrice)}</span>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-yellow-500">{formatGBP(p.price)}</span>
+                  <span className="text-lg font-bold text-[#D0B079]">{formatGBP(p.price)}</span>
                 </div>
               )}
               <div className="flex items-center justify-between mt-1">
                 <div className="flex items-center gap-3">
                   <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
                     <input type="checkbox" className="sr-only" checked={status} readOnly />
-                    <div className={`w-12 h-6 rounded-full transition-colors ${status ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                    <div className={`w-12 h-6 rounded-full transition-colors ${status ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                     <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${status ? 'translate-x-6' : ''}`}></div>
                   </div>
-                  <button onClick={() => handleEdit(p)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 group-hover:bg-yellow-500/10 transition-colors"><Edit size={14} /></button>
+                  <button onClick={() => handleEdit(p)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-yellow-400 group-hover:bg-[#D0B079]/10 transition-colors"><Edit size={14} /></button>
                   <button onClick={() => handleDelete(p.id)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-rose-500"><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -424,7 +424,7 @@ export default function ProductPage() {
         <button
           disabled={current === 1}
           onClick={() => onPageChange(current - 1)}
-          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-[#D0B079]/10 hover:text-[#D0B079] transition-all active:scale-90"
         >
           <GripVertical className="rotate-90" size={16} />
         </button>
@@ -433,7 +433,7 @@ export default function ProductPage() {
             <button
               key={i + 1}
               onClick={() => onPageChange(i + 1)}
-              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-yellow-500 text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
+              className={`w-10 h-10 rounded-xl font-bold transition-all ${current === i + 1 ? 'bg-[#D0B079] text-slate-900 shadow-xl' : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
             >
               {i + 1}
             </button>
@@ -442,7 +442,7 @@ export default function ProductPage() {
         <button
           disabled={current === total}
           onClick={() => onPageChange(current + 1)}
-          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all active:scale-90"
+          className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white disabled:opacity-20 hover:bg-[#D0B079]/10 hover:text-[#D0B079] transition-all active:scale-90"
         >
           <GripVertical className="-rotate-90" size={16} />
         </button>
@@ -451,7 +451,7 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <style>{`
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -489,7 +489,7 @@ export default function ProductPage() {
                       placeholder="Search products..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-4 py-3 text-sm font-medium text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl pl-12 pr-4 py-3 text-sm font-medium text-white placeholder-white/10 focus:outline-none focus:border-[#D0B079]/40 transition-all"
                     />
                   </div>
 
@@ -506,13 +506,13 @@ export default function ProductPage() {
                       </select>
                     </div>
 
-                    <button onClick={() => setShowSearchModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
+                    <button onClick={() => setShowSearchModal(true)} className="px-6 py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] font-bold text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap active:scale-95">
                       <Globe size={18} /> Search Global
                     </button>
 
                     <button
                       onClick={() => { resetForm(); setShowModal(true); }}
-                      className="px-8 py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
+                      className="px-8 py-3.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-sm rounded-xl shadow-2xl transition-all flex items-center justify-center gap-2 whitespace-nowrap border border-white/10"
                     >
                       <Plus size={18} /> Add Product
                     </button>
@@ -553,7 +553,7 @@ export default function ProductPage() {
                                     <div
                                       ref={dragProvided.innerRef}
                                       {...dragProvided.draggableProps}
-                                      className={`grid grid-cols-[80px_100px_1.5fr_2fr_200px_120px_160px] items-center ${p.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-yellow-500/50 z-[9999]" : ""}`}
+                                      className={`grid grid-cols-[80px_100px_1.5fr_2fr_200px_120px_160px] items-center ${p.status === 0 ? "opacity-40" : ""} hover:bg-white/[0.02] transition-colors ${snapshot.isDragging ? "bg-[#0d1f45] shadow-2xl rounded-xl ring-2 ring-[#D0B079]/50 z-[9999]" : ""}`}
                                       style={{ ...dragProvided.draggableProps.style }}
                                     >
                                       <div {...dragProvided.dragHandleProps} className="px-6 py-2.5 cursor-grab text-white/10 hover:text-yellow-400 transition-colors flex items-center justify-center">
@@ -588,19 +588,19 @@ export default function ProductPage() {
                                               <span className="px-2 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-black rounded uppercase tracking-wider shadow-sm">Save {formatGBP(Number(p.discountPrice) - Number(p.price))}</span>
                                             </div>
                                             <div className="flex items-baseline gap-3">
-                                              <span className="text-lg font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</span>
+                                              <span className="text-lg font-black text-[#D0B079] tracking-tight">{formatGBP(p.price)}</span>
                                               <span className="text-sm font-bold text-white/50 line-through decoration-rose-500/60 decoration-2">{formatGBP(p.discountPrice)}</span>
                                             </div>
                                           </div>
                                         ) : (
-                                          <div className="text-base font-black text-yellow-500 tracking-tight">{formatGBP(p.price)}</div>
+                                          <div className="text-base font-black text-[#D0B079] tracking-tight">{formatGBP(p.price)}</div>
                                         )}
                                       </div>
                                       <div className="px-6 py-2.5 flex items-center justify-center">
                                         <div className="flex flex-col items-center gap-1">
                                           <div className="relative group/toggle cursor-pointer" onClick={() => handleToggleStatus(p)}>
                                             <input type="checkbox" className="sr-only" checked={p.status === 1} readOnly />
-                                            <div className={`w-10 h-5 rounded-full transition-colors ${p.status === 1 ? 'bg-yellow-500' : 'bg-white/10'}`}></div>
+                                            <div className={`w-10 h-5 rounded-full transition-colors ${p.status === 1 ? 'bg-[#D0B079]' : 'bg-white/10'}`}></div>
                                             <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all ${p.status === 1 ? 'translate-x-5' : ''}`}></div>
                                           </div>
                                           <span className={`text-[9px] font-bold tracking-wide transition-colors ${p.status === 1 ? 'text-yellow-400' : 'text-white/30'}`}>
@@ -609,7 +609,7 @@ export default function ProductPage() {
                                         </div>
                                       </div>
                                       <div className="px-6 py-2.5 flex items-center justify-end gap-3">
-                                        <button onClick={() => handleEdit(p)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-yellow-500/10 transition-all active:scale-90"><Edit size={16} /></button>
+                                        <button onClick={() => handleEdit(p)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-yellow-400 hover:bg-[#D0B079]/10 transition-all active:scale-90"><Edit size={16} /></button>
                                         <button onClick={() => handleDelete(p.id)} className="p-2.5 bg-white/5 border border-white/[0.08] rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90"><Trash2 size={16} /></button>
                                       </div>
                                     </div>
@@ -667,20 +667,20 @@ export default function ProductPage() {
                   <div className="space-y-6">
                     <div>
                       <label className="block text-xs font-bold text-white/40 mb-3">Product Name <span className="text-rose-500">*</span></label>
-                      <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all" />
+                      <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white placeholder-white/10 focus:outline-none focus:border-[#D0B079]/40 transition-all" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-white/40 mb-3">Description</label>
-                      <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all resize-none" />
+                      <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all resize-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-white/40 mb-3">Price (GBP) <span className="text-rose-500">*</span></label>
-                        <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
+                        <input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-white/40 mb-3">Discount (%)</label>
-                        <input type="text" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: e.target.value })} placeholder="e.g. 15%" className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all" />
+                        <input type="text" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: e.target.value })} placeholder="e.g. 15%" className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-5 py-4 text-sm font-semibold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all" />
                       </div>
                     </div>
                     <div>
@@ -699,7 +699,7 @@ export default function ProductPage() {
                       </div>
                       <div
                         onClick={() => document.getElementById('imageProd').click()}
-                        className="aspect-square bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-yellow-500/50 transition-all overflow-hidden relative group"
+                        className="aspect-square bg-white/[0.03] border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#D0B079]/50 transition-all overflow-hidden relative group"
                       >
                         <input type="file" id="imageProd" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
                         {previewUrl ? (
@@ -727,7 +727,7 @@ export default function ProductPage() {
                               const exists = current.includes(opt.key);
                               setForm({ ...form, contains: exists ? current.filter(x => x !== opt.key) : [...current, opt.key] });
                             }}
-                            className={`p-2 rounded-lg border transition-all ${form.contains?.includes(opt.key) ? 'bg-yellow-500/20 border-yellow-400' : 'bg-white/5 border-white/10 opacity-30 group hover:opacity-100'}`}
+                            className={`p-2 rounded-lg border transition-all ${form.contains?.includes(opt.key) ? 'bg-[#D0B079]/20 border-yellow-400' : 'bg-white/5 border-white/10 opacity-30 group hover:opacity-100'}`}
                           >
                             <img src={opt.icon} className="w-6 h-6 object-contain" alt={opt.key} />
                           </button>
@@ -737,7 +737,7 @@ export default function ProductPage() {
                   </div>
                 </div>
                 <div className="pt-6 border-t border-white/[0.08] flex justify-end">
-                  <button type="submit" className="px-10 py-5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-bold text-base rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10 flex items-center gap-3">
+                  <button type="submit" className="px-10 py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 font-bold text-base rounded-2xl shadow-2xl transition-all transform active:scale-95 border border-white/10 flex items-center gap-3">
                     <Save size={18} /> {form.id ? "Save Changes" : "Add Product"}
                   </button>
                 </div>
@@ -752,7 +752,7 @@ export default function ProductPage() {
             <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-[#0b1a3d] border border-white/[0.08] rounded-[2rem] shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh]">
               <div className="p-8 border-b border-white/[0.08] bg-white/5 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-yellow-500/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
+                  <div className="p-2 bg-[#D0B079]/10 rounded-xl"><Globe size={20} className="text-yellow-400" /></div>
                   <h2 className="text-xl font-bold text-white tracking-tight">Product Menu Import</h2>
                 </div>
                 <button onClick={() => setShowSearchModal(false)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-all"><X size={20} /></button>
@@ -762,7 +762,7 @@ export default function ProductPage() {
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-yellow-400" size={18} />
                   <input
                     autoFocus
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-14 pr-6 py-4 text-sm font-semibold text-white focus:outline-none focus:border-yellow-500/40 transition-all shadow-xl"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-14 pr-6 py-4 text-sm font-semibold text-white focus:outline-none focus:border-[#D0B079]/40 transition-all shadow-xl"
                     placeholder="Search global products..."
                     value={globalSearchQuery}
                     onChange={e => setGlobalSearchQuery(e.target.value)}
@@ -781,7 +781,7 @@ export default function ProductPage() {
                         <div className="text-[10px] font-medium text-white/20 mt-0.5">{prod.restaurant_name}</div>
                       </div>
                     </div>
-                    <button onClick={() => handleAddGlobalProduct(prod)} className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 rounded-xl hover:scale-105 transition-all shadow-lg border border-white/10"><Plus size={20} /></button>
+                    <button onClick={() => handleAddGlobalProduct(prod)} className="p-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 rounded-xl hover:scale-105 transition-all shadow-lg border border-white/10"><Plus size={20} /></button>
                   </div>
                 ))}
               </div>

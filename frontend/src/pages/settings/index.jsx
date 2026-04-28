@@ -131,7 +131,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans">
       <style>{`
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -178,7 +178,7 @@ export default function Settings() {
                     {/* SECTION 1: CUSTOMER REWARDS & BONUSES */}
                     <div className="space-y-8">
                       <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
-                        <Gift className="text-yellow-500" size={24} />
+                        <Gift className="text-[#D0B079]" size={24} />
                         <div>
                           <h3 className="text-lg font-bold text-white tracking-tight">Customer Rewards & Bonuses</h3>
                           <p className="text-white mt-1 text-sm font-medium tracking-wide">Credits and earnings for customer acquisition and retention</p>
@@ -198,7 +198,7 @@ export default function Settings() {
                               value={form.signup_bonus_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -215,7 +215,7 @@ export default function Settings() {
                               value={form.referral_bonus_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -232,7 +232,7 @@ export default function Settings() {
                               value={form.earn_per_order_amount}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -262,7 +262,7 @@ export default function Settings() {
                               value={form.minimum_order}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -279,7 +279,7 @@ export default function Settings() {
                               value={form.minimum_cart_total}
                               onChange={handleChange}
                               placeholder="0.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -289,7 +289,7 @@ export default function Settings() {
                     {/* SECTION 3: LOYALTY PROGRAM */}
                     <div className="space-y-8">
                       <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
-                        <Award className="text-yellow-500" size={24} />
+                        <Award className="text-[#D0B079]" size={24} />
                         <div>
                           <h3 className="text-lg font-bold text-white tracking-tight">Loyalty Program Dynamics</h3>
                           <p className="text-white mt-1 text-sm font-medium tracking-wide">Points calculation and redemption rules for repeat customers</p>
@@ -309,7 +309,7 @@ export default function Settings() {
                               value={form.loyalty_points_per_gbp}
                               onChange={handleChange}
                               placeholder="1"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -326,7 +326,7 @@ export default function Settings() {
                               value={form.loyalty_redeem_points}
                               onChange={handleChange}
                               placeholder="10"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -343,7 +343,7 @@ export default function Settings() {
                               value={form.loyalty_redeem_value}
                               onChange={handleChange}
                               placeholder="1.00"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -362,7 +362,7 @@ export default function Settings() {
                               value={form.loyalty_available_after_hours}
                               onChange={handleChange}
                               placeholder="24"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -381,7 +381,7 @@ export default function Settings() {
                               value={form.loyalty_expiry_days}
                               onChange={handleChange}
                               placeholder="30"
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-bold placeholder-white/10 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -410,7 +410,7 @@ export default function Settings() {
                               value={form.stripe_publishable_key}
                               onChange={handleChange}
                               placeholder="pk_test_..."
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -426,7 +426,7 @@ export default function Settings() {
                               value={form.stripe_secret_key}
                               onChange={handleChange}
                               placeholder="sk_test_..."
-                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500/40 transition-all hover:bg-white/10 shadow-inner"
+                              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-mono text-xs focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all hover:bg-white/10 shadow-inner"
                             />
                           </div>
                         </div>
@@ -436,13 +436,13 @@ export default function Settings() {
                     {/* ACTION BUTTONS */}
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-8 pt-10 border-t border-white/[0.08]">
                       <div className="flex items-start gap-4 max-w-xl text-sm font-medium tracking-wide text-white italic">
-                        <AlertCircle className="shrink-0 text-yellow-500" size={18} />
+                        <AlertCircle className="shrink-0 text-[#D0B079]" size={18} />
                         <p>Changes apply immediately to all transactions. Please verify values before saving.</p>
                       </div>
                       <button
                         type="submit"
                         disabled={saving}
-                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black tracking-widest text-l rounded-2xl shadow-xl hover:shadow-yellow-500/20 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08]"
+                        className="w-full sm:w-auto flex items-center justify-center gap-3 px-12 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-black tracking-widest text-l rounded-2xl shadow-xl hover:shadow-[#D0B079]/20 transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08]"
                       >
                         {saving ? (
                           <>

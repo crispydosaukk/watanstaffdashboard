@@ -161,7 +161,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
             {/* Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
               <h3 className="text-white font-semibold flex items-center gap-2">
-                <MapPin size={18} className="text-yellow-400" />
+                <MapPin size={18} className="text-[#D0B079]" />
                 Select Location
               </h3>
               <button onClick={onClose} className="p-1 hover:bg-white/10 text-white/60 hover:text-white rounded-lg transition-colors">
@@ -178,7 +178,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
                   placeholder="Search for area, street name..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50 focus:border-[#D0B079]/50 transition-all font-medium"
                   autoFocus
                 />
               </div>
@@ -187,7 +187,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
               <div className="space-y-3">
                 <button
                   onClick={() => { onUseCurrentLocation(); onClose(); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 hover:text-yellow-400 border border-yellow-500/20 transition-all group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] hover:text-[#D0B079] border border-[#D0B079]/20 transition-all group"
                 >
                   <Navigation size={18} className="group-hover:scale-110 transition-transform" />
                   <div className="text-left">
@@ -200,7 +200,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
                 {(currentLat && currentLng) && (
                   <div className="p-3 bg-white/5 border border-white/10 rounded-xl animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-start gap-3">
-                      <div className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg shrink-0">
+                      <div className="p-2 bg-[#D0B079]/20 text-[#D0B079] rounded-lg shrink-0">
                         <MapPin size={16} />
                       </div>
                       <div>
@@ -244,7 +244,7 @@ const LocationModal = ({ isOpen, onClose, onSelectLocation, onUseCurrentLocation
                   }}
                   className="w-full text-left p-4 hover:bg-white/5 border-b border-white/5 last:border-0 transition-colors flex items-start gap-3 group"
                 >
-                  <MapPin size={18} className="mt-0.5 text-white/40 group-hover:text-yellow-400 transition-colors shrink-0" />
+                  <MapPin size={18} className="mt-0.5 text-white/40 group-hover:text-[#D0B079] transition-colors shrink-0" />
                   <div>
                     <span className="block text-white text-sm font-medium group-hover:text-yellow-100">{place.structured_formatting.main_text}</span>
                     <span className="block text-white/40 text-xs mt-0.5">{place.structured_formatting.secondary_text}</span>
@@ -651,9 +651,9 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
             <div className="hidden lg:flex items-center">
               <img
-                src="/zingbitelogo.png"
-                alt="ZingBite"
-                className="h-[72px] w-auto object-contain drop-shadow-lg"
+                src="/watanstafflogo.png"
+                alt="WatanStaff"
+                className="h-[48px] w-auto object-contain drop-shadow-lg"
               />
             </div>
           </div>
@@ -665,7 +665,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
               onClick={() => setIsLocationModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2 shrink-0 active:scale-95 transition-all"
             >
-              <MapPin size={14} className="text-yellow-400 shrink-0" />
+              <MapPin size={14} className="text-[#D0B079] shrink-0" />
               <span className="text-[11px] font-bold text-white/90 truncate uppercase tracking-tight">
                 {locationName || "Detecting location..."}
               </span>
@@ -680,7 +680,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
               className="flex items-center gap-3 text-white bg-white/8 hover:bg-white/15 py-2.5 px-6 rounded-xl border border-white/15 shadow-sm min-w-[300px] max-w-[500px] transition-all hover:scale-[1.01] active:scale-95 cursor-pointer focus:outline-none"
               style={{ width: '420px', fontWeight: 500, fontSize: '0.95rem' }}
             >
-              <MapPin size={16} className="text-yellow-400 shrink-0" />
+              <MapPin size={16} className="text-[#D0B079] shrink-0" />
               <span className="truncate text-white/85 text-sm">{locationName || "Detecting location..."}</span>
               <ChevronDown size={14} className="text-white/40 ml-auto shrink-0" />
             </button>
@@ -694,7 +694,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
               <button
                 onClick={() => setShowNotifications((v) => !v)}
                 className={`relative p-2.5 rounded-xl transition-all duration-200 ${showNotifications
-                    ? 'bg-white/10 text-yellow-300'
+                    ? 'bg-white/10 text-[#D0B079]'
                     : 'text-white/60 hover:text-white hover:bg-white/8'
                   }`}
               >
@@ -741,7 +741,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <div className="flex justify-between items-start mb-1">
                                <div className="flex items-center gap-2">
                                   <p className="font-bold text-white text-sm">Table Booking</p>
-                                  <span className="px-1.5 py-0.5 bg-yellow-500/20 text-yellow-500 text-[9px] font-black uppercase rounded">Pending</span>
+                                  <span className="px-1.5 py-0.5 bg-[#D0B079]/20 text-[#D0B079] text-[9px] font-black uppercase rounded">Pending</span>
                                </div>
                                <p className="text-[10px] text-white/30 uppercase font-medium">Just now</p>
                             </div>
@@ -749,7 +749,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <div className="flex items-center gap-3 mt-3">
                                <button 
                                   onClick={(e) => { e.stopPropagation(); setSelectedQuickRes(res); setShowNotifications(false); }}
-                                  className="flex-1 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-yellow-500/20"
+                                  className="flex-1 py-1.5 bg-[#D0B079]/10 text-[#D0B079] text-[10px] font-black uppercase tracking-widest rounded-lg border border-[#D0B079]/20"
                                >
                                   View Details
                                </button>
@@ -767,7 +767,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleRegistrationStatusUpdate(notif, 1); }}
-                                className="flex-1 flex items-center justify-center py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
+                                className="flex-1 flex items-center justify-center py-2 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95"
                               >
                                 Accept
                               </button>
@@ -790,7 +790,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold rounded uppercase tracking-wider">New</span>
                                   {order.takeaway_time && (
-                                    <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[10px] font-bold rounded flex items-center gap-1">
+                                    <span className="px-2 py-0.5 bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20 text-[10px] font-bold rounded flex items-center gap-1">
                                       <Clock size={10} /> {order.takeaway_time}
                                     </span>
                                   )}
@@ -848,7 +848,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
                               <button
                                 onClick={() => handleAccept(order)}
-                                className="flex items-center justify-center py-2.5 px-3 sm:px-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-xs sm:text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95"
+                                className="flex items-center justify-center py-2.5 px-3 sm:px-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 text-xs sm:text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#D0B079]/20 hover:scale-[1.02] active:scale-95"
                               >
                                 Accept Order
                               </button>
@@ -945,17 +945,17 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                 initial={{ opacity: 0, x: 50, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, x: 0, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-                className="pointer-events-auto bg-[#0b1a3d]/95 backdrop-blur-2xl border-2 border-yellow-500/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.2)] overflow-hidden shrink-0"
+                className="pointer-events-auto bg-[#0b1a3d]/95 backdrop-blur-2xl border-2 border-[#D0B079]/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.2)] overflow-hidden shrink-0"
               >
                 <div className="p-4 sm:p-5">
                   <div className="flex items-start gap-4">
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-yellow-500 border border-yellow-500/30 shadow-inner">
+                      <div className="w-12 h-12 rounded-2xl bg-[#D0B079]/20 flex items-center justify-center text-[#D0B079] border border-[#D0B079]/30 shadow-inner">
                         <Bell size={24} className="animate-bounce" />
                       </div>
                       <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border border-white/20"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D0B079] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#D0B079] border border-white/20"></span>
                       </span>
                     </div>
 
@@ -966,11 +966,11 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             {toast.isRegistration ? "New Registration!" : toast.isReservation ? "New Reservation!" : "Incoming Order!"}
                           </h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <p className="text-yellow-400 text-xs font-bold leading-none uppercase tracking-widest">
+                            <p className="text-[#D0B079] text-xs font-bold leading-none uppercase tracking-widest">
                               {toast.isRegistration || toast.isReservation ? toast.order_number : `#${toast.order_number}`}
                             </p>
                             {toast.takeaway_time && (
-                              <span className="px-1.5 py-0.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-[9px] font-black uppercase rounded flex items-center gap-1">
+                              <span className="px-1.5 py-0.5 bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20 text-[9px] font-black uppercase rounded flex items-center gap-1">
                                 <Clock size={10} /> {toast.takeaway_time}
                               </span>
                             )}
@@ -993,7 +993,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                           <>
                             {toast.items.map((item, i) => (
                               <p key={i} className="text-white/80 text-sm font-medium line-clamp-1">
-                                <span className="text-yellow-400 mr-1.5">{item.quantity}x</span> {item.name}
+                                <span className="text-[#D0B079] mr-1.5">{item.quantity}x</span> {item.name}
                               </p>
                             ))}
                             {toast.allergy_note && (
@@ -1020,7 +1020,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                             <>
                               <button
                                 onClick={() => handleRegistrationStatusUpdate(toast, 1)}
-                                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
+                                className="px-4 py-2 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
                               >
                                 Accept
                               </button>
@@ -1034,14 +1034,14 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                           ) : toast.isReservation ? (
                             <button
                               onClick={() => handleGoToReservation(toast)}
-                              className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#D0B079]/20 transform active:scale-95 transition-all"
                             >
                               View Booking
                             </button>
                           ) : (
                             <button
                               onClick={() => handleAccept(toast)}
-                              className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-yellow-500/20 transform active:scale-95 transition-all"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 text-sm font-black uppercase tracking-widest rounded-xl shadow-lg shadow-[#D0B079]/20 transform active:scale-95 transition-all"
                             >
                               Accept
                             </button>
@@ -1094,7 +1094,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                     <p className="text-xs font-semibold text-white/30 mb-2 uppercase tracking-wide">Status</p>
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-widest ${
                       selectedQuickRes.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                      selectedQuickRes.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                      selectedQuickRes.status === 'pending' ? 'bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20' :
                       selectedQuickRes.status === 'seated' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                       'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                     }`}>
@@ -1116,19 +1116,19 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
                 <div className="space-y-4">
                    <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
-                      <Phone size={16} className="text-yellow-400/70" />
+                      <Phone size={16} className="text-[#D0B079]/70" />
                       {selectedQuickRes.customer_phone || "No phone"}
                    </div>
                    <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
-                      <Mail size={16} className="text-yellow-400/70" />
+                      <Mail size={16} className="text-[#D0B079]/70" />
                       {selectedQuickRes.customer_email || "No email"}
                    </div>
                    <div className="flex items-center gap-3 text-white/80 text-base font-medium">
-                      <Calendar size={18} className="text-yellow-400/70" />
+                      <Calendar size={18} className="text-[#D0B079]/70" />
                       {new Date(selectedQuickRes.reservation_date).toLocaleDateString()} at {selectedQuickRes.reservation_time}
                    </div>
                    <div className="flex items-center gap-3 text-white/60 text-sm font-medium">
-                      <MessageSquare size={16} className="text-yellow-400/70" />
+                      <MessageSquare size={16} className="text-[#D0B079]/70" />
                       {selectedQuickRes.special_requests || "No special requests"}
                    </div>
                 </div>
@@ -1143,7 +1143,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
                         onClick={() => handleQuickUpdateStatus(selectedQuickRes.id, s)}
                         className={`px-3 py-3.5 rounded-2xl text-[13px] font-bold uppercase tracking-wider transition-all border ${
                           selectedQuickRes.status === s 
-                          ? 'bg-yellow-500 text-slate-900 border-yellow-500 shadow-lg shadow-yellow-500/20' 
+                          ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-lg shadow-[#D0B079]/20' 
                           : 'bg-white/5 text-white/40 border-white/10 hover:bg-white/10'
                         }`}
                       >
@@ -1155,7 +1155,7 @@ export default function Header({ onToggleSidebar, darkMode = true }) {
 
                 <button 
                   onClick={() => setSelectedQuickRes(null)}
-                  className="w-full py-5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-yellow-500/20 active:scale-95 transition-all mt-2"
+                  className="w-full py-5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl shadow-2xl shadow-[#D0B079]/20 active:scale-95 transition-all mt-2"
                 >
                   Close View
                 </button>

@@ -26,12 +26,29 @@ import {
 import { getAppSettings } from "../controllers/api/settingsController.js";
 import { getActiveOffers } from "../controllers/api/offerController.js";
 import { reserveTable, getReservationSettings } from "../controllers/api/tableReservationController.js";
+import { staffLogin } from "../controllers/admin/StaffController.js";
+import { handleClockIn, handleClockOut, getSessionStatus, handleUpdateAttendance, getStaffAttendance } from "../controllers/admin/AttendanceController.js";
 
 
 const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/staff/login", staffLogin);
+
+// Staff Attendance – requires staff JWT token
+router.post("/staff/clock-in", auth, handleClockIn);
+router.post("/staff/clock-out", auth, handleClockOut);
+router.get("/staff/session-status", auth, getSessionStatus);
+router.get("/staff/attendance/:staffId", auth, getStaffAttendance);
+router.put("/staff/attendance/:id", auth, handleUpdateAttendance); 
+
+// Mobile-specific aliases (optional but kept for compatibility)
+router.post("/mobile/staff/clock-in", auth, handleClockIn);
+router.post("/mobile/staff/clock-out", auth, handleClockOut);
+router.get("/mobile/staff/status", auth, getSessionStatus);
+
+// Staff Management Routes (Web)
 router.get("/profile", auth, profile);
 router.get("/wallet/summary", auth, getWalletSummary);
 

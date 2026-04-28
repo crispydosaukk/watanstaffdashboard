@@ -55,7 +55,7 @@ export const updateReservationStatus = async (req, res) => {
           title: "✅ Table Confirmed",
           body: `Your reservation for table ${resData.table_number || "request"} on ${formattedDate} at ${formattedTime} is confirmed!`
         },
-        seated: { title: "🍴 You're Seated", body: "Welcome to ZingBite! Enjoy your meal." },
+        seated: { title: "🍴 You're Seated", body: "Welcome to WatanStaff! Enjoy your meal." },
         completed: { title: "✨ Thank You", body: "We hope you enjoyed your visit. See you again soon!" },
         cancelled: { title: "❌ Table Cancelled", body: "Your reservation has been cancelled." },
         no_show: { title: "⚠️ No Show", body: "We missed you today!" }

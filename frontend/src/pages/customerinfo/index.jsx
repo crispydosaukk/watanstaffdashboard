@@ -89,7 +89,7 @@ export default function CustomerInfo() {
         </div>
         <button
           onClick={() => openCustomerDetails(c)}
-          className="p-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-xl shadow-xl active:scale-95 transition-all"
+          className="p-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 rounded-xl shadow-xl active:scale-95 transition-all"
         >
           <Eye size={18} />
         </button>
@@ -102,7 +102,7 @@ export default function CustomerInfo() {
         <div className="space-y-1 text-right">
           <p className="text-[10px] font-medium text-white tracking-wide">Credits</p>
           <div className="flex items-center justify-end gap-1.5">
-            <span className="text-sm font-bold text-yellow-500 tracking-tight">{formatWallet(c.wallet_balance)}</span>
+            <span className="text-sm font-bold text-[#D0B079] tracking-tight">{formatWallet(c.wallet_balance)}</span>
             <span className="text-xs font-medium text-yellow-600 tracking-tight">({Number(c.loyalty_points || 0)} Pts)</span>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function CustomerInfo() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 pt-16 min-h-0 relative">
@@ -140,7 +140,7 @@ export default function CustomerInfo() {
                         <p className="text-sm font-medium tracking-wide text-white mb-1">Total Customers</p>
                         <p className="text-3xl font-bold text-white tracking-tight">{stats.total}</p>
                       </div>
-                      <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                      <div className="p-4 bg-[#D0B079]/10 rounded-2xl border border-[#D0B079]/20">
                         <Users size={24} className="text-yellow-400" />
                       </div>
                     </div>
@@ -149,9 +149,9 @@ export default function CustomerInfo() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium tracking-wide text-white mb-1">Total Wallet</p>
-                        <p className="text-3xl font-bold text-yellow-500 tracking-tight">{formatWallet(stats.totalWallet)}</p>
+                        <p className="text-3xl font-bold text-[#D0B079] tracking-tight">{formatWallet(stats.totalWallet)}</p>
                       </div>
-                      <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
+                      <div className="p-4 bg-[#D0B079]/10 rounded-2xl border border-[#D0B079]/20">
                         <Wallet size={24} className="text-yellow-400" />
                       </div>
                     </div>
@@ -162,8 +162,8 @@ export default function CustomerInfo() {
                         <p className="text-sm font-medium tracking-wide text-white mb-1">Total Points</p>
                         <p className="text-3xl font-bold text-yellow-600 tracking-tight">{stats.totalLoyalty.toLocaleString()}</p>
                       </div>
-                      <div className="p-4 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
-                        <Award size={24} className="text-yellow-500" />
+                      <div className="p-4 bg-[#D0B079]/10 rounded-2xl border border-[#D0B079]/20">
+                        <Award size={24} className="text-[#D0B079]" />
                       </div>
                     </div>
                   </div>
@@ -177,7 +177,7 @@ export default function CustomerInfo() {
                     placeholder="Scan for name, mobile, or email..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-[1.5rem] pl-16 pr-6 py-5 text-base font-medium text-white placeholder-white/20 focus:outline-none focus:border-yellow-500/40 transition-all shadow-xl"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-[1.5rem] pl-16 pr-6 py-5 text-base font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#D0B079]/40 transition-all shadow-xl"
                   />
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function CustomerInfo() {
                   <h3 className="text-sm font-bold text-white tracking-wide flex items-center gap-3">
                     <Users size={18} className="text-yellow-400" /> Customer List
                   </h3>
-                  <button className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-base rounded-xl shadow-xl transition-all flex items-center gap-2 active:scale-95">
+                  <button className="px-6 py-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-base rounded-xl shadow-xl transition-all flex items-center gap-2 active:scale-95">
                     <Download size={18} /> Export CSV
                   </button>
                 </div>
@@ -224,14 +224,14 @@ export default function CustomerInfo() {
                           <td className="px-8 py-6 text-sm font-medium text-white/80">
                             {formatPhoneNumber(c.country_code, c.mobile_number)}
                           </td>
-                          <td className="px-8 py-6 text-sm font-bold text-yellow-500">
+                          <td className="px-8 py-6 text-sm font-bold text-[#D0B079]">
                             {formatWallet(c.wallet_balance)}
                           </td>
                           <td className="px-8 py-6 text-sm font-bold text-yellow-600">
                             {Number(c.loyalty_points || 0)}
                           </td>
                           <td className="px-8 py-6 text-right">
-                            <button onClick={() => openCustomerDetails(c)} className="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95">
+                            <button onClick={() => openCustomerDetails(c)} className="px-5 py-2.5 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-bold text-xs rounded-xl shadow-xl transition-all active:scale-95">
                               View Details
                             </button>
                           </td>
@@ -285,7 +285,7 @@ export default function CustomerInfo() {
                   <div className="text-center sm:text-left">
                     <h4 className="text-2xl font-bold text-white tracking-tight">{selectedCustomer.full_name}</h4>
                     <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-3">
-                      <span className="px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold tracking-wider rounded-full">Active Customer</span>
+                      <span className="px-4 py-1.5 bg-[#D0B079]/10 border border-[#D0B079]/20 text-[#D0B079] text-[10px] font-bold tracking-wider rounded-full">Active Customer</span>
                       <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-white/40 text-[10px] font-medium tracking-wider rounded-full">Joined {new Date(selectedCustomer.created_at).getFullYear()}</span>
                     </div>
                   </div>
@@ -293,7 +293,7 @@ export default function CustomerInfo() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Phone size={12} className="text-yellow-500" /> Contact Details</p>
+                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Phone size={12} className="text-[#D0B079]" /> Contact Details</p>
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs font-medium text-white tracking-wide">Mobile Number</p>
@@ -306,7 +306,7 @@ export default function CustomerInfo() {
                     </div>
                   </div>
                   <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Calendar size={12} className="text-yellow-500" /> Bio Details</p>
+                    <p className="text-xs font-bold tracking-wide text-white mb-4 flex items-center gap-2"><Calendar size={12} className="text-[#D0B079]" /> Bio Details</p>
                     <div className="space-y-4">
                       <div>
                         <p className="text-xs font-medium text-white tracking-wide">Date Of Birth</p>
@@ -321,19 +321,19 @@ export default function CustomerInfo() {
                 </div>
 
                 <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl">
-                  <p className="text-xs font-bold tracking-wide text-white mb-6 flex items-center gap-2"><Wallet size={12} className="text-yellow-500" /> Customer Wallet</p>
+                  <p className="text-xs font-bold tracking-wide text-white mb-6 flex items-center gap-2"><Wallet size={12} className="text-[#D0B079]" /> Customer Wallet</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
+                    <div className="p-6 bg-[#D0B079]/5 border border-[#D0B079]/10 rounded-2xl">
                       <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Wallet Balance</p>
-                      <p className="text-2xl font-bold text-yellow-500 leading-none">{formatWallet(selectedCustomer.wallet_balance)}</p>
+                      <p className="text-2xl font-bold text-[#D0B079] leading-none">{formatWallet(selectedCustomer.wallet_balance)}</p>
                     </div>
-                    <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
+                    <div className="p-6 bg-[#D0B079]/5 border border-[#D0B079]/10 rounded-2xl">
                       <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Loyalty Points</p>
                       <p className="text-2xl font-bold text-yellow-600 leading-none">{Number(selectedCustomer.loyalty_points || 0)}</p>
                     </div>
-                    <div className="p-6 bg-yellow-500/5 border border-yellow-500/10 rounded-2xl">
+                    <div className="p-6 bg-[#D0B079]/5 border border-[#D0B079]/10 rounded-2xl">
                       <p className="text-xs font-medium text-white/60 tracking-wide mb-1">Redeemable Value</p>
-                      <p className="text-2xl font-bold text-yellow-500 leading-none">{calculateRedeemable(selectedCustomer)}</p>
+                      <p className="text-2xl font-bold text-[#D0B079] leading-none">{calculateRedeemable(selectedCustomer)}</p>
                     </div>
                   </div>
                 </div>
@@ -342,9 +342,9 @@ export default function CustomerInfo() {
                   <div className="p-6 bg-gradient-to-r from-[#0b1a3d] to-white/5 border border-white/[0.08] rounded-2xl flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium text-white tracking-wide mb-1">Referral Code</p>
-                      <p className="text-xl font-bold text-yellow-500 tracking-[0.15em]">{selectedCustomer.referral_code}</p>
+                      <p className="text-xl font-bold text-[#D0B079] tracking-[0.15em]">{selectedCustomer.referral_code}</p>
                     </div>
-                    <div className="p-4 bg-yellow-500/10 rounded-2xl"><Gift size={24} className="text-yellow-400" /></div>
+                    <div className="p-4 bg-[#D0B079]/10 rounded-2xl"><Gift size={24} className="text-yellow-400" /></div>
                   </div>
                 )}
               </div>

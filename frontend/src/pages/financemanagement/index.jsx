@@ -23,7 +23,7 @@ const getOrderType = (status) => {
 const getStatusLabel = (status) => {
   switch (Number(status)) {
     case 0: return { label: "Placed",    dot: "bg-amber-500",   text: "text-amber-400" };
-    case 1: return { label: "Accepted",  dot: "bg-yellow-500",  text: "text-yellow-400" };
+    case 1: return { label: "Accepted",  dot: "bg-[#D0B079]",  text: "text-yellow-400" };
     case 2: return { label: "Rejected",  dot: "bg-rose-500",    text: "text-rose-400" };
     case 3: return { label: "Ready",     dot: "bg-purple-500",  text: "text-purple-400" };
     case 4: return { label: "Collected", dot: "bg-emerald-500", text: "text-emerald-400" };
@@ -64,7 +64,7 @@ const StatCard = ({ title, value, color, icon: Icon, percentage, loading }) => (
     <div>
       <p className="text-white text-sm font-semibold mb-2">Total {title}</p>
       <h3 className="text-3xl font-semibold text-white tracking-tight leading-none flex items-baseline gap-1">
-        <span className="text-yellow-500 text-lg">£</span>
+        <span className="text-[#D0B079] text-lg">£</span>
         {loading ? <span className="text-white/30 text-xl animate-pulse">Loading...</span> : value}
       </h3>
     </div>
@@ -199,7 +199,7 @@ const FinanceManagement = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-yellow-500/30 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30 font-sans text-white overflow-x-hidden">
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
       <div className="flex flex-1 pt-24 relative">
@@ -244,7 +244,7 @@ const FinanceManagement = () => {
                   </div>
                   <button
                     onClick={() => fetchData()}
-                    className="p-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 rounded-xl transition-all border border-yellow-500/30 active:scale-90"
+                    className="p-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] rounded-xl transition-all border border-[#D0B079]/30 active:scale-90"
                   >
                     <RefreshCw size={15} />
                   </button>
@@ -255,7 +255,7 @@ const FinanceManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard title="Gross Intake" value={formatAmount(summary.gross_intake)} color="bg-emerald-500" icon={TrendingUp} loading={statsLoading} />
                 <StatCard title="Refund Outflow" value={formatAmount(summary.refund_outflow)} color="bg-rose-500" icon={TrendingDown} loading={statsLoading} />
-                <StatCard title="Net Liquidity" value={formatAmount(summary.net_liquidity)} color="bg-yellow-500" icon={Activity} loading={statsLoading} />
+                <StatCard title="Net Liquidity" value={formatAmount(summary.net_liquidity)} color="bg-[#D0B079]" icon={Activity} loading={statsLoading} />
               </div>
 
               {/* Transaction Stream */}
@@ -263,7 +263,7 @@ const FinanceManagement = () => {
                 <div className="p-8 border-b border-white/[0.05] flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white/[0.02]">
                   <div>
                     <h2 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
-                       <CreditCard className="text-yellow-500" size={20} /> Transactions
+                       <CreditCard className="text-[#D0B079]" size={20} /> Transactions
                     </h2>
                     <p className="text-white/70 text-xs font-semibold mt-1">
                       {loading ? "Fetching data..." : `${pagination.total} transaction${pagination.total !== 1 ? "s" : ""} found`}
@@ -271,16 +271,16 @@ const FinanceManagement = () => {
                   </div>
                   <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
                     <div className="relative group/search">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/search:text-yellow-500 transition-all" size={14} />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/search:text-[#D0B079] transition-all" size={14} />
                       <input
                         type="search"
                         placeholder="Search order / customer..."
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500/40 w-full sm:w-64 transition-all"
+                        className="bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#D0B079]/40 w-full sm:w-64 transition-all"
                       />
                     </div>
-                    <button type="submit" className="px-4 py-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 text-xs font-semibold rounded-xl border border-yellow-500/30 transition-all">
+                    <button type="submit" className="px-4 py-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] text-xs font-semibold rounded-xl border border-[#D0B079]/30 transition-all">
                       Search
                     </button>
                   </form>
@@ -409,13 +409,13 @@ const FinanceManagement = () => {
                       step="0.01"
                       value={refundAmountInput}
                       onChange={(e) => setRefundAmountInput(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 pl-14 pr-8 text-3xl font-bold text-white tabular-nums focus:outline-none focus:border-yellow-500/40"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-6 pl-14 pr-8 text-3xl font-bold text-white tabular-nums focus:outline-none focus:border-[#D0B079]/40"
                       placeholder="0.00"
                     />
                   </div>
-                  <div className="flex items-start gap-3 p-4 bg-yellow-500/5 rounded-2xl border border-yellow-500/10">
-                    <AlertCircle className="text-yellow-500 shrink-0 mt-0.5" size={14} />
-                    <p className="text-[10px] font-medium text-yellow-500 uppercase tracking-wider leading-relaxed">
+                  <div className="flex items-start gap-3 p-4 bg-[#D0B079]/5 rounded-2xl border border-[#D0B079]/10">
+                    <AlertCircle className="text-[#D0B079] shrink-0 mt-0.5" size={14} />
+                    <p className="text-[10px] font-medium text-[#D0B079] uppercase tracking-wider leading-relaxed">
                       Refunds are processed to the original payment method first (Stripe), then to the customer wallet.
                     </p>
                   </div>

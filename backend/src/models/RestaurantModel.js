@@ -73,14 +73,15 @@ async function insertRestaurant(conn, userId, payload) {
     const foodTypeStr = Array.isArray(payload.food_type) ? payload.food_type.join(",") : payload.food_type ?? null;
     const [res] = await conn.query(
       `INSERT INTO restaurant_details
-        (user_id, restaurant_name, restaurant_address, restaurant_phonenumber,
+        (user_id, restaurant_name, company_name, restaurant_address, restaurant_phonenumber,
         restaurant_email, restaurant_facebook, restaurant_twitter, restaurant_instagram,
         restaurant_tiktok, google_review_link, website_url, delivery_partner_1_url, delivery_partner_2_url, delivery_partner_3_url, delivery_partner_4_url, parking_info, instore, kerbside, latitude, longitude, restaurant_photo,
         stripe_secret_key, stripe_publishable_key, food_type, is_halal, cuisine_type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         payload.restaurant_name ?? null,
+        payload.company_name ?? null,
         payload.restaurant_address ?? null,
         payload.restaurant_phonenumber ?? null,
         payload.restaurant_email ?? null,
@@ -118,6 +119,7 @@ async function updateRestaurant(conn, restaurantId, payload) {
     const foodTypeStr = Array.isArray(payload.food_type) ? payload.food_type.join(",") : payload.food_type ?? null;
     const fieldsMap = {
       restaurant_name: payload.restaurant_name ?? null,
+      company_name: payload.company_name ?? null,
       restaurant_address: payload.restaurant_address ?? null,
       restaurant_phonenumber: payload.restaurant_phonenumber ?? null,
       restaurant_email: payload.restaurant_email ?? null,

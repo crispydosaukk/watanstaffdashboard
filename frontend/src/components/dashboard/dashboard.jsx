@@ -66,7 +66,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
             </button>
           )}
           {trend && (
-            <div className="flex items-center gap-1 bg-yellow-500/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-yellow-400 text-[9px] sm:text-[10px] font-black border border-yellow-500/20 shadow-sm">
+            <div className="flex items-center gap-1 bg-[#D0B079]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[#D0B079] text-[9px] sm:text-[10px] font-black border border-[#D0B079]/20 shadow-sm">
               <TrendingUp size={10} /> {trend}
             </div>
           )}
@@ -83,7 +83,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
     </div>
 
     {/* Decorative Glow */}
-    <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl group-hover:bg-yellow-500/10 transition-colors" />
+    <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-[#D0B079]/5 rounded-full blur-3xl group-hover:bg-[#D0B079]/10 transition-colors" />
   </motion.div>
 );
 
@@ -119,7 +119,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
         <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-8 py-6 flex justify-between items-center border-b border-white/10">
           <div>
             <h3 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-wider">
-              <Eye size={24} className="text-yellow-400" /> {title}
+              <Eye size={24} className="text-[#D0B079]" /> {title}
             </h3>
             <p className="text-[10px] text-white/40 mt-1.5 uppercase font-bold tracking-[0.2em]">{items.length} records found</p>
           </div>
@@ -177,12 +177,12 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                                 <ShoppingBag size={16} className="m-auto text-white/20 h-full" />
                               )}
                             </div>
-                            <span className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">{item.name || item.product_name}</span>
+                            <span className="text-sm font-bold text-white group-hover:text-[#D0B079] transition-colors">{item.name || item.product_name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-yellow-400 font-black text-sm">£{Number(item.price || item.product_price || 0).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-[#D0B079] font-black text-sm">£{Number(item.price || item.product_price || 0).toFixed(2)}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${Number(item.status || item.product_status) === 1 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${Number(item.status || item.product_status) === 1 ? 'bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                             {Number(item.status || item.product_status) === 1 ? 'In Stock' : 'Out of Stock'}
                           </span>
                         </td>
@@ -201,9 +201,9 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                       <>
                         <td className="px-6 py-4 font-bold text-white">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm group-hover:text-yellow-400 transition-colors">#{item.order_number}</span>
+                            <span className="text-sm group-hover:text-[#D0B079] transition-colors">#{item.order_number}</span>
                             {item.order_source === 'Dashboard' && (
-                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-[9px] font-black border border-white/20" title="Dashboard Order">
+                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#D0B079] text-white text-[9px] font-black border border-white/20" title="Dashboard Order">
                                 D
                               </div>
                             )}
@@ -218,9 +218,9 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                           </span>
                         </td>
                         <td className="px-6 py-4 text-white/70 text-sm font-medium">{item.customer_name || 'Guest'}</td>
-                        <td className="px-6 py-4 text-yellow-400 font-black text-sm">£{Number(item.grand_total).toFixed(2)}</td>
+                        <td className="px-6 py-4 text-[#D0B079] font-black text-sm">£{Number(item.grand_total).toFixed(2)}</td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${Number(item.order_status) === 4 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${Number(item.order_status) === 4 ? "bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30" :
                             Number(item.order_status) === 0 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
                               Number(item.order_status) === 2 ? "bg-red-500/20 text-red-400 border border-red-500/30" :
                                 "bg-amber-500/20 text-amber-400 border border-amber-400/30"
@@ -237,7 +237,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             <>
                               <button
                                 onClick={() => onReadyClick(item.order_number)}
-                                className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-lg transition-all flex items-center gap-1.5 border border-yellow-500/20 shadow-md active:scale-95"
+                                className="px-3 py-1.5 bg-[#D0B079]/20 hover:bg-[#D0B079]/40 text-[#D0B079] rounded-lg transition-all flex items-center gap-1.5 border border-[#D0B079]/20 shadow-md active:scale-95"
                                 title="Accept"
                               >
                                 <CheckCircle size={14} />
@@ -266,7 +266,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
                             {Number(item.order_status) === 3 && (
                               <button
                                 onClick={() => onConfirmCollection ? onConfirmCollection(item.order_number) : onUpdateStatus(item.order_number, 4)}
-                                className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-lg transition-all flex items-center gap-1.5 border border-yellow-500/20 shadow-md active:scale-95"
+                                className="px-3 py-1.5 bg-[#D0B079]/20 hover:bg-[#D0B079]/40 text-[#D0B079] rounded-lg transition-all flex items-center gap-1.5 border border-[#D0B079]/20 shadow-md active:scale-95"
                                 title="Mark Collected"
                               >
                                 <CheckCircle size={14} />
@@ -295,7 +295,7 @@ const MetricDetailsModal = ({ isOpen, onClose, title, items = [], type, onUpdate
 
         <div className="bg-white/5 p-6 border-t border-white/10 flex justify-between items-center sm:px-8">
           <p className="text-[10px] text-white/30 uppercase font-black tracking-widest">Click any row to manage</p>
-          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
+          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
             Close Details
           </button>
         </div>
@@ -338,7 +338,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
       >
         <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-6 py-5 flex justify-between items-center border-b border-white/10 shrink-0">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <ShoppingBag size={20} className="text-yellow-400" /> Order #{order.order_number}
+            <ShoppingBag size={20} className="text-[#D0B079]" /> Order #{order.order_number}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors">
             <X size={20} />
@@ -349,7 +349,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Customer Info */}
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h4 className="text-yellow-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
+              <h4 className="text-[#D0B079] text-sm font-bold uppercase mb-3 flex items-center gap-2">
                 <Users size={14} /> Customer Details
               </h4>
               <div className="space-y-2">
@@ -367,7 +367,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
 
             {/* Order Info */}
             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <h4 className="text-yellow-400 text-sm font-bold uppercase mb-3 flex items-center gap-2">
+              <h4 className="text-[#D0B079] text-sm font-bold uppercase mb-3 flex items-center gap-2">
                 <CreditCard size={14} /> Payment & Status
               </h4>
               <div className="space-y-3">
@@ -377,7 +377,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-white/60 text-sm">Status</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${Number(order.order_status) === 4 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${Number(order.order_status) === 4 ? "bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30" :
                     Number(order.order_status) === 0 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
                       Number(order.order_status) === 2 ? "bg-red-500/20 text-red-400 border border-red-500/30" :
                         "bg-amber-500/20 text-amber-400 border border-amber-400/30"
@@ -399,7 +399,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
           {/* Product List */}
           <div>
             <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-              <ShoppingBag size={16} className="text-yellow-400" /> Order Items
+              <ShoppingBag size={16} className="text-[#D0B079]" /> Order Items
             </h4>
             <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
               {loading ? (
@@ -442,14 +442,14 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
                           </div>
                         </td>
                         <td className="px-4 py-3 text-white/70 text-center">x{item.quantity}</td>
-                        <td className="px-4 py-3 text-yellow-300 font-medium text-right">£{Number(item.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-[#D0B079] font-medium text-right">£{Number(item.price).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-white/5 border-t border-white/10">
                     <tr>
                       <td colSpan="2" className="px-4 py-3 text-right font-bold text-white">Total</td>
-                      <td className="px-4 py-3 text-right font-bold text-yellow-400">£{Number(order.grand_total).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-right font-bold text-[#D0B079]">£{Number(order.grand_total).toFixed(2)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -464,7 +464,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
               <>
                 <button
                   onClick={() => onReadyClick(order.order_number)}
-                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
+                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
                 >
                   <CheckCircle size={16} /> Accept
                 </button>
@@ -487,7 +487,7 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, onReadyClick, onCon
             {Number(order.order_status) === 3 && (
               <button
                 onClick={() => onConfirmCollection ? onConfirmCollection(order.order_number) : onUpdateStatus(order.order_number, 4)}
-                className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
+                className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] text-slate-900 rounded-xl transition-all font-black text-sm flex items-center gap-2 shadow-lg shadow-yellow-900/20 active:scale-95"
               >
                 <CheckCircle size={16} /> Mark Collected
               </button>
@@ -544,7 +544,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
           </button>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">
             <h3 className="text-2xl font-bold text-white shadow-sm">{product.name}</h3>
-            <p className="text-yellow-300 font-medium text-sm mt-1">{product.category_name || "Uncategorized"}</p>
+            <p className="text-[#D0B079] font-medium text-sm mt-1">{product.category_name || "Uncategorized"}</p>
           </div>
         </div>
 
@@ -556,7 +556,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
             </div>
             <div className="text-right">
               <span className="text-white/60 text-xs block mb-1">Total Sales</span>
-              <span className="text-xl font-bold text-yellow-400">{product.count} <span className="text-sm font-normal text-white/60">units</span></span>
+              <span className="text-xl font-bold text-[#D0B079]">{product.count} <span className="text-sm font-normal text-white/60">units</span></span>
             </div>
           </div>
 
@@ -570,7 +570,7 @@ const ProductDetailsModal = ({ product, onClose }) => {
           </div>
         </div>
         <div className="bg-white/5 p-4 border-t border-white/10 flex justify-end">
-          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
+          <button onClick={onClose} className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] text-slate-900 rounded-xl transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-yellow-900/20 active:scale-95">
             Close
           </button>
         </div>
@@ -790,7 +790,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
       >
         <div className="bg-gradient-to-r from-[#071428] to-[#0d1f45] px-8 py-6 flex justify-between items-center border-b border-white/10">
           <h3 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-wider">
-            <Plus size={24} className="text-yellow-400" /> New Order
+            <Plus size={24} className="text-[#D0B079]" /> New Order
           </h3>
           <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/70 hover:text-white transition-all border border-white/10">
             <X size={20} />
@@ -800,12 +800,12 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
         <div className="p-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {isSuccess ? (
             <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mb-6 border border-yellow-500/30 text-yellow-400">
+              <div className="w-24 h-24 bg-[#D0B079]/20 rounded-full flex items-center justify-center mb-6 border border-[#D0B079]/30 text-[#D0B079]">
                 <CheckCircle size={64} />
               </div>
               <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-wider">Order Placed!</h2>
               <p className="text-white/50 mb-8 max-w-sm">
-                Order <span className="text-yellow-400 font-bold">#{successOrderNumber}</span> has been successfully created and sent to the kitchen.
+                Order <span className="text-[#D0B079] font-bold">#{successOrderNumber}</span> has been successfully created and sent to the kitchen.
               </p>
               <div className="flex gap-4">
                 <button
@@ -816,7 +816,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-slate-900 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
+                  className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] text-slate-900 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
                 >
                   Close Manager
                 </button>
@@ -825,7 +825,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
           ) : step === 1 ? (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-yellow-500/30 text-yellow-400">
+                <div className="w-16 h-16 bg-[#D0B079]/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#D0B079]/30 text-[#D0B079]">
                   <UserPlus size={32} />
                 </div>
                 <h4 className="text-white font-bold text-xl">Order Initialization</h4>
@@ -843,7 +843,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                         setLocalUserId(e.target.value);
                         if (error) setError("");
                       }}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-10 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 appearance-none text-lg font-medium"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-10 py-4 text-white focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50 appearance-none text-lg font-medium"
                     >
                       <option value="" className="bg-slate-900">Choose Restaurant...</option>
                       {restaurants.map(r => (
@@ -867,7 +867,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                       setPhoneNumber(e.target.value);
                       if (error) setError("");
                     }}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-lg font-medium"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50 text-lg font-medium"
                   />
                 </div>
               </div>
@@ -877,7 +877,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
               <button
                 onClick={searchCustomer}
                 disabled={loading || !phoneNumber}
-                className="w-full py-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 disabled:opacity-50 text-[#071428] rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/40"
+                className="w-full py-4 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] disabled:opacity-50 text-[#071428] rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-yellow-900/40"
               >
                 {loading ? "Searching..." : "Find Customer"}
               </button>
@@ -895,16 +895,16 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                       placeholder="Search items..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                     />
                   </div>
-                  <div className="flex items-center gap-3 px-4 py-2 bg-yellow-500/10 rounded-2xl border border-yellow-500/20">
-                    <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center font-bold text-[#071428] shadow-lg">
+                  <div className="flex items-center gap-3 px-4 py-2 bg-[#D0B079]/10 rounded-2xl border border-[#D0B079]/20">
+                    <div className="w-8 h-8 bg-[#D0B079] rounded-lg flex items-center justify-center font-bold text-[#071428] shadow-lg">
                       {customer?.full_name?.charAt(0) || "G"}
                     </div>
                     <div>
                       <h5 className="text-white text-xs font-bold truncate max-w-[100px]">{customer?.full_name || "Guest"}</h5>
-                      <button onClick={() => setStep(1)} className="text-[10px] text-yellow-400 font-bold hover:underline uppercase tracking-widest">Change</button>
+                      <button onClick={() => setStep(1)} className="text-[10px] text-[#D0B079] font-bold hover:underline uppercase tracking-widest">Change</button>
                     </div>
                   </div>
                 </div>
@@ -919,7 +919,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                         fetchProductsForCategory(cat.id);
                       }}
                       className={`px-5 py-2.5 rounded-xl whitespace-nowrap font-bold text-xs uppercase tracking-widest transition-all border ${selectedCategory === cat.id
-                        ? "bg-gradient-to-r from-yellow-400 to-amber-500 border-yellow-500 text-slate-900 shadow-lg shadow-yellow-900/40"
+                        ? "bg-gradient-to-r from-yellow-400 to-[#b8965f] border-[#D0B079] text-slate-900 shadow-lg shadow-yellow-900/40"
                         : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white"
                         }`}
                     >
@@ -932,7 +932,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[300px]">
                   {loadingItems ? (
                     <div className="flex flex-col items-center justify-center py-20 text-white/20">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500 mb-4" />
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#D0B079] mb-4" />
                       <p className="font-bold uppercase tracking-widest text-xs">Loading items...</p>
                     </div>
                   ) : (
@@ -945,7 +945,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                             <motion.div
                               layout
                               key={p.id}
-                              className={`group relative bg-white/5 border rounded-2xl p-4 transition-all cursor-pointer hover:bg-white/10 ${inCart ? "border-yellow-500/50 bg-yellow-500/5 shadow-lg shadow-yellow-900/20" : "border-white/10"
+                              className={`group relative bg-white/5 border rounded-2xl p-4 transition-all cursor-pointer hover:bg-white/10 ${inCart ? "border-[#D0B079]/50 bg-[#D0B079]/5 shadow-lg shadow-yellow-900/20" : "border-white/10"
                                 }`}
                               onClick={() => addToCart(p)}
                             >
@@ -958,19 +958,19 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h6 className="text-white font-bold text-sm truncate group-hover:text-yellow-400 transition-colors">{p.name}</h6>
-                                  <p className="text-yellow-400 font-black text-sm mt-1">£{Number(p.price).toFixed(2)}</p>
+                                  <h6 className="text-white font-bold text-sm truncate group-hover:text-[#D0B079] transition-colors">{p.name}</h6>
+                                  <p className="text-[#D0B079] font-black text-sm mt-1">£{Number(p.price).toFixed(2)}</p>
                                   {inCart && (
                                     <div className="mt-2 flex items-center justify-between">
-                                      <div className="flex items-center gap-2 bg-yellow-500/20 px-2 py-1 rounded-lg">
+                                      <div className="flex items-center gap-2 bg-[#D0B079]/20 px-2 py-1 rounded-lg">
                                         <button
                                           onClick={(e) => { e.stopPropagation(); updateQuantity(p.id, -1); }}
-                                          className="text-yellow-400 hover:text-white"
+                                          className="text-[#D0B079] hover:text-white"
                                         >-</button>
                                         <span className="text-white text-xs font-bold">{inCart.quantity}</span>
                                         <button
                                           onClick={(e) => { e.stopPropagation(); updateQuantity(p.id, 1); }}
-                                          className="text-yellow-400 hover:text-white"
+                                          className="text-[#D0B079] hover:text-white"
                                         >+</button>
                                       </div>
                                     </div>
@@ -995,7 +995,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
               <div className="w-full lg:w-80 flex flex-col bg-white/5 rounded-3xl border border-white/10 overflow-hidden shrink-0">
                 <div className="p-5 border-b border-white/10 bg-white/5">
                   <h6 className="text-white font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                    <ShoppingBag size={14} className="text-yellow-400" /> Cart Summary
+                    <ShoppingBag size={14} className="text-[#D0B079]" /> Cart Summary
                   </h6>
                 </div>
 
@@ -1043,7 +1043,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                             onClick={toggleLoyalty}
                             className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isLoyaltyApplied
                               ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                              : "bg-gradient-to-r from-yellow-400 to-amber-500 text-[#071428] shadow-lg shadow-yellow-900/40"
+                              : "bg-gradient-to-r from-yellow-400 to-[#b8965f] text-[#071428] shadow-lg shadow-yellow-900/40"
                               }`}
                           >
                             {isLoyaltyApplied ? "Remove" : "Claim"}
@@ -1063,7 +1063,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
 
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Total Amount</span>
-                    <span className="text-yellow-400 text-xl font-black">
+                    <span className="text-[#D0B079] text-xl font-black">
                       £{(cart.reduce((s, i) => s + i.price * i.quantity, 0) - loyaltyValue).toFixed(2)}
                     </span>
                   </div>
@@ -1071,7 +1071,7 @@ const NewOrderModal = ({ isOpen, onClose, onOrderPlaced, initialUserId, restaura
                   <button
                     onClick={placeOrder}
                     disabled={cart.length === 0 || loading}
-                    className="w-full py-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 disabled:opacity-50 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
+                    className="w-full py-4 bg-gradient-to-r from-yellow-400 to-[#b8965f] hover:from-yellow-300 hover:to-[#a3804d] disabled:opacity-50 text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-yellow-900/20 active:scale-95"
                   >
                     {loading ? "Placing..." : "Confirm Order"}
                   </button>
@@ -1283,7 +1283,7 @@ export default function Dashboard() {
           title: "Confirm Collection",
           message: (
             <div className="text-sm font-medium text-white/80 mt-2 space-y-3 text-left">
-              <p className="text-white/60 mb-4">Are you sure you want to mark order <strong className="text-yellow-400 font-black">#{orderNumber}</strong> as collected?</p>
+              <p className="text-white/60 mb-4">Are you sure you want to mark order <strong className="text-[#D0B079] font-black">#{orderNumber}</strong> as collected?</p>
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
                 {items.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-start gap-2 text-xs">
@@ -1481,10 +1481,10 @@ export default function Dashboard() {
   const getStatusBadge = (status) => {
     const s = Number(status);
     if (s === 0) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">Placed</span>;
-    if (s === 1) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Accepted</span>;
+    if (s === 1) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30">Accepted</span>;
     if (s === 2) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/40">Rejected</span>;
     if (s === 3) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/50">Ready</span>;
-    if (s === 4) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">Collected</span>;
+    if (s === 4) return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/40">Collected</span>;
     return <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-gray-500/20 text-gray-300 border border-white/10">Cancelled</span>;
   };
 
@@ -1494,7 +1494,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center gap-2">
         <button
           onClick={() => setSelectedOrder(order)}
-          className="p-2 bg-white/5 hover:bg-white/15 rounded-lg text-yellow-400 hover:text-yellow-300 transition-all border border-white/5 active:scale-95"
+          className="p-2 bg-white/5 hover:bg-white/15 rounded-lg text-[#D0B079] hover:text-[#D0B079] transition-all border border-white/5 active:scale-95"
           title="View Details"
         >
           <Eye size={18} />
@@ -1503,7 +1503,7 @@ export default function Dashboard() {
           <>
             <button
               onClick={() => handleReadyClick(order.order_number)}
-              className="p-2 bg-yellow-500/15 hover:bg-yellow-500/30 rounded-lg text-yellow-400 transition-all border border-yellow-500/20 active:scale-95"
+              className="p-2 bg-[#D0B079]/15 hover:bg-[#D0B079]/30 rounded-lg text-[#D0B079] transition-all border border-[#D0B079]/20 active:scale-95"
               title="Accept"
             >
               <CheckCircle size={18} />
@@ -1529,7 +1529,7 @@ export default function Dashboard() {
         {status === 3 && (
           <button
             onClick={() => confirmCollection(order.order_number)}
-            className="p-2 bg-yellow-500/20 hover:bg-yellow-500/40 rounded-lg text-yellow-400 transition-all shadow-md active:scale-95"
+            className="p-2 bg-[#D0B079]/20 hover:bg-[#D0B079]/40 rounded-lg text-[#D0B079] transition-all shadow-md active:scale-95"
             title="Mark Collected"
           >
             <CheckCircle size={18} />
@@ -1540,7 +1540,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] text-white font-sans selection:bg-yellow-500/30">
+    <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] text-white font-sans selection:bg-[#D0B079]/30">
       <style dangerouslySetInnerHTML={{
         __html: `
             .custom-scrollbar::-webkit-scrollbar {
@@ -1580,7 +1580,7 @@ export default function Dashboard() {
                   <div className="relative">
                     <button
                       onClick={() => setShowRestaurantMenu(!showRestaurantMenu)}
-                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-medium hover:scale-[1.02] transition-all text-sm tracking-wider h-full whitespace-nowrap shadow-lg shadow-yellow-900/10"
+                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-[#b8965f]/20 backdrop-blur-md rounded-xl border border-[#D0B079]/30 text-[#D0B079] font-medium hover:scale-[1.02] transition-all text-sm tracking-wider h-full whitespace-nowrap shadow-lg shadow-yellow-900/10"
                     >
                       <LayoutDashboard size={18} strokeWidth={2.5} />
                       {selectedRestaurant ? (restaurants.find(r => String(r.user_id) === String(selectedRestaurant))?.restaurant_name || "Restaurant") : "All Restaurants"}
@@ -1595,7 +1595,7 @@ export default function Dashboard() {
                               setSelectedRestaurant("");
                               setShowRestaurantMenu(false);
                             }}
-                            className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${selectedRestaurant === "" ? 'text-yellow-400 bg-white/5' : 'text-white/80'}`}
+                            className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${selectedRestaurant === "" ? 'text-[#D0B079] bg-white/5' : 'text-white/80'}`}
                           >
                             All Restaurants
                           </button>
@@ -1606,7 +1606,7 @@ export default function Dashboard() {
                                 setSelectedRestaurant(String(r.user_id));
                                 setShowRestaurantMenu(false);
                               }}
-                              className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${String(selectedRestaurant) === String(r.user_id) ? 'text-yellow-400 bg-white/5' : 'text-white/80'}`}
+                              className={`w-full px-4 py-2 text-left hover:bg-white/10 transition-colors text-sm ${String(selectedRestaurant) === String(r.user_id) ? 'text-[#D0B079] bg-white/5' : 'text-white/80'}`}
                             >
                               {r.restaurant_name}
                             </button>
@@ -1620,16 +1620,16 @@ export default function Dashboard() {
                 {/* Super Admin Buttons (Matches reference image style) */}
                 <button
                   onClick={() => setIsDateTimeFilterModalOpen(true)}
-                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-medium hover:scale-[1.02] transition-all text-sm tracking-wider whitespace-nowrap shadow-lg shadow-yellow-900/10"
+                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-[#b8965f]/20 backdrop-blur-md rounded-xl border border-[#D0B079]/30 text-[#D0B079] font-medium hover:scale-[1.02] transition-all text-sm tracking-wider whitespace-nowrap shadow-lg shadow-yellow-900/10"
                 >
                   <Calendar size={18} strokeWidth={2.5} /> {dateRange.label} <ChevronDown size={14} />
                 </button>
-                <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-medium hover:from-yellow-400/30 hover:to-amber-500/30 transition-all text-sm tracking-wider whitespace-nowrap">
+                <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-[#b8965f]/20 backdrop-blur-md rounded-xl border border-[#D0B079]/30 text-[#D0B079] font-medium hover:from-[#b8965f]/30 hover:to-[#b8965f]/30 transition-all text-sm tracking-wider whitespace-nowrap">
                   <ArrowRight className="rotate-90" size={18} /> Export
                 </button>
                 <button
                   onClick={() => setIsNewOrderModalOpen(true)}
-                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-amber-500/20 backdrop-blur-md rounded-xl border border-yellow-500/30 text-yellow-400 font-medium hover:scale-[1.02] active:scale-95 transition-all text-sm tracking-wider shadow-lg shadow-yellow-900/10 whitespace-nowrap"
+                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-yellow-400/20 to-[#b8965f]/20 backdrop-blur-md rounded-xl border border-[#D0B079]/30 text-[#D0B079] font-medium hover:scale-[1.02] active:scale-95 transition-all text-sm tracking-wider shadow-lg shadow-yellow-900/10 whitespace-nowrap"
                 >
                   <Plus size={18} strokeWidth={2.5} /> New Order
                 </button>
@@ -1674,7 +1674,7 @@ export default function Dashboard() {
                 value={stats.total_bookings}
                 subtext="Lifetime Orders"
                 icon={ShoppingBag}
-                colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                colorClass="bg-[#D0B079]/20 border border-yellow-400/30"
                 delay={0.1}
                 onEyeClick={() => openDetailModal('total_bookings', 'Total Bookings')}
               />
@@ -1692,7 +1692,7 @@ export default function Dashboard() {
                 value={stats.yet_to_receive_payments}
                 subtext="To Be Received"
                 icon={CreditCard}
-                colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                colorClass="bg-[#D0B079]/20 border border-yellow-400/30"
                 delay={0.3}
                 onEyeClick={() => openDetailModal('payments', 'Payment Requests')}
               />
@@ -1702,7 +1702,7 @@ export default function Dashboard() {
                   value={stats.deactive_products}
                   subtext="In-active items"
                   icon={Package}
-                  colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                  colorClass="bg-[#D0B079]/20 border border-yellow-400/30"
                   delay={0.4}
                   onEyeClick={() => openDetailModal('deactive', 'Inactive Products')}
                 />
@@ -1716,7 +1716,7 @@ export default function Dashboard() {
                 value={stats.total_products}
                 subtext="Total Inventory"
                 icon={Box}
-                colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                colorClass="bg-[#D0B079]/20 border border-yellow-400/30"
                 delay={0.5}
                 trend="0%"
                 onEyeClick={() => openDetailModal('products', 'Total Products')}
@@ -1757,7 +1757,7 @@ export default function Dashboard() {
                   value={stats.completed_orders}
                   subtext="Successfully Delivered"
                   icon={CheckCircle}
-                  colorClass="bg-yellow-500/20 border border-yellow-400/30"
+                  colorClass="bg-[#D0B079]/20 border border-yellow-400/30"
                   delay={0.9}
                   onEyeClick={() => openDetailModal('completed', 'Completed Orders')}
                 />
@@ -1875,7 +1875,7 @@ export default function Dashboard() {
 
                           {/* Rank & Image */}
                           <div className="relative w-12 h-12 shrink-0">
-                            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-yellow-500 text-white text-[10px] font-bold flex items-center justify-center z-10 border border-[#0b1a3d] shadow-md">
+                            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[#D0B079] text-white text-[10px] font-bold flex items-center justify-center z-10 border border-[#0b1a3d] shadow-md">
                               {idx + 1}
                             </div>
                             <div className="w-12 h-12 rounded-lg bg-white/10 overflow-hidden ring-1 ring-white/10">
@@ -1895,7 +1895,7 @@ export default function Dashboard() {
                           <div className="flex-1 min-w-0">
                             <h5 className="font-medium text-white text-sm truncate">{product.name}</h5>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-yellow-400 text-xs font-bold">£{Number(product.price || 0).toFixed(2)}</span>
+                              <span className="text-[#D0B079] text-xs font-bold">£{Number(product.price || 0).toFixed(2)}</span>
                               <span className="text-white/30 text-[10px]">•</span>
                               <span className="text-white/50 text-xs">{product.count} sales</span>
                             </div>
@@ -1904,7 +1904,7 @@ export default function Dashboard() {
                           {/* Action */}
                           <button
                             onClick={() => setSelectedProduct(product)}
-                            className="p-2 rounded-lg bg-white/5 hover:bg-yellow-500/20 text-white/40 hover:text-yellow-400 transition-colors border border-transparent hover:border-yellow-500/30"
+                            className="p-2 rounded-lg bg-white/5 hover:bg-[#D0B079]/20 text-white/40 hover:text-[#D0B079] transition-colors border border-transparent hover:border-[#D0B079]/30"
                           >
                             <Eye size={18} />
                           </button>
@@ -1926,7 +1926,7 @@ export default function Dashboard() {
               >
                 <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <ShoppingBag size={20} className="text-yellow-400" /> Recent Orders
+                    <ShoppingBag size={20} className="text-[#D0B079]" /> Recent Orders
                   </h2>
                 </div>
 
@@ -1952,14 +1952,14 @@ export default function Dashboard() {
                               <div className="flex items-center gap-2">
                                 #{order.order_number}
                                 {order.order_source === 'Dashboard' && (
-                                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-white text-[9px] font-black border border-white/10 shadow-sm" title="Dashboard Order">
+                                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#D0B079] text-white text-[9px] font-black border border-white/10 shadow-sm" title="Dashboard Order">
                                     D
                                   </div>
                                 )}
                               </div>
                             </td>
                             <td className="px-6 py-4 text-white/80">{order.customer_name || "Guest"}</td>
-                            <td className="px-6 py-4 font-semibold text-yellow-300">{formatCurrency(order.grand_total)}</td>
+                            <td className="px-6 py-4 font-semibold text-[#D0B079]">{formatCurrency(order.grand_total)}</td>
                             <td className="px-6 py-4">{getStatusBadge(order.order_status)}</td>
                             <td className="px-6 py-4 text-white/60">
                               {new Date(order.created_at).toLocaleDateString()}
@@ -2017,7 +2017,7 @@ export default function Dashboard() {
               <div className="mt-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-xl overflow-hidden">
                 <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-white/5">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Store size={20} className="text-yellow-400" /> Restaurant Performance
+                    <Store size={20} className="text-[#D0B079]" /> Restaurant Performance
                   </h2>
                 </div>
                 <div className="overflow-x-auto">
@@ -2034,7 +2034,7 @@ export default function Dashboard() {
                         <tr key={idx} className="hover:bg-white/5">
                           <td className="px-6 py-4 font-medium text-white">{perf.restaurant_name}</td>
                           <td className="px-6 py-4 text-center text-white/70">{perf.order_count}</td>
-                          <td className="px-6 py-4 text-right text-yellow-300 font-bold">{formatCurrency(perf.revenue)}</td>
+                          <td className="px-6 py-4 text-right text-[#D0B079] font-bold">{formatCurrency(perf.revenue)}</td>
                         </tr>
                       ))}
                     </tbody>

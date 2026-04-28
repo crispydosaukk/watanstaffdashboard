@@ -42,7 +42,7 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                         {/* Header */}
                         <div className="p-6 border-b border-white/[0.08] bg-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+                                <div className="p-2.5 bg-[#D0B079]/10 rounded-xl border border-[#D0B079]/20 text-[#D0B079] shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                                     <Clock size={20} />
                                 </div>
                                 <div className="min-w-0">
@@ -72,7 +72,7 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                                             if (error) setError("");
                                         }}
                                         placeholder="00"
-                                        className={`w-full bg-white/[0.03] border-2 ${error ? 'border-rose-500/50' : 'border-white/[0.08]'} rounded-2xl px-5 py-6 text-white text-4xl font-black placeholder-white/10 focus:outline-none focus:border-yellow-500/40 transition-all text-center tracking-tighter shadow-inner`}
+                                        className={`w-full bg-white/[0.03] border-2 ${error ? 'border-rose-500/50' : 'border-white/[0.08]'} rounded-2xl px-5 py-6 text-white text-4xl font-black placeholder-white/10 focus:outline-none focus:border-[#D0B079]/40 transition-all text-center tracking-tighter shadow-inner`}
                                         autoFocus
                                         onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
                                         id="ready_minutes_input"
@@ -94,7 +94,7 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                                             setError("");
                                         }}
                                         className={`py-4 rounded-xl border text-[10px] font-black tracking-widest uppercase transition-all shadow-lg ${minutes === t.toString()
-                                                ? 'bg-gradient-to-r from-yellow-500 to-amber-500 border-transparent text-[#071428] scale-105'
+                                                ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] border-transparent text-[#071428] scale-105'
                                                 : 'bg-white/5 border-white/[0.05] text-white/40 hover:border-white/20 hover:text-white'
                                             }`}
                                     >
@@ -114,7 +114,7 @@ const ReadyInModal = ({ isOpen, onClose, onConfirm, orderNumber }) => {
                             </button>
                             <button
                                 onClick={handleConfirm}
-                                className="flex-[2] py-4 px-6 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 border border-white/10"
+                                className="flex-[2] py-4 px-6 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 border border-white/10"
                                 id="confirm_ready_time"
                             >
                                 <CheckCircle size={18} />

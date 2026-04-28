@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(uploadsDir));
 
 app.get("/", (req, res) => {
-  res.send("ZingBite backend is running ✅");
+  res.send("WatanStaff backend is running ✅");
 });
 
 app.use("/api/mobile", apiRoutes);

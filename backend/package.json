@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "ZINGBITE backend (Express + MySQL)",
+  "description": "WATANSTAFF backend (Express + MySQL)",
   "type": "module",
   "main": "src/server.js",
   "scripts": {

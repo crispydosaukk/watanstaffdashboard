@@ -92,12 +92,25 @@ import {
   updateReservationSettings,
 } from "../controllers/admin/TableReservationController.js";
 
+import {
+  getStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  staffLogin,
+  getAllStaff,
+} from "../controllers/admin/StaffController.js";
+
+
+import { getStaffAttendance, handleClockIn, handleClockOut, getSessionStatus, handleUpdateAttendance } from "../controllers/admin/AttendanceController.js";
+
 
 
 const router = express.Router();
 
 /* AUTH */
 router.post("/auth/login", login);
+router.post("/staff/login", staffLogin);
 
 /* PERMISSIONS */
 router.get("/permissions", listPermissions);
@@ -121,6 +134,22 @@ router.delete("/users/:id", deleteUser);
 router.get("/restaurants", auth, listRestaurants);
 router.get("/restaurant", auth, getRestaurant);
 router.post("/restaurant", auth, upload.single("photo"), upsertRestaurant);
+
+/* STAFF MANAGEMENT */
+router.get("/staff", auth, getStaff);
+router.get("/all-staff", auth, getAllStaff); // Super Admin: all restaurants
+router.post("/staff", auth, upload.single("profile_image"), createStaff);
+router.put("/staff/:id", auth, upload.single("profile_image"), updateStaff);
+router.delete("/staff/:id", auth, deleteStaff);
+
+/* STAFF ATTENDANCE (admin view) */
+router.get("/staff/attendance/:staffId", auth, getStaffAttendance);
+router.put("/staff/attendance/:id", auth, handleUpdateAttendance);
+
+/* STAFF ATTENDANCE (mobile app) */
+router.post("/staff/clock-in", auth, handleClockIn);
+router.post("/staff/clock-out", auth, handleClockOut);
+router.get("/staff/session-status", auth, getSessionStatus);
 
 /* CATEGORY */
 router.put("/category/reorder", auth, reorderCategories);

@@ -32,7 +32,7 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-yellow-500/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50 flex justify-between items-center text-white transition-all hover:bg-white/10"
       >
         <span className={selected.length ? "text-white" : "text-white/40"}>{labelText}</span>
         <ChevronDown size={16} className={`text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -56,9 +56,9 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
                     <div
                       key={opt.id}
                       onClick={() => onToggle(opt.id)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-yellow-500/10 text-yellow-500" : "hover:bg-white/10 text-white/80"}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${active ? "bg-[#D0B079]/10 text-[#D0B079]" : "hover:bg-white/10 text-white/80"}`}
                     >
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-yellow-500 border-yellow-500" : "border-white/30"}`}>
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${active ? "bg-[#D0B079] border-[#D0B079]" : "border-white/30"}`}>
                         {active && <Check size={12} className="text-white" />}
                       </div>
                       <span className="text-sm font-medium">{opt.title}</span>
@@ -237,7 +237,7 @@ export default function Roles() {
     return (
       <div className="flex flex-wrap gap-1.5">
         {permArr.map((p, i) => (
-          <span key={p.id || i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+          <span key={p.id || i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
             {p.title}
           </span>
         ))}
@@ -268,7 +268,7 @@ export default function Roles() {
             <div className="flex items-center gap-3 w-full md:w-auto">
               <button
                 onClick={() => setOpenCreate(true)}
-                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-2xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 text-base"
+                className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-2xl font-bold shadow-[0_0_20px_rgba(251,191,36,0.2)] transition-all hover:-translate-y-1 active:scale-95 text-base"
               >
                 <Plus size={20} strokeWidth={3} />
                 Add Role
@@ -406,7 +406,7 @@ export default function Roles() {
                     placeholder="e.g. Moderator"
                     value={roleTitle}
                     onChange={(e) => setRoleTitle(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                   />
                 </div>
 
@@ -414,7 +414,7 @@ export default function Roles() {
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-white/80 block">Assign Permissions</label>
                     <div className="flex gap-2">
-                      <button type="button" onClick={handleSelectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/30">Select All</button>
+                      <button type="button" onClick={handleSelectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30 hover:bg-[#D0B079]/30">Select All</button>
                       <button type="button" onClick={handleDeselectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 text-white/60 border border-white/10 hover:bg-white/10">Deselect All</button>
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export default function Roles() {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || !roleTitle.trim()}
-                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                  className="px-8 py-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                 >
                   {submitting ? "Creating..." : "Create Role"}
                 </button>
@@ -469,7 +469,7 @@ export default function Roles() {
                   <input
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                   />
                 </div>
 
@@ -477,7 +477,7 @@ export default function Roles() {
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-medium text-white/80 block">Assign Permissions</label>
                     <div className="flex gap-2">
-                      <button type="button" onClick={editHandleSelectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/30">Select All</button>
+                      <button type="button" onClick={editHandleSelectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30 hover:bg-[#D0B079]/30">Select All</button>
                       <button type="button" onClick={editHandleDeselectAll} className="px-2 py-1 text-xs font-semibold rounded-lg bg-white/5 text-white/60 border border-white/10 hover:bg-white/10">Deselect All</button>
                     </div>
                   </div>
@@ -496,7 +496,7 @@ export default function Roles() {
                 <button
                   onClick={handleUpdate}
                   disabled={updating || !editTitle.trim()}
-                  className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                  className="px-8 py-3 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-[#071428] rounded-xl font-bold text-sm shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                 >
                   {updating ? "Saving..." : "Save Changes"}
                 </button>

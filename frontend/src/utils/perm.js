@@ -22,18 +22,14 @@ export function can(required) {
   if (!required) return true;
 
   const user = getUser();
+  const roleTitle = (user.role_title || user.role || "").toLowerCase();
 
-  // 🔥 SUPER ADMIN BYPASS (role_id === 6 or title includes 'super')
-  if (
-    user.role_id === 6 ||                       
-    user.role === "Super Admin" ||             
-    user.role?.title?.toLowerCase() === "super admin"
-  ) {
+  // 🔥 SUPER ADMIN BYPASS
+  if (user.role_id === 6 || roleTitle.includes("super")) {
     return true;
-  } 
+  }
 
-
-// normal permissions for other roles
+  // normal permissions for other roles
   const perms = getPerms();
   return perms.includes(String(required).toLowerCase());
 }
@@ -45,13 +41,10 @@ export function can(required) {
  */
 export function getSafePath() {
   const user = getUser();
-  
+  const roleTitle = (user.role_title || user.role || "").toLowerCase();
+
   // Super Admin bypass
-  if (
-    user.role_id === 6 ||
-    user.role === "Super Admin" ||
-    user.role?.title?.toLowerCase() === "super admin"
-  ) {
+  if (user.role_id === 6 || roleTitle.includes("super")) {
     return "/dashboard";
   }
 

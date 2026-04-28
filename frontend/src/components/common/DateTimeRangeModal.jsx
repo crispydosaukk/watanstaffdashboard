@@ -202,7 +202,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-2xl font-bold text-white flex items-center gap-3 tracking-tight">
-                <Calendar size={28} className="text-yellow-500" /> Date Range
+                <Calendar size={28} className="text-[#D0B079]" /> Date Range
               </h3>
             </div>
             <button
@@ -217,13 +217,13 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("filter")}
-              className={`px-6 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all ${activeTab === 'filter' ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 shadow-lg shadow-yellow-900/40' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all ${activeTab === 'filter' ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 shadow-lg shadow-yellow-900/40' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
             >
               Filter
             </button>
             <button
               onClick={() => setActiveTab("compare")}
-              className={`px-6 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all ${activeTab === 'compare' ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 shadow-lg shadow-yellow-900/40' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all ${activeTab === 'compare' ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-slate-900 shadow-lg shadow-yellow-900/40' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
             >
               Compare
             </button>
@@ -245,7 +245,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-yellow-500/50 focus:bg-white/5 transition-all font-sans"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D0B079]/50 focus:bg-white/5 transition-all font-sans"
                     />
                   </div>
                   <div>
@@ -254,7 +254,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-yellow-500/50 focus:bg-white/5 transition-all font-sans"
+                      className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D0B079]/50 focus:bg-white/5 transition-all font-sans"
                     />
                   </div>
                 </div>
@@ -268,10 +268,10 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                     <button
                       key={opt}
                       onClick={() => setCompareOption(opt)}
-                      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all text-left ${compareOption === opt ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' : 'bg-white/5 border-white/[0.08] text-white/60 hover:bg-white/[0.08] hover:border-white/20'}`}
+                      className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all text-left ${compareOption === opt ? 'bg-[#D0B079]/10 border-[#D0B079]/50 text-[#D0B079]' : 'bg-white/5 border-white/[0.08] text-white/60 hover:bg-white/[0.08] hover:border-white/20'}`}
                     >
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${compareOption === opt ? 'border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'border-white/20'}`}>
-                        {compareOption === opt && <div className="w-3 h-3 bg-yellow-500 rounded-full" />}
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${compareOption === opt ? 'border-[#D0B079] shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'border-white/20'}`}>
+                        {compareOption === opt && <div className="w-3 h-3 bg-[#D0B079] rounded-full" />}
                       </div>
                       <span className="font-bold text-sm tracking-wide">{opt}</span>
                     </button>
@@ -294,7 +294,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                     type="time"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-yellow-500/50 focus:bg-white/5 transition-all font-sans [color-scheme:dark]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D0B079]/50 focus:bg-white/5 transition-all font-sans [color-scheme:dark]"
                   />
                 </div>
                 <div>
@@ -303,7 +303,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                     type="time"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-yellow-500/50 focus:bg-white/5 transition-all font-sans [color-scheme:dark]"
+                    className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-[#D0B079]/50 focus:bg-white/5 transition-all font-sans [color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -315,7 +315,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                 Customers (Optional)
               </label>
               <div className="relative">
-                <div className="flex items-center gap-2 px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl focus-within:border-yellow-500/50 focus-within:bg-white/5 transition-all shadow-inner">
+                <div className="flex items-center gap-2 px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl focus-within:border-[#D0B079]/50 focus-within:bg-white/5 transition-all shadow-inner">
                   <Search size={18} className="text-white/40" />
                   <input
                     type="text"
@@ -346,7 +346,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                               className="w-full px-4 py-4 hover:bg-white/[0.05] transition-all text-left border-b border-white/5 last:border-b-0 flex items-center justify-between group"
                             >
                               <div className="flex-1">
-                                <p className="text-white font-bold text-sm tracking-tight group-hover:text-yellow-500 transition-colors">
+                                <p className="text-white font-bold text-sm tracking-tight group-hover:text-[#D0B079] transition-colors">
                                   {customer.full_name || customer.customer_name}
                                 </p>
                                 <p className="text-white/30 text-xs mt-0.5 font-medium">
@@ -354,7 +354,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                                 </p>
                               </div>
                               {selectedCustomers.find(c => c.id === customer.id) && (
-                                <div className="ml-2 w-6 h-6 bg-yellow-500 rounded-lg flex items-center justify-center shadow-lg shadow-yellow-900/40">
+                                <div className="ml-2 w-6 h-6 bg-[#D0B079] rounded-lg flex items-center justify-center shadow-lg shadow-yellow-900/40">
                                   <Check size={14} className="text-slate-900" />
                                 </div>
                               )}
@@ -376,14 +376,14 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
                     {selectedCustomers.map((customer) => (
                       <div
                         key={customer.id}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-xl"
                       >
-                         <span className="text-yellow-500 text-xs font-bold tracking-wide whitespace-nowrap">
+                         <span className="text-[#D0B079] text-xs font-bold tracking-wide whitespace-nowrap">
                           {customer.full_name || customer.customer_name}
                         </span>
                         <button
                           onClick={() => toggleCustomer(customer)}
-                          className="text-yellow-500 hover:text-rose-500 transition-colors"
+                          className="text-[#D0B079] hover:text-rose-500 transition-colors"
                         >
                           <X size={14} />
                         </button>
@@ -407,7 +407,7 @@ const DateTimeRangeModal = ({ isOpen, onClose, onApplyFilters }) => {
           </button>
           <button
             onClick={handleApplyFilters}
-            className="flex-1 py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-900 rounded-2xl transition-all font-bold text-sm tracking-wide shadow-2xl shadow-yellow-900/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10"
+            className="flex-1 py-4 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] text-slate-900 rounded-2xl transition-all font-bold text-sm tracking-wide shadow-2xl shadow-yellow-900/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10"
           >
             Apply Filters
           </button>

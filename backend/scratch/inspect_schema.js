@@ -6,7 +6,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || "127.0.0.1",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "zingbite",
+  database: process.env.DB_NAME || "watanstaff",
 });
 
 async function check() {
@@ -22,7 +22,7 @@ async function check() {
     FROM
       INFORMATION_SCHEMA.KEY_COLUMN_USAGE
     WHERE
-      TABLE_NAME = 'categories' AND TABLE_SCHEMA = 'zingbite'
+      TABLE_NAME = 'categories' AND TABLE_SCHEMA = 'watanstaff'
   `);
   console.log("Foreign Keys:", fks);
     

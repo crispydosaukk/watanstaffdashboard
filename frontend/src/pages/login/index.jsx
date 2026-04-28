@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
-import { FiLogIn } from "react-icons/fi";
+import { FiLogIn, FiEye, FiEyeOff } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
 import { getSafePath } from "../../utils/perm";
 
@@ -122,44 +122,51 @@ export default function LoginPage() {
         <div className={`animated-border premium-shadow w-full max-w-[420px] transition-all duration-700 ease-out ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
           }`}>
           <div className="animated-border-inner">
-            <div className="px-4 py-5 sm:px-8 sm:py-8 md:px-12">
-              <div className="flex justify-center mb-2 sm:mb-3">
-                <img
-                  src="/zingbitelogo.png"
-                  alt="logo"
-                  className="h-20 sm:h-24 object-contain transition-transform hover:scale-105 duration-300"
-                />
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
+              {/* Logo Section */}
+              <div className="flex justify-center mb-4 sm:mb-6">
+                <div className="bg-black p-3.5 sm:p-4 rounded-xl shadow-xl transition-all duration-300 group">
+                  <img
+                    src="/watanstafflogo.png"
+                    alt="logo"
+                    className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
               </div>
 
               <div className="text-center space-y-0.5 mb-4 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Welcome Back</h1>
-                <p className="text-xs sm:text-sm text-gray-500 font-medium">Please enter your details to sign in</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+                  Welcome Back
+                </h1>
+                <p className="text-xs text-gray-400 font-medium">
+                  Enter your credentials to continue
+                </p>
               </div>
 
               {err && (
-                <div className="mb-6 bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl border border-red-100 flex items-center animate-shake">
+                <div className="mb-4 bg-red-50 text-red-600 text-xs px-3 py-2 rounded-lg border border-red-100 flex items-center animate-shake">
                   <span className="mr-2">⚠️</span> {err}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                 <div className="group">
-                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 mb-1 block group-focus-within:text-emerald-600 transition-colors">
-                    Email Address
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block group-focus-within:text-[#D0B079] transition-colors">
+                    Email
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={form.email}
                     onChange={onChange}
-                    placeholder="name@example.com"
-                    className="underline-input"
+                    placeholder="manager@watanstaff.com"
+                    className="underline-input font-medium text-gray-800"
                   />
-                  <span className="underline-focus-line"></span>
+                  <span className="underline-focus-line after:bg-[#D0B079]"></span>
                 </div>
 
                 <div className="group relative">
-                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1 mb-1 block group-focus-within:text-emerald-600 transition-colors">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-1 block group-focus-within:text-[#D0B079] transition-colors">
                     Password
                   </label>
                   <input
@@ -168,50 +175,53 @@ export default function LoginPage() {
                     value={form.password}
                     onChange={onChange}
                     placeholder="••••••••"
-                    className="underline-input"
+                    className="underline-input font-medium text-gray-800"
                   />
-                  <span className="underline-focus-line"></span>
+                  <span className="underline-focus-line after:bg-[#D0B079]"></span>
 
                   <button
                     type="button"
                     onClick={() => setShowPwd((s) => !s)}
-                    className="absolute right-0 bottom-3 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors px-2 py-1"
+                    className="absolute right-0 bottom-2 text-gray-400 hover:text-[#D0B079] transition-colors p-2"
                   >
-                    {showPwd ? "HIDE" : "SHOW"}
+                    {showPwd ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between pt-1 sm:pt-2">
+                <div className="flex items-center justify-between pt-1">
                   <label className="flex items-center group cursor-pointer">
                     <div className="relative flex items-center justify-center">
                       <input
                         type="checkbox"
                         checked={remember}
                         onChange={(e) => setRemember(e.target.checked)}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-200 transition-all checked:border-emerald-500 checked:bg-emerald-500 hover:border-emerald-400"
+                        className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 transition-all checked:border-[#D0B079] checked:bg-[#D0B079] hover:border-[#D0B079]"
                       />
-                      <svg className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                      <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <span className="ml-3 text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Remember me</span>
+                    <span className="ml-2 text-xs font-semibold text-gray-400 group-hover:text-gray-600 transition-colors">Remember me</span>
                   </label>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold py-3 sm:py-3.5 rounded-xl shadow-lg shadow-emerald-200 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-1 sm:mt-2"
+                  style={{ backgroundColor: "#D0B079" }}
+                  className="w-full flex items-center justify-center hover:opacity-90 active:scale-[0.98] text-black font-semibold py-3 rounded-lg shadow-lg shadow-[#D0B079]/20 transition-all duration-200 disabled:opacity-70 mt-2"
                 >
-                  {loading ? (
-                    <><ImSpinner2 className="animate-spin mr-2 text-xl" /> Authenticating...</>
-                  ) : (
-                    <><FiLogIn className="mr-2 text-lg" /> Sign In</>
-                  )}
+                  <span className="flex items-center">
+                    {loading ? (
+                      <><ImSpinner2 className="animate-spin mr-2 text-lg" /> Loading...</>
+                    ) : (
+                      <><FiLogIn className="mr-2 text-lg" /> Sign In</>
+                    )}
+                  </span>
                 </button>
               </form>
 
-              <div className="mt-4 sm:mt-8 pt-4 border-t border-gray-100 text-center">
-                <p className="text-sm text-gray-500 font-medium">
-                  Forgot your password? <button className="text-emerald-600 font-bold hover:underline">Contact Support</button>
+              <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+                <p className="text-xs text-gray-400 font-medium">
+                  Forgot password? <button className="text-emerald-600 font-bold hover:underline">Support</button>
                 </p>
               </div>
             </div>

@@ -5,27 +5,27 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X, HelpCircle } from "lucide
 const GlobalPopup = ({ isOpen, onClose, title, message, type = "success", onConfirm }) => {
 
     const icons = {
-        success: <CheckCircle className="text-yellow-400" size={40} />,
+        success: <CheckCircle className="text-[#D0B079]" size={40} />,
         error: <XCircle className="text-rose-400" size={40} />,
         warning: <AlertTriangle className="text-amber-400" size={40} />,
-        info: <Info className="text-yellow-400" size={40} />,
-        confirm: <HelpCircle className="text-yellow-400" size={40} />,
+        info: <Info className="text-[#D0B079]" size={40} />,
+        confirm: <HelpCircle className="text-[#D0B079]" size={40} />,
     };
 
     const bgs = {
-        success: "bg-yellow-500/10 border-yellow-500/20",
+        success: "bg-[#D0B079]/10 border-[#D0B079]/20",
         error: "bg-rose-500/10 border-rose-500/20",
         warning: "bg-amber-500/10 border-amber-500/20",
-        info: "bg-yellow-500/10 border-yellow-500/20",
-        confirm: "bg-yellow-500/10 border-yellow-500/20",
+        info: "bg-[#D0B079]/10 border-[#D0B079]/20",
+        confirm: "bg-[#D0B079]/10 border-[#D0B079]/20",
     };
 
     const buttonBgs = {
-        success: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
-        error: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
-        warning: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
-        info: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
-        confirm: "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 shadow-yellow-900/40 text-slate-900",
+        success: "bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] shadow-yellow-900/40 text-slate-900",
+        error: "bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] shadow-yellow-900/40 text-slate-900",
+        warning: "bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] shadow-yellow-900/40 text-slate-900",
+        info: "bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] shadow-yellow-900/40 text-slate-900",
+        confirm: "bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] shadow-yellow-900/40 text-slate-900",
     };
 
     return (
