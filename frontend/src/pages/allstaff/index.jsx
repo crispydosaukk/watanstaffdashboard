@@ -179,8 +179,9 @@ export default function AllStaffPage() {
     const groups = {};
     attendanceData.records.forEach(record => {
       if (!record || !record.date) return;
-      const dateKey = new Date(record.date).toDateString();
-      if (dateKey === "Invalid Date") return;
+      
+      // Use the date part only for grouping
+      const dateKey = (record.date instanceof Date ? record.date.toISOString() : String(record.date)).split('T')[0];
       
       if (!groups[dateKey]) {
         groups[dateKey] = {
@@ -193,22 +194,34 @@ export default function AllStaffPage() {
       }
       
       const g = groups[dateKey];
+      
+      // Update first in for the day summary
       if (record.clock_in) {
         if (!g.first_in || new Date(record.clock_in) < new Date(g.first_in)) {
           g.first_in = record.clock_in;
         }
       }
+      // Update last out for the day summary
       if (record.clock_out) {
         if (!g.last_out || new Date(record.clock_out) > new Date(g.last_out)) {
           g.last_out = record.clock_out;
         }
       }
+
       g.total_minutes += (record.total_minutes || 0);
       g.sessions.push(record);
     });
     
     return Object.values(groups).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [attendanceData?.records]);
+
+  const toLocalISO = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    return localISOTime;
+  };
 
   const handleUpdateAttendanceRecord = async (e) => {
     e.preventDefault();
@@ -233,10 +246,11 @@ export default function AllStaffPage() {
   };
 
   const formatWorkTime = (minutes) => {
-    if (!minutes) return "0h 0m";
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}h ${m}m`;
+    if (!minutes || isNaN(minutes)) return "0h 0m";
+    const absMin = Math.abs(minutes);
+    const h = Math.floor(absMin / 60);
+    const m = absMin % 60;
+    return `${minutes < 0 ? "-" : ""}${h}h ${m}m`;
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
@@ -535,66 +549,103 @@ export default function AllStaffPage() {
                         <tr><td colSpan="4" className="px-6 py-20 text-center"><Loader2 className="animate-spin inline-block text-[#D0B079] mb-4" size={40} /><p className="text-white/20 font-bold tracking-widest text-xs">Fetching records...</p></td></tr>
                       ) : groupedRecords.length > 0 ? (
                         groupedRecords.map((group) => (
-                          <tr key={group.date} className="hover:bg-white/[0.02] transition-colors group">
-                            <td className="px-6 py-4">
-                              <div className="text-white font-bold">{new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                              {group.sessions.length > 1 && (
-                                <div className="mt-1 flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079]/30" />
-                                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{group.sessions.length} sessions recorded</span>
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                <span className="text-green-400 font-mono text-sm">
-                                  {group.first_in ? new Date(group.first_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                <span className="text-rose-400 font-mono text-sm">
-                                  {group.last_out ? new Date(group.last_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-4">
-                                <div className="text-[#D0B079] font-black text-sm">{formatWorkTime(group.total_minutes)}</div>
-                                {group.sessions.length === 1 && (
-                                  <div className="flex items-center gap-2">
-                                    {editingAttendance?.id === group.sessions[0].id ? (
-                                      <>
-                                        <button onClick={handleUpdateAttendanceRecord} className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30">
-                                          <Save size={14} />
+                          <React.Fragment key={group.date}>
+                            {group.sessions.map((session, sIdx) => (
+                              <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group">
+                                {sIdx === 0 && (
+                                  <td className="px-6 py-4 border-b border-white/5" rowSpan={group.sessions.length}>
+                                    <div className="text-white font-bold">{new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                    {group.sessions.length > 1 && (
+                                      <div className="mt-1 flex items-center gap-1.5">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079]/30" />
+                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{group.sessions.length} sessions recorded</span>
+                                      </div>
+                                    )}
+                                  </td>
+                                )}
+                                <td className="px-6 py-4 border-b border-white/5">
+                                  {editingAttendance?.id === session.id ? (
+                                    <div className="space-y-1">
+                                      <label className="text-[8px] uppercase text-white/40 font-bold">Clock In</label>
+                                      <input 
+                                        type="datetime-local"
+                                        value={editingAttendance.clock_in}
+                                        onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
+                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-lg px-2 py-1.5 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079]"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                      <span className="text-green-400 font-mono text-sm">
+                                        {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 border-b border-white/5">
+                                  {editingAttendance?.id === session.id ? (
+                                    <div className="space-y-1">
+                                      <label className="text-[8px] uppercase text-white/40 font-bold">Clock Out</label>
+                                      <input 
+                                        type="datetime-local"
+                                        value={editingAttendance.clock_out}
+                                        onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
+                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-lg px-2 py-1.5 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079]"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                      <span className="text-rose-400 font-mono text-sm">
+                                        {session.clock_out ? new Date(session.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                      </span>
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 text-right border-b border-white/5">
+                                  <div className="flex items-center justify-end gap-4">
+                                    {editingAttendance?.id === session.id ? (
+                                      <div className="flex items-center gap-2">
+                                        <button 
+                                          onClick={handleUpdateAttendanceRecord}
+                                          disabled={updatingAttendance}
+                                          className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all disabled:opacity-50"
+                                          title="Save changes"
+                                        >
+                                          {updatingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                         </button>
-                                        <button onClick={() => setEditingAttendance(null)} className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-white/10">
+                                        <button 
+                                          onClick={() => setEditingAttendance(null)} 
+                                          className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-white/10 transition-all"
+                                          title="Cancel"
+                                        >
                                           <X size={14} />
                                         </button>
-                                      </>
+                                      </div>
                                     ) : (
-                                      <button 
-                                        onClick={() => {
-                                          const s = group.sessions[0];
-                                          setEditingAttendance({
-                                            id: s.id,
-                                            clock_in: s.clock_in ? new Date(s.clock_in).toISOString().slice(0, 16) : "",
-                                            clock_out: s.clock_out ? new Date(s.clock_out).toISOString().slice(0, 16) : ""
-                                          });
-                                        }} 
-                                        className="p-2 bg-white/5 text-white/20 rounded-lg hover:bg-[#D0B079]/20 hover:text-[#D0B079] opacity-0 group-hover:opacity-100 transition-all"
-                                      >
-                                        <Edit2 size={14} />
-                                      </button>
+                                      <>
+                                        <div className="text-[#D0B079] font-black text-sm">{formatWorkTime(session.total_minutes)}</div>
+                                        <button 
+                                          onClick={() => {
+                                            setEditingAttendance({
+                                              id: session.id,
+                                              clock_in: toLocalISO(session.clock_in),
+                                              clock_out: toLocalISO(session.clock_out)
+                                            });
+                                          }} 
+                                          className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-[#D0B079]/20 hover:text-[#D0B079] opacity-40 group-hover:opacity-100 transition-all"
+                                          title="Edit this session"
+                                        >
+                                          <Edit2 size={14} />
+                                        </button>
+                                      </>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
                         ))
                       ) : (
                         <tr><td colSpan="4" className="px-6 py-20 text-center text-white/20 font-bold tracking-widest text-xs">No attendance records found for this period</td></tr>
@@ -672,7 +723,7 @@ export default function AllStaffPage() {
                   {/* Fields */}
                   <div className="lg:col-span-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <InputField label="Full Legal Name" icon={User} value={formData.full_name}
+                      <InputField label="Full Name" icon={User} value={formData.full_name}
                         onChange={(e) => { const v = e.target.value; setFormData(p => ({ ...p, full_name: v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v })); }}
                         placeholder="e.g. Johnathan Doe" required />
                       <InputField label="Designation" icon={Briefcase} value={formData.designation}
@@ -685,7 +736,7 @@ export default function AllStaffPage() {
                         onChange={(e) => setFormData(p => ({ ...p, phone_number: e.target.value }))} placeholder="+44 7700 900000" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <InputField label="New Password" icon={Shield} value={formData.password} type="password"
+                      <InputField label="Password" icon={Shield} value={formData.password} type="password"
                         onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))} placeholder="Leave empty to keep current" autoComplete="new-password" />
                       <InputField label="Date of Birth" icon={Calendar} value={formData.dob} type="date"
                         onChange={(e) => setFormData(p => ({ ...p, dob: e.target.value }))} />
@@ -693,14 +744,14 @@ export default function AllStaffPage() {
                   </div>
                 </div>
 
-                <div className="mt-10 flex justify-end gap-4 border-t border-white/5 pt-8">
+                <div className="mt-8 flex justify-end gap-4 border-t border-white/5 pt-8">
                   <button type="button" onClick={() => setShowModal(false)}
                     className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white font-semibold text-xs uppercase tracking-widest rounded-2xl transition-all">
                     Discard
                   </button>
                   <button type="submit" disabled={saving}
                     className="px-10 py-4 bg-[#D0B079] hover:bg-[#b8965f] text-slate-900 font-semibold text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-[#D0B079]/20 transition-all flex items-center gap-3 disabled:opacity-50">
-                    {saving ? <><Loader2 className="animate-spin" size={16} />Saving...</> : <><Save size={16} />Save Changes</>}
+                    {saving ? <><Loader2 className="animate-spin" size={16} />Saving...</> : <><Save size={16} />Save changes</>}
                   </button>
                 </div>
               </form>
@@ -717,9 +768,9 @@ export default function AllStaffPage() {
               onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl no-print" />
             
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col no-print">
+              exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
               
-              <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex items-center justify-between">
+              <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex items-center justify-between no-print">
                 <div>
                   <h2 className="text-2xl font-semibold">Report preview</h2>
                   <p className="text-white/40 text-xs mt-1">Ready for printing or PDF export</p>
@@ -821,9 +872,12 @@ export default function AllStaffPage() {
       <style>{`
         @media print {
           body * { visibility: hidden; }
-          #report-content, #report-content * { visibility: visible; }
+          #report-content, #report-content * { 
+            visibility: visible !important; 
+            opacity: 1 !important;
+          }
           #report-content {
-            position: absolute;
+            position: fixed;
             left: 0;
             top: 0;
             width: 100%;
@@ -832,6 +886,7 @@ export default function AllStaffPage() {
             padding: 0;
             background: white !important;
             color: black !important;
+            z-index: 9999999;
           }
           .no-print { display: none !important; }
         }

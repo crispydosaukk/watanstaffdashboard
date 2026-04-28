@@ -13,16 +13,7 @@ export const handleClockIn = async (req, res) => {
     // 1. Proactively close any sessions from previous days
     await AttendanceModel.autoCloseStaleSessions(staffId);
 
-    // 2. Check if they already have a session for TODAY (active or closed)
-    const alreadyHadSession = await AttendanceModel.hasSessionForToday(staffId);
-    if (alreadyHadSession) {
-      return res.status(400).json({
-        status: 0,
-        message: "Shift limit reached: You can only clock in once per day (Midnight to Midnight).",
-      });
-    }
-
-    // 3. Double check for any other active session (should be null after step 1 & 2)
+    // 2. Double check for any other active session
     const active = await AttendanceModel.getActiveSession(staffId);
     if (active) {
       return res.json({
