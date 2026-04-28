@@ -38,6 +38,11 @@ export async function sendNotification({
 
   const tokens = rows.map(r => r.fcm_token);
 
+  if (!admin) {
+    console.warn("Firebase not initialized. Skipping push notification.");
+    return;
+  }
+
   await admin.messaging().sendEachForMulticast({
     tokens,
     notification: { title, body },
