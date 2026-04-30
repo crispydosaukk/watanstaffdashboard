@@ -55,6 +55,7 @@ export function getSafePath(passedUser, passedPerms) {
     { perm: "dashboard", path: "/dashboard" },
     { perm: "staff_management", path: "/staff" },
     { perm: "all_staff", path: "/allstaff" },
+    { perm: "notifications", path: "/notifications" },
     { perm: "restaurant", path: "/restuarent" },
     { perm: "access", path: "/access" },
   ];

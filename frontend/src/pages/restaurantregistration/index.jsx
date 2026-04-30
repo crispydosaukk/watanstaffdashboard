@@ -20,6 +20,7 @@ const InputGroup = ({ label, icon: Icon, value, onChange, placeholder, type = "t
     </label>
     <div className="relative">
       <input
+        id={id}
         type={type}
         name={name}
         value={value}
@@ -197,11 +198,53 @@ export default function RestaurantRegistration() {
     address_proof_file: "",
     food_hygiene_rating: "",
     allergen_info_file: "",
-    is_halal: "0"
+    is_halal: "0",
+    latitude: "",
+    longitude: ""
   });
 
   useEffect(() => {
     init();
+  }, []);
+
+  // Geolocation Autocomplete Logic
+  useEffect(() => {
+    const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!GOOGLE_MAPS_API_KEY) return;
+
+    const loadAutocomplete = () => {
+      const input = document.getElementById("registration_address_autocomplete");
+      if (!input || !window.google || !window.google.maps || !window.google.maps.places) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(input, {
+        fields: ["formatted_address", "geometry"],
+      });
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          setFormData(prev => ({
+            ...prev,
+            store_address: place.formatted_address,
+            latitude: place.geometry.location.lat().toString(),
+            longitude: place.geometry.location.lng().toString()
+          }));
+        }
+      });
+    };
+
+    if (!document.getElementById("google-maps-script")) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.id = "google-maps-script";
+      script.async = true;
+      script.onload = loadAutocomplete;
+      document.head.appendChild(script);
+    } else {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        loadAutocomplete();
+      }
+    }
   }, []);
 
   const init = async () => {
@@ -272,7 +315,9 @@ export default function RestaurantRegistration() {
           address_proof_file: res.data.data.address_proof_file || "",
           food_hygiene_rating: res.data.data.food_hygiene_rating || "",
           allergen_info_file: res.data.data.allergen_info_file || "",
-          is_halal: String(res.data.data.is_halal || "0")
+          is_halal: String(res.data.data.is_halal || "0"),
+          latitude: res.data.data.latitude || "",
+          longitude: res.data.data.longitude || ""
         });
       } else {
         setMyProfile(null);
@@ -289,6 +334,13 @@ export default function RestaurantRegistration() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Geofencing Validation
+    if (!formData.latitude || !formData.longitude || !formData.store_address) {
+      alert("Location data is missing. Please ensure the 'Operational Headquarters' address is correctly selected to generate Latitude and Longitude.");
+      return;
+    }
+
     setSubmitting(true);
     const fd = new FormData();
     Object.keys(formData).forEach(key => {
@@ -674,8 +726,41 @@ export default function RestaurantRegistration() {
                           <SelectGroup label="Network Scope" name="number_of_locations" value={formData.number_of_locations} onChange={handleInputChange} options={[{ value: "1", label: "Single Unit" }, { value: "2-5", label: "2-5 Units" }, { value: "5+", label: "5+ Units" }]} icon={Building2} required />
                           <InputGroup label="Floor / Unit" name="floor_suite" value={formData.floor_suite} onChange={handleInputChange} placeholder="e.g. Ground Floor, Suite 402" icon={Building2} />
 
-                          <div className="md:col-span-2">
-                            <InputGroup label="Operational Headquarters" name="store_address" value={formData.store_address} onChange={handleInputChange} placeholder="Full physical location address" icon={MapPin} required />
+                          <div className="md:col-span-2 space-y-4">
+                            <InputGroup 
+                              label="Operational Headquarters" 
+                              name="store_address" 
+                              id="registration_address_autocomplete"
+                              value={formData.store_address} 
+                              onChange={handleInputChange} 
+                              placeholder="Search Google Maps for your business location..." 
+                              icon={MapPin} 
+                              required 
+                            />
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-1">Detected Latitude</label>
+                                <input
+                                  type="text"
+                                  value={formData.latitude}
+                                  readOnly
+                                  placeholder="Auto-captured"
+                                  className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-400/50 text-[10px] font-mono cursor-default"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-white/30 uppercase tracking-widest ml-1">Detected Longitude</label>
+                                <input
+                                  type="text"
+                                  value={formData.longitude}
+                                  readOnly
+                                  placeholder="Auto-captured"
+                                  className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-yellow-400/50 text-[10px] font-mono cursor-default"
+                                />
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-yellow-400/60 font-medium italic">* Geolocation is required for staff clock-in verification.</p>
                           </div>
                         </div>
                       </div>

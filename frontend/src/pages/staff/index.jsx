@@ -4,8 +4,10 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { usePopup } from "../../context/PopupContext";
-import { db, storage } from "../../lib/firebase";
-import { collection, query, onSnapshot, doc, getDoc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy } from "firebase/firestore";
+import { db, storage, secondaryAuth } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, getDoc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy, setDoc, writeBatch } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Shield, Search, Plus, Briefcase, Mail, Phone, Eye, Printer, Edit2, Trash2, Users, UserCheck, X, Camera, Calendar, Loader2, Save, Clock, User } from "lucide-react";
 
@@ -67,6 +69,22 @@ export default function StaffManagement() {
         .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
       setStaff(staffList);
       setLoading(false);
+
+      // --- AUTO-REPAIR LOGIC ---
+      // Automatically link staff to this restaurant if the ID is missing
+      const brokenStaff = staffList.filter(s => !s.restaurant_id);
+      if (brokenStaff.length > 0) {
+        brokenStaff.forEach(async (s) => {
+          try {
+            await updateDoc(doc(db, "staff", s.id), {
+              restaurant_id: String(user.uid || ""),
+              updated_at: new Date()
+            });
+          } catch (repairErr) {
+            console.error("Auto-repair failed:", repairErr);
+          }
+        });
+      }
     }, (err) => {
       console.error(err);
       setLoading(false);
@@ -150,9 +168,18 @@ export default function StaffManagement() {
 
       const updates = {
         ...formData,
-        restaurant_id: String(user.restaurant_id || ""),
+        restaurant_id: String(user.uid || ""),
         updated_at: new Date()
       };
+
+      // Fetch restaurant name for denormalization (needed for app profile)
+      const restaurantUid = user.uid || "";
+      if (restaurantUid) {
+        const restDoc = await getDoc(doc(db, "restaurants", restaurantUid));
+        if (restDoc.exists()) {
+          updates.restaurant_name = restDoc.data().restaurant_name || "";
+        }
+      }
 
       if (!updates.password) delete updates.password;
 
@@ -165,11 +192,35 @@ export default function StaffManagement() {
       if (editingId) {
         await updateDoc(doc(db, "staff", editingId), updates);
       } else {
-        updates.created_at = new Date();
-        updates.is_active = true;
-        updates.created_by = user.uid || "";
-        await addDoc(collection(db, "staff"), updates);
+        // Create Firebase Auth user for the staff
+        try {
+          const userCredential = await createUserWithEmailAndPassword(secondaryAuth, updates.email, updates.password);
+          const newStaffUid = userCredential.user.uid;
+          
+          // Sign out from secondary app immediately to prevent session conflicts
+          await signOut(secondaryAuth);
+
+          updates.created_at = new Date();
+          updates.is_active = true;
+          updates.created_by = user.uid || "";
+          
+          // Generate Unique Employee ID if not present
+          if (!updates.employee_id) {
+            const randomNum = Math.floor(1000 + Math.random() * 9000);
+            updates.employee_id = `WS-${randomNum}`;
+          }
+          
+          // Use Auth UID as Firestore Doc ID for consistency
+          await setDoc(doc(db, "staff", newStaffUid), updates);
+        } catch (authErr) {
+          console.error("Auth Creation Error:", authErr);
+          if (authErr.code === 'auth/email-already-in-use') {
+             throw new Error("This email is already registered in our system.");
+          }
+          throw authErr;
+        }
       }
+
 
 
       showPopup({
@@ -182,13 +233,15 @@ export default function StaffManagement() {
       console.error(err);
       showPopup({
         title: "Error",
-        message: "Operation failed",
+        message: err.message || "Operation failed",
         type: "error"
       });
     } finally {
       setSaving(false);
     }
   };
+
+
 
   const handleDelete = (id) => {
     showPopup({
@@ -223,15 +276,34 @@ export default function StaffManagement() {
       setShowAttendanceModal(true);
 
       const params = filters || attendanceFilters;
-      let q = query(collection(db, "attendance"), where("staff_id", "==", id), orderBy("clock_in", "desc"));
+      // Index-free query
+      let q = query(collection(db, "attendance"), where("staff_id", "==", id));
 
       const snapshot = await getDocs(q);
-      const records = snapshot.docs.map(doc => ({
+      let records = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
         clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+        date: doc.data().date?.toDate ? doc.data().date.toDate() : doc.data().date,
       }));
+
+      // Sort and Filter in JS
+      records.sort((a, b) => {
+        const dateA = a.clock_in instanceof Date ? a.clock_in : new Date(a.clock_in || 0);
+        const dateB = b.clock_in instanceof Date ? b.clock_in : new Date(b.clock_in || 0);
+        return dateB - dateA;
+      });
+
+      if (params.from) {
+        const fromDate = new Date(params.from);
+        records = records.filter(r => new Date(r.clock_in) >= fromDate);
+      }
+      if (params.to) {
+        const toDate = new Date(params.to);
+        toDate.setHours(23, 59, 59, 999);
+        records = records.filter(r => new Date(r.clock_in) <= toDate);
+      }
 
       const staffMember = staff.find(s => s.id === id);
       setAttendanceData({
@@ -242,7 +314,11 @@ export default function StaffManagement() {
       });
     } catch (err) {
       console.error(err);
-      showPopup({ title: "Error", message: "Failed to fetch attendance", type: "error" });
+      showPopup({ 
+        title: "Error", 
+        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`, 
+        type: "error" 
+      });
     } finally {
       setLoadingAttendance(false);
     }
@@ -324,37 +400,45 @@ export default function StaffManagement() {
       const staffMember = staff.find(s => s.id === staffId);
       if (!staffMember) throw new Error("Staff member not found");
 
-      let q = query(
-        collection(db, "attendance"),
-        where("staff_id", "==", staffId),
-        orderBy("clock_in", "desc")
-      );
-
-      // Apply date filters if available
-      if (attendanceFilters.from) {
-        const fromDate = new Date(attendanceFilters.from);
-        fromDate.setHours(0, 0, 0, 0);
-        q = query(q, where("clock_in", ">=", fromDate));
-      }
-      if (attendanceFilters.to) {
-        const toDate = new Date(attendanceFilters.to);
-        toDate.setHours(23, 59, 59, 999);
-        q = query(q, where("clock_in", "<=", toDate));
-      }
+      // Index-free query
+      let q = query(collection(db, "attendance"), where("staff_id", "==", staffId));
 
       const snapshot = await getDocs(q);
-      const records = snapshot.docs.map(doc => ({
+      let records = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
         clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+        date: doc.data().date?.toDate ? doc.data().date.toDate() : doc.data().date,
       }));
+
+      // Filter and Sort in JS
+      if (attendanceFilters.from) {
+        const fromDate = new Date(attendanceFilters.from);
+        records = records.filter(r => new Date(r.clock_in) >= fromDate);
+      }
+      if (attendanceFilters.to) {
+        const toDate = new Date(attendanceFilters.to);
+        toDate.setHours(23, 59, 59, 999);
+        records = records.filter(r => new Date(r.clock_in) <= toDate);
+      }
+
+      records.sort((a, b) => {
+        const dateA = a.clock_in instanceof Date ? a.clock_in : new Date(a.clock_in || 0);
+        const dateB = b.clock_in instanceof Date ? b.clock_in : new Date(b.clock_in || 0);
+        return dateB - dateA;
+      });
+
 
       setAttendanceData({ staff: staffMember, records: records });
       setShowReportModal(true);
     } catch (err) {
       console.error(err);
-      showPopup({ title: "Error", message: "Failed to load report from Firestore", type: "error" });
+      showPopup({ 
+        title: "Error", 
+        message: `Failed to load report: ${err.message || "Unknown error"}`, 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
@@ -430,6 +514,8 @@ export default function StaffManagement() {
                   <option value="inactive">Inactive</option>
                 </select>
 
+
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -484,6 +570,12 @@ export default function StaffManagement() {
                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-lg border ${item.is_active !== 0 ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
                               {item.is_active !== 0 ? 'Active' : 'Inactive'}
                             </span>
+                            {item.employee_id && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg border bg-white/5 text-[#D0B079] border-white/10">
+                                {item.employee_id}
+                              </span>
+                            )}
+
                           </div>
                         </div>
 

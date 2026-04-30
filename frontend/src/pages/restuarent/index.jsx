@@ -1,42 +1,44 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-import Header from "../../components/common/header.jsx";
-import Sidebar from "../../components/common/sidebar.jsx";
-import Footer from "../../components/common/footer.jsx";
-import { v4 as uuidv4 } from "uuid";
-import { db } from "../../lib/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
-import {
-  Store, MapPin, Phone, Mail, X, Clock, Plus, Trash2, Save,
-  Calendar, Loader2, Shield
+import { 
+  Store, Phone, Mail, MapPin, Calendar, Clock, 
+  Save, Loader2, Plus, Trash2, Shield, Building2, Map as MapIcon
 } from "lucide-react";
+import { db } from "../../lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
+import Header from "../../components/common/header";
+import Sidebar from "../../components/common/sidebar";
+import Footer from "../../components/common/footer";
 import { usePopup } from "../../context/PopupContext";
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", className = "", required = false, id }) => (
-  <div className={`space-y-2 group ${className}`}>
-    <label className="text-sm font-medium tracking-wide text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-      {Icon && <Icon size={12} className="text-[#D0B079]" />}
-      {label} {required && <span className="text-rose-500">*</span>}
+const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = "text", required = false, id }) => (
+  <div className="space-y-2 group">
+    <label className="text-sm font-medium tracking-wide text-white group-focus-within:text-[#D0B079] transition-colors flex items-center gap-2">
+      <Icon size={12} className="text-[#D0B079]" /> {label} {required && <span className="text-rose-500">*</span>}
     </label>
     <div className="relative">
       <input
         id={id}
         type={type}
-        value={value || ""}
+        value={value}
         onChange={onChange}
         placeholder={placeholder}
+        required={required}
         className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-medium placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-base"
       />
     </div>
   </div>
 );
 
-export default function Restuarent() {
-  const { showPopup } = usePopup();
+export default function RestaurantProfile() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { showPopup } = usePopup();
+
   const [info, setInfo] = useState({
     restaurant_name: "",
     company_name: "",
@@ -47,16 +49,16 @@ export default function Restuarent() {
     longitude: "",
   });
 
-  const [timings, setTimings] = useState([{ id: uuidv4(), day: "Monday", start: "", end: "", is_active: true }]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [timings, setTimings] = useState([]);
 
-  useEffect(() => { loadRestaurant(); }, []);
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
-  // Initialize Google Places Autocomplete for the address field
+  // Google Maps Autocomplete Initialization
   useEffect(() => {
     const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!GOOGLE_MAPS_API_KEY) return;
+    if (!GOOGLE_MAPS_API_KEY || loading) return;
 
     const loadAutocomplete = () => {
       const input = document.getElementById("restaurant_address_autocomplete");
@@ -72,14 +74,13 @@ export default function Restuarent() {
           setInfo(prev => ({
             ...prev,
             address: place.formatted_address,
-            latitude: place.geometry.location.lat(),
-            longitude: place.geometry.location.lng()
+            latitude: place.geometry.location.lat().toString(),
+            longitude: place.geometry.location.lng().toString()
           }));
         }
       });
     };
 
-    // Helper to load script if not already present
     if (!document.getElementById("google-maps-script")) {
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
@@ -88,63 +89,19 @@ export default function Restuarent() {
       script.onload = loadAutocomplete;
       document.head.appendChild(script);
     } else {
-      // Script already exists, but might not be fully loaded or places lib might be missing
-      if (window.google && window.google.maps && window.google.maps.places) {
-        loadAutocomplete();
-      } else {
-        const script = document.getElementById("google-maps-script");
-        const oldOnload = script.onload;
-        script.onload = () => {
-          if (oldOnload) oldOnload();
-          loadAutocomplete();
-        };
-      }
+      loadAutocomplete();
     }
-  }, []);
+  }, [loading]);
 
-  const onInfoChange = (k) => (e) => setInfo((p) => ({ ...p, [k]: e.target.value }));
-
-  function normalizeDay(raw) {
-    if (!raw) return null;
-    const s = String(raw).trim();
-    const day = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-    return WEEKDAYS.includes(day) ? day : null;
-  }
-
-  const isWeekdayPresent = (d) => timings.some((t) => normalizeDay(t.day) === normalizeDay(d));
-
-  const handleAddManual = () => {
-    const present = new Set(timings.map((t) => normalizeDay(t.day)));
-    const missing = WEEKDAYS.find((d) => !present.has(d));
-    if (!missing) return;
-    setTimings((prev) =>
-      [...prev, { id: uuidv4(), day: missing, start: "", end: "", is_active: true }]
-        .sort((a, b) => WEEKDAYS.indexOf(a.day) - WEEKDAYS.indexOf(b.day))
-    );
-  };
-
-  const changeDay = (id, newDayRaw) => {
-    const newDay = normalizeDay(newDayRaw);
-    if (!newDay || isWeekdayPresent(newDay)) return;
-    updateTiming(id, { day: newDay });
-    setTimings((prev) => prev.slice().sort((a, b) => WEEKDAYS.indexOf(a.day) - WEEKDAYS.indexOf(b.day)));
-  };
-
-  const updateTiming = (id, changes) => setTimings((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)));
-  const removeTiming = (id) => setTimings((prev) => prev.filter((t) => t.id !== id));
-
-  async function loadRestaurant() {
-    setLoading(true);
+  async function loadProfile() {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const restaurantId = user.uid || "";
-      if (!restaurantId) { setLoading(false); return; }
+      if (!restaurantId) return;
 
-      const docRef = doc(db, "restaurants", restaurantId);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      const restDoc = await getDoc(doc(db, "restaurants", restaurantId));
+      if (restDoc.exists()) {
+        const data = restDoc.data();
         setInfo({
           restaurant_name: data.restaurant_name ?? "",
           company_name: data.company_name ?? "",
@@ -172,13 +129,58 @@ export default function Restuarent() {
     }
   }
 
+  const onInfoChange = (field) => (e) => setInfo(prev => ({ ...prev, [field]: e.target.value }));
+
+  async function fetchCurrentLocation() {
+    if (!navigator.geolocation) {
+      showPopup({ title: "Error", message: "Geolocation not supported.", type: "error" });
+      return;
+    }
+
+    setSaving(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setInfo(prev => ({ ...prev, latitude: latitude.toString(), longitude: longitude.toString() }));
+
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+          );
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            setInfo(prev => ({ ...prev, address: data.results[0].formatted_address }));
+            showPopup({ title: "Success", message: "Location updated!", type: "success" });
+          }
+        } catch (err) {
+          console.error("Geocode error:", err);
+        } finally {
+          setSaving(false);
+        }
+      },
+      () => {
+        setSaving(false);
+        showPopup({ title: "Error", message: "Allow location access.", type: "error" });
+      },
+      { enableHighAccuracy: true }
+    );
+  }
+
   async function saveAll() {
+    if (!info.latitude || !info.longitude || !info.address) {
+      showPopup({
+        title: "Location Required",
+        message: "Latitude, Longitude and Address are mandatory.",
+        type: "warning"
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const restaurantId = user.uid || "";
-      if (!restaurantId) { setSaving(false); return; }
-
+      
       const updates = {
         restaurant_name: info.restaurant_name,
         company_name: info.company_name,
@@ -197,23 +199,26 @@ export default function Restuarent() {
       };
 
       await setDoc(doc(db, "restaurants", restaurantId), updates, { merge: true });
-
-      showPopup({
-        title: "Success",
-        message: "Restaurant profile saved successfully!",
-        type: "success"
-      });
+      showPopup({ title: "Success", message: "Profile saved!", type: "success" });
     } catch (e) {
-      console.error(e);
-      showPopup({
-        title: "Save Failed",
-        message: "Something went wrong while saving your profile.",
-        type: "error"
-      });
+      showPopup({ title: "Error", message: "Save failed.", type: "error" });
     } finally {
       setSaving(false);
     }
   }
+
+  const handleAddManual = () => {
+    const usedDays = timings.map(t => t.day);
+    const nextDay = WEEKDAYS.find(d => !usedDays.includes(d));
+    if (nextDay) {
+      setTimings(prev => [...prev, { id: uuidv4(), day: nextDay, start: "09:00", end: "17:00", is_active: true }]);
+    }
+  };
+
+  const removeTiming = (id) => setTimings(prev => prev.filter(t => t.id !== id));
+  const updateTiming = (id, updates) => setTimings(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+
+  if (loading) return <div className="h-screen bg-[#071428] flex items-center justify-center"><Loader2 className="animate-spin text-[#D0B079]" size={48} /></div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#071428] via-[#0d1f45] to-[#071428] selection:bg-[#D0B079]/30">
@@ -298,26 +303,30 @@ export default function Restuarent() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-white/5">
-                    <div className="flex items-center gap-4">
-                      <h3 className="text-sm font-semibold tracking-wide text-[#D0B079] shrink-0">Geolocation</h3>
-                      <div className="h-px w-full bg-gradient-to-r from-[#D0B079]/20 to-transparent"></div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-sm font-semibold tracking-wide text-[#D0B079] shrink-0">Geolocation</h3>
+                        <div className="h-px w-64 bg-gradient-to-r from-[#D0B079]/20 to-transparent"></div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={fetchCurrentLocation}
+                        className="px-4 py-2 bg-white/5 hover:bg-[#D0B079]/10 border border-white/10 hover:border-[#D0B079]/30 rounded-xl text-white/70 hover:text-[#D0B079] text-xs font-bold transition-all flex items-center gap-2"
+                      >
+                        <MapIcon size={14} />
+                        Fetch My Location
+                      </button>
                     </div>
                     <div className="space-y-4">
-                      <div className="space-y-2 group">
-                        <label className="text-sm font-medium tracking-wide text-white group-focus-within:text-yellow-400 transition-colors flex items-center gap-2">
-                          <MapPin size={12} className="text-[#D0B079]" /> Physical Address <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            id="restaurant_address_autocomplete"
-                            value={info.address}
-                            onChange={onInfoChange("address")}
-                            placeholder="Search Google Maps for address..."
-                            className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-medium placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-base"
-                          />
-                        </div>
-                      </div>
+                      <InputField
+                        id="restaurant_address_autocomplete"
+                        icon={MapPin}
+                        label="Physical Address"
+                        value={info.address}
+                        onChange={onInfoChange("address")}
+                        placeholder="Search Google Maps for address..."
+                        required
+                      />
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-white/50 ml-1">Latitude</label>
@@ -384,11 +393,11 @@ export default function Restuarent() {
                             <label className="text-sm font-medium text-white ml-1"> Day</label>
                             <select
                               value={t.day}
-                              onChange={(e) => changeDay(t.id, e.target.value)}
-                              className="w-full px-4 py-3 bg-[#0b1a3d] border border-white/10 rounded-xl text-white font-medium text-sm tracking-wide focus:outline-none focus:border-[#D0B079] transition-all cursor-pointer appearance-none"
+                              onChange={(e) => updateTiming(t.id, { day: e.target.value })}
+                              className="w-full px-4 py-3 bg-[#0b1a3d] border border-white/10 rounded-xl text-white font-medium text-sm tracking-wide focus:outline-none focus:border-[#D0B079] transition-all cursor-pointer appearance-none [&>option]:bg-[#0b1a3d]"
                             >
                               {WEEKDAYS.map((d) => (
-                                <option key={d} value={d} disabled={isWeekdayPresent(d) && t.day !== d} className="bg-[#0b1a3d]">
+                                <option key={d} value={d} className="bg-[#0b1a3d]">
                                   {d}
                                 </option>
                               ))}
@@ -444,49 +453,25 @@ export default function Restuarent() {
                             <button
                               onClick={() => removeTiming(t.id)}
                               className="p-3 bg-rose-500/5 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all hover:scale-110 shadow-lg border border-rose-500/10"
-                              title="Purge sequence"
                             >
                               <Trash2 size={18} />
                             </button>
                           </div>
                         </div>
-
-                        {/* Active Indicator */}
-                        {t.is_active && (
-                          <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
-                        )}
                       </div>
                     ))}
                   </div>
-
-                  {timings.length === 0 && (
-                    <div className="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
-                      <Clock size={48} strokeWidth={1} className="mx-auto mb-4 text-white/20" />
-                      <p className="text-sm font-medium text-white/50 tracking-wide">Temporal schedule unidentified</p>
-                      <p className="text-sm font-medium text-[#D0B079]/60 mt-2">Initialize a daily sequence to configure availability</p>
-                    </div>
-                  )}
                 </div>
               </motion.div>
 
-              {/* Save Button at the bottom */}
               <div className="flex justify-end pt-4">
                 <button
                   onClick={saveAll}
                   disabled={saving}
-                  className="w-full sm:w-64 py-5 px-8 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] disabled:opacity-50 text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 disabled:scale-100 flex items-center justify-center gap-3"
+                  className="w-full sm:w-64 py-5 px-8 bg-gradient-to-r from-[#D0B079] to-[#b8965f] hover:from-[#b8965f] hover:to-[#a3804d] disabled:opacity-50 text-slate-900 font-bold text-lg rounded-2xl shadow-2xl transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 shadow-[#D0B079]/20"
                 >
-                  {saving ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={26} />
-                      Save Profile
-                    </>
-                  )}
+                  {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={26} />}
+                  Save Profile
                 </button>
               </div>
             </div>

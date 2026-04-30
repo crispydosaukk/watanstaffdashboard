@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Edit2, Save, Loader2, User, Camera, Briefcase, Shield, Calendar, Eye, Clock, XCircle,
-  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download
+  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download, Bell
 } from "lucide-react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
-import { db, storage } from "../../lib/firebase";
-import { collection, query, onSnapshot, doc, updateDoc, where, getDocs, orderBy } from "firebase/firestore";
+import { db, storage, secondaryAuth } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, where, getDocs, orderBy, setDoc, deleteDoc, writeBatch, addDoc, serverTimestamp } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { usePopup } from "../../context/PopupContext.jsx";
 import Footer from "../../components/common/footer.jsx";
@@ -99,6 +100,12 @@ export default function AllStaffPage() {
   const [attendanceFilters, setAttendanceFilters] = useState({ from: "", to: "" });
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
+  
+  // Notification state
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationTarget, setNotificationTarget] = useState(null);
+  const [sendingNotification, setSendingNotification] = useState(false);
+  const [notificationData, setNotificationData] = useState({ title: "", body: "" });
 
   useEffect(() => {
     setLoading(true);
@@ -121,6 +128,21 @@ export default function AllStaffPage() {
       }));
       setStaff(staffList);
       setLoading(false);
+
+      // --- GLOBAL AUTO-REPAIR ---
+      const brokenStaff = staffList.filter(s => !s.restaurant_id && s.created_by);
+      if (brokenStaff.length > 0) {
+        brokenStaff.forEach(async (s) => {
+          try {
+            await updateDoc(doc(db, "staff", s.id), {
+              restaurant_id: String(s.created_by),
+              updated_at: new Date()
+            });
+          } catch (e) {
+            console.error("Global auto-repair failed:", e);
+          }
+        });
+      }
     }, (err) => {
       console.error(err);
       setError("Failed to load staff.");
@@ -143,6 +165,7 @@ export default function AllStaffPage() {
       designation: item.designation || "",
       gender: item.gender || "Male",
       dob: item.dob || "",
+      restaurant_id: item.restaurant_id || ""
     });
     setImagePreview(null); // Will be handled by Avatar or similar logic if needed
     setImageFile(null);
@@ -159,43 +182,33 @@ export default function AllStaffPage() {
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      const updates = { ...formData };
-      if (!updates.password) delete updates.password;
-
-      if (imageFile) {
-        const imageRef = ref(storage, `profiles/${editingId}_${Date.now()}`);
-        await uploadBytes(imageRef, imageFile);
-        updates.profile_image = await getDownloadURL(imageRef);
-      }
-
-      await updateDoc(doc(db, "staff", editingId), updates);
-      
-      showPopup({ title: "Success", message: "Account updated successfully", type: "success" });
-      setShowModal(false);
-    } catch (err) {
-      console.error(err);
-      showPopup({ title: "Error", message: "Operation failed", type: "error" });
-    } finally { setSaving(false); }
-  };
 
   const handleViewAttendance = async (id, params = {}) => {
     setLoadingAttendance(true);
     setShowAttendanceModal(true);
     try {
-      let q = query(collection(db, "attendance"), where("staff_id", "==", id), orderBy("clock_in", "desc"));
+      // Index-free query (only one where)
+      let q = query(collection(db, "attendance"), where("staff_id", "==", id));
       
       const snapshot = await getDocs(q);
-      const records = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        // Convert Firebase Timestamps to JS Dates if needed
-        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
-        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
-      }));
+      let records = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Convert all potential timestamps to JS Dates
+          clock_in: data.clock_in?.toDate ? data.clock_in.toDate() : data.clock_in,
+          clock_out: data.clock_out?.toDate ? data.clock_out.toDate() : data.clock_out,
+          date: data.date?.toDate ? data.date.toDate() : data.date,
+        };
+      });
+
+      // Sort in JavaScript to avoid index requirement
+      records.sort((a, b) => {
+        const dateA = a.clock_in instanceof Date ? a.clock_in : new Date(a.clock_in || 0);
+        const dateB = b.clock_in instanceof Date ? b.clock_in : new Date(b.clock_in || 0);
+        return dateB - dateA;
+      });
 
       const staffMember = staff.find(s => s.id === id);
       setAttendanceData({ 
@@ -206,12 +219,17 @@ export default function AllStaffPage() {
       });
 
     } catch (err) {
-      console.error(err);
-      showPopup({ title: "Error", message: "Failed to fetch attendance", type: "error" });
+      console.error("Attendance Fetch Error:", err);
+      showPopup({ 
+        title: "Error", 
+        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`, 
+        type: "error" 
+      });
     } finally {
       setLoadingAttendance(false);
     }
   };
+
 
   const groupedRecords = useMemo(() => {
     if (!attendanceData || !Array.isArray(attendanceData.records)) return [];
@@ -268,9 +286,14 @@ export default function AllStaffPage() {
     if (!editingAttendance) return;
     setUpdatingAttendance(true);
     try {
+      const cin = new Date(editingAttendance.clock_in);
+      const cout = new Date(editingAttendance.clock_out);
+      const totalMinutes = Math.floor((cout - cin) / 60000);
+
       await updateDoc(doc(db, "attendance", editingAttendance.id), {
-        clock_in: new Date(editingAttendance.clock_in),
-        clock_out: new Date(editingAttendance.clock_out)
+        clock_in: cin,
+        clock_out: cout,
+        total_minutes: Math.max(0, totalMinutes)
       });
       
       showPopup({ title: "Success", message: "Attendance updated", type: "success" });
@@ -301,51 +324,138 @@ export default function AllStaffPage() {
     }
   };
 
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notificationData.title || !notificationData.body) {
+      showPopup({ title: "Required", message: "Please enter both title and message", type: "warning" });
+      return;
+    }
+    setSendingNotification(true);
+    try {
+      await addDoc(collection(db, "notifications"), {
+        title: notificationData.title,
+        body: notificationData.body,
+        staff_id: notificationTarget.id,
+        staff_name: notificationTarget.name,
+        sent_at: serverTimestamp(),
+        status: "pending",
+        type: "direct_message",
+        fcm_token: notificationTarget.fcmToken || null,
+        platform: notificationTarget.platform || "unknown"
+      });
+      showPopup({ title: "Sent", message: "Notification sent successfully", type: "success" });
+      setShowNotificationModal(false);
+      setNotificationData({ title: "", body: "" });
+    } catch (err) {
+      console.error(err);
+      showPopup({ title: "Error", message: "Failed to send notification", type: "error" });
+    } finally {
+      setSendingNotification(false);
+    }
+  };
+
   const handleOpenReport = async (staffId) => {
     try {
       setLoading(true);
       const staffMember = staff.find(sm => sm.id === staffId);
       if (!staffMember) throw new Error("Staff member not found");
 
-      let q = query(
-        collection(db, "attendance"),
-        where("staff_id", "==", staffId),
-        orderBy("clock_in", "desc")
-      );
+      // Index-free query
+      let q = query(collection(db, "attendance"), where("staff_id", "==", staffId));
 
-      // Apply date filters if available
+      const snapshot = await getDocs(q);
+      let records = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          clock_in: data.clock_in?.toDate ? data.clock_in.toDate() : data.clock_in,
+          clock_out: data.clock_out?.toDate ? data.clock_out.toDate() : data.clock_out,
+          date: data.date?.toDate ? data.date.toDate() : data.date,
+        };
+      });
+
+      // Filter and Sort in JS
       if (attendanceFilters.from) {
         const fromDate = new Date(attendanceFilters.from);
-        fromDate.setHours(0, 0, 0, 0);
-        q = query(q, where("clock_in", ">=", fromDate));
+        records = records.filter(r => new Date(r.clock_in) >= fromDate);
       }
       if (attendanceFilters.to) {
         const toDate = new Date(attendanceFilters.to);
         toDate.setHours(23, 59, 59, 999);
-        q = query(q, where("clock_in", "<=", toDate));
+        records = records.filter(r => new Date(r.clock_in) <= toDate);
       }
 
-      const snapshot = await getDocs(q);
-      const records = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
-        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
-      }));
+      records.sort((a, b) => {
+        const dateA = a.clock_in instanceof Date ? a.clock_in : new Date(a.clock_in || 0);
+        const dateB = b.clock_in instanceof Date ? b.clock_in : new Date(b.clock_in || 0);
+        return dateB - dateA;
+      });
 
       setAttendanceData({ staff: staffMember, records: records });
       setShowReportModal(true);
     } catch (err) {
-      console.error(err);
-      showPopup({ title: "Error", message: "Failed to load report from Firestore", type: "error" });
+      console.error("Report Fetch Error:", err);
+      showPopup({ 
+        title: "Error", 
+        message: `Failed to load report: ${err.message || "Unknown error"}`, 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
+
   };
 
   const handlePrint = () => {
     window.print();
   };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!formData.full_name || !formData.email) {
+      showPopup({ title: "Required", message: "Name and Email are mandatory", type: "warning" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let photoUrl = imagePreview;
+
+      if (imageFile) {
+        const fileRef = ref(storage, `profiles/${editingId || Date.now()}`);
+        await uploadBytes(fileRef, imageFile);
+        photoUrl = await getDownloadURL(fileRef);
+      }
+
+      const staffData = {
+        full_name: formData.full_name,
+        email: formData.email,
+        phone_number: formData.phone_number || "",
+        designation: formData.designation || "",
+        gender: formData.gender || "Male",
+        dob: formData.dob || "",
+        restaurant_id: formData.restaurant_id || "",
+        profile_image: photoUrl || "",
+        updated_at: serverTimestamp()
+      };
+
+      if (formData.password) {
+        staffData.password = formData.password;
+      }
+
+      await updateDoc(doc(db, "staff", editingId), staffData);
+      
+      showPopup({ title: "Success", message: "Staff profile updated successfully", type: "success" });
+      setShowModal(false);
+    } catch (err) {
+      console.error("Save Error:", err);
+      showPopup({ title: "Error", message: "Failed to save changes", type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const restaurants = useMemo(() => {
     const map = new Map();
@@ -403,9 +513,11 @@ export default function AllStaffPage() {
                 </h1>
                 <p className="text-white/40 text-base font-medium mt-2">All restaurants combined — view, edit and manage status</p>
               </div>
-              <span className="px-4 py-2 rounded-xl text-sm font-bold bg-white/5 text-white/50 border border-white/10">
-                {restaurants.length} Restaurants
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="px-4 py-2 rounded-xl text-sm font-bold bg-white/5 text-white/50 border border-white/10">
+                  {restaurants.length} Restaurants
+                </span>
+              </div>
             </motion.div>
 
             {/* Filters */}
@@ -532,6 +644,16 @@ export default function AllStaffPage() {
                                 title="Generate report"
                               >
                                 <Printer size={14} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setNotificationTarget({ id: s.id, name: s.full_name, fcmToken: s.fcmToken, platform: s.platform });
+                                  setShowNotificationModal(true);
+                                }}
+                                className="p-2 bg-white/5 hover:bg-amber-500/20 text-white/30 hover:text-amber-400 rounded-xl border border-white/5 transition-all"
+                                title="Send notification"
+                              >
+                                <Bell size={14} />
                               </button>
                               <button
                                 onClick={() => handleOpenModal(s)}
@@ -840,7 +962,14 @@ export default function AllStaffPage() {
                   <h2 className="text-2xl font-semibold">Report preview</h2>
                   <p className="text-white/40 text-xs mt-1">Ready for printing or PDF export</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="px-4 py-2 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-0.5">Network Scope</p>
+                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                      <Store size={14} className="text-[#D0B079]" />
+                      {restaurants.length} Restaurants
+                    </p>
+                  </div>
                   <button 
                     onClick={handlePrint} 
                     className="px-6 py-3 bg-[#D0B079] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-[#b8965f] transition-all"
@@ -929,6 +1058,89 @@ export default function AllStaffPage() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      
+      {/* Send Notification Modal */}
+      <AnimatePresence>
+        {showNotificationModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowNotificationModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+            
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 40 }} transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-lg bg-[#0b1a3d] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden">
+              
+              <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3 text-[#D0B079] font-bold tracking-wider mb-1">
+                    <Bell size={14} />
+                    <span className="text-[10px] font-semibold tracking-widest uppercase">Direct Notification</span>
+                  </div>
+                  <h2 className="text-2xl font-semibold tracking-tight text-white">
+                    Notify {notificationTarget?.name}
+                  </h2>
+                </div>
+                <button onClick={() => setShowNotificationModal(false)} className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-500 rounded-xl transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSendNotification} className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-white/40 tracking-widest uppercase ml-1">Notification Title</label>
+                  <input 
+                    type="text" 
+                    value={notificationData.title} 
+                    onChange={(e) => setNotificationData(p => ({ ...p, title: e.target.value }))}
+                    placeholder="e.g., New Task Assigned"
+                    className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-white/40 tracking-widest uppercase ml-1">Message Content</label>
+                  <textarea 
+                    value={notificationData.body} 
+                    onChange={(e) => setNotificationData(p => ({ ...p, body: e.target.value }))}
+                    placeholder="Type your message here..."
+                    rows={4}
+                    className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setShowNotificationModal(false)}
+                    className="flex-1 px-6 py-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={sendingNotification}
+                    className="flex-[2] px-6 py-4 bg-[#D0B079] text-slate-900 font-bold rounded-2xl hover:bg-[#b8965f] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {sendingNotification ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bell size={18} />
+                        <span>Send Notification</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

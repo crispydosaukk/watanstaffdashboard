@@ -18,6 +18,7 @@ import RequirePerm from "./components/RequirePerm.jsx";
 // import FinanceManagement from "./pages/financemanagement/index.jsx";
 import AllStaffPage from "./pages/allstaff/index.jsx";
 import StaffManagement from "./pages/staff/index.jsx";
+import NotificationsPage from "./pages/notifications/index.jsx";
 import { getSafePath } from "./utils/perm";
 import { useAuth } from "./context/AuthContext";
 
@@ -68,6 +69,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <RequirePerm perm="all_staff"><AllStaffPage /></RequirePerm>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <RequirePerm perm="all_staff"><NotificationsPage /></RequirePerm>
             </PrivateRoute>
           }
         />
