@@ -4,29 +4,33 @@ import Dashboard from "./components/dashboard/dashboard.jsx";
 import AccessManagement from "./pages/access/index.jsx";
 import Roles from "./pages/roles/index.jsx";
 import Users from "./pages/users/index.jsx";
-import Restuarent from "./pages/restuarent/index.jsx";      // ← NEW
+import Restuarent from "./pages/restuarent/index.jsx";
 import RequirePerm from "./components/RequirePerm.jsx";
-import Category from "./pages/category/index.jsx";
-import Product from "./pages/product/index.jsx";
-import CustomerInfo from "./pages/customerinfo/index.jsx";
-import Orders from "./pages/orders/index.jsx";
-import Settings from "./pages/settings/index.jsx";
-import CustomerDetails from "./pages/customerdetails/index.jsx";
-import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
-import OffersPage from "./pages/offers/index.jsx";
-import TableReservations from "./pages/tablereservations/index.jsx";
-import FinanceManagement from "./pages/financemanagement/index.jsx";
-import StaffManagement from "./pages/staff/index.jsx";
+// import Category from "./pages/category/index.jsx";
+// import Product from "./pages/product/index.jsx";
+// import CustomerInfo from "./pages/customerinfo/index.jsx";
+// import Orders from "./pages/orders/index.jsx";
+// import Settings from "./pages/settings/index.jsx";
+// import CustomerDetails from "./pages/customerdetails/index.jsx";
+// import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
+// import OffersPage from "./pages/offers/index.jsx";
+// import TableReservations from "./pages/tablereservations/index.jsx";
+// import FinanceManagement from "./pages/financemanagement/index.jsx";
 import AllStaffPage from "./pages/allstaff/index.jsx";
+import StaffManagement from "./pages/staff/index.jsx";
 import { getSafePath } from "./utils/perm";
+import { useAuth } from "./context/AuthContext";
 
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" replace />;
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {
+  const { user, userData, perms } = useAuth();
+
   return (
+
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -60,7 +64,7 @@ export default function App() {
         />
 
         <Route
-          path="/all-staff"
+          path="/allstaff"
           element={
             <PrivateRoute>
               <RequirePerm perm="all_staff"><AllStaffPage /></RequirePerm>
@@ -93,6 +97,8 @@ export default function App() {
           }
         />
 
+        {/* Legacy Routes - Disabled */}
+        {/* 
         <Route
           path="/category"
           element={
@@ -132,17 +138,20 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        */}
 
         <Route
           path="/"
           element={
-            localStorage.getItem("token") ? (
-              <Navigate to={getSafePath()} replace />
+            user && userData ? (
+              <Navigate to={getSafePath(userData, perms)} replace />
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
+
+        {/* 
         <Route
           path="/orders"
           element={
@@ -208,6 +217,7 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
 
@@ -215,4 +225,5 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
 

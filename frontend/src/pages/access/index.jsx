@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
+import { db } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, orderBy, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Shield } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
@@ -24,29 +25,30 @@ export default function AccessManagement() {
 
   const [search, setSearch] = useState("");
 
-  async function loadPermissions() {
-    try {
-      setLoading(true);
-      const res = await api.get("/permissions");
-      setPermissions(Array.isArray(res?.data?.data) ? res.data.data : []);
-      setError("");
-    } catch (e) {
-      setError(e.message || "Failed to load");
-    } finally {
+  useEffect(() => {
+    // Removed orderBy("created_at", "desc") to allow seeded permissions without timestamps to appear
+    const q = query(collection(db, "permissions"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setPermissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    }
-  }
-
-  useEffect(() => { loadPermissions(); }, []);
+    }, (err) => {
+      setError(err.message);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   async function handleCreate() {
     if (!title.trim()) { setError("Title is required"); return; }
     try {
       setSubmitting(true);
-      await api.post("/permissions", { title: title.trim() });
+      const permId = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      await setDoc(doc(db, "permissions", permId), {
+        title: title.trim(),
+        created_at: new Date()
+      });
       setTitle("");
       setOpenModal(false);
-      await loadPermissions();
     } catch (e) {
       setError(e.message || "Failed to create");
     } finally {
@@ -64,11 +66,13 @@ export default function AccessManagement() {
     if (!editTitle.trim()) { setError("Title is required"); return; }
     try {
       setSubmitting(true);
-      await api.put(`/permissions/${editingId}`, { title: editTitle.trim() });
+      await updateDoc(doc(db, "permissions", editingId), {
+        title: editTitle.trim(),
+        updated_at: new Date()
+      });
       setEditOpen(false);
       setEditingId(null);
       setEditTitle("");
-      await loadPermissions();
     } catch (e) {
       setError(e.message || "Failed to update");
     } finally {
@@ -83,8 +87,7 @@ export default function AccessManagement() {
       type: "confirm",
       onConfirm: async () => {
         try {
-          await api.delete(`/permissions/${id}`);
-          setPermissions(prev => prev.filter(p => p.id !== id));
+          await deleteDoc(doc(db, "permissions", id));
           showPopup({ title: "Deleted", message: "Permission removed.", type: "success" });
         } catch (e) {
           setError(e.message || "Failed to delete");
@@ -178,7 +181,7 @@ export default function AccessManagement() {
                         <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
                         <td className="px-8 py-6 font-bold text-[#00f2ff] group-hover:text-white transition-colors tracking-wide">{p.title}</td>
                         <td className="px-8 py-6 text-white/60 font-medium tracking-wide">
-                          {p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
+                          {p.created_at ? (p.created_at.toDate ? p.created_at.toDate() : new Date(p.created_at)).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-3">

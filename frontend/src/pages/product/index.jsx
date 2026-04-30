@@ -11,6 +11,9 @@ import {
   GripVertical, Tag, Image as ImageIcon, Loader2, Zap, Globe, Package
 } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
+import { db, storage } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy, writeBatch } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function ProductPage() {
   const { showPopup } = usePopup();
@@ -59,26 +62,37 @@ export default function ProductPage() {
   const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
-    fetch(`${API}/category`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.json())
-      .then(setCategories)
-      .catch((err) => console.error("Error loading categories:", err));
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const restaurantId = String(user.restaurant_id || "");
 
-    fetch(`${API}/products`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.json())
-      .then(data => {
-        const safeData = data.map(p => {
-          let c = p.contains;
-          try {
-            if (typeof c === 'string') c = JSON.parse(c);
-            if (typeof c === 'string') c = JSON.parse(c);
-          } catch (e) { }
-          return { ...p, contains: Array.isArray(c) ? c : [] };
-        });
-        setProducts(safeData.sort((a, b) => a.sort_order - b.sort_order));
-      })
-      .catch((err) => console.error("Error loading products:", err));
-  }, [API, token]);
+    // 1. Listen to Categories
+    const catQ = restaurantId 
+      ? query(collection(db, "categories"), where("restaurant_id", "==", restaurantId), orderBy("sort_order", "asc"))
+      : query(collection(db, "categories"), orderBy("sort_order", "asc"));
+
+    const unsubCats = onSnapshot(catQ, (snapshot) => {
+      setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // 2. Listen to Products
+    const prodQ = restaurantId 
+      ? query(collection(db, "products"), where("restaurant_id", "==", restaurantId), orderBy("sort_order", "asc"))
+      : query(collection(db, "products"), orderBy("sort_order", "asc"));
+
+    const unsubProds = onSnapshot(prodQ, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        contains: Array.isArray(doc.data().contains) ? doc.data().contains : []
+      }));
+      setProducts(data);
+    });
+
+    return () => {
+      unsubCats();
+      unsubProds();
+    };
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery.trim().toLowerCase()), 300);
@@ -107,8 +121,8 @@ export default function ProductPage() {
       setPreviewUrl(url);
       return () => URL.revokeObjectURL(url);
     }
-    setPreviewUrl(form.oldImage ? `${API_BASE}/uploads/${form.oldImage}` : "");
-  }, [form.image, form.oldImage, API_BASE]);
+    setPreviewUrl(form.oldImage || "");
+  }, [form.image, form.oldImage]);
 
   const filteredProducts = useMemo(() => {
     let list = [...products];
@@ -250,49 +264,52 @@ export default function ProductPage() {
     if (rawPrice <= 0) return showPopup({ title: "Validation Error", message: "Price must be greater than zero", type: "warning" });
 
     let finalPrice = rawPrice;
-    let discountPriceToSend = "";
+    let discountPriceValue = null;
     if (form.discountPrice && String(form.discountPrice).trim() !== "") {
       const disc = parseFloat(String(form.discountPrice).replace("%", "").trim());
       if (disc > 0 && disc <= 100) {
         finalPrice = +(rawPrice - (rawPrice * disc) / 100).toFixed(2);
-        discountPriceToSend = rawPrice;
+        discountPriceValue = rawPrice;
       } else if (disc > 100) {
         finalPrice = rawPrice;
-        discountPriceToSend = disc;
+        discountPriceValue = disc;
       }
     }
 
-    const fd = new FormData();
-    fd.append("name", nameTrim);
-    fd.append("description", form.description || "");
-    fd.append("price", finalPrice);
-    fd.append("discountPrice", discountPriceToSend);
-    fd.append("cat_id", form.cat_id || "");
-    fd.append("contains", JSON.stringify(form.contains));
-    if (form.image instanceof File) fd.append("image", form.image);
-
-    const method = form.id ? "PUT" : "POST";
-    const url = form.id ? `${API}/products/${form.id}` : `${API}/products`;
-
     try {
-      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` }, body: fd });
-      if (!res.ok) {
-        const err = await res.json();
-        return showPopup({ title: "Save Failed", message: err.message || "Failed to save product", type: "error" });
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const updates = {
+        name: nameTrim,
+        description: form.description || "",
+        price: finalPrice,
+        discountPrice: discountPriceValue,
+        cat_id: form.cat_id || "",
+        contains: form.contains || [],
+        restaurant_id: String(user.restaurant_id || ""),
+        updated_at: new Date()
+      };
+
+      if (form.image instanceof File) {
+        const imageRef = ref(storage, `products/${Date.now()}_${form.image.name}`);
+        await uploadBytes(imageRef, form.image);
+        updates.image = await getDownloadURL(imageRef);
       }
-      const saved = await res.json();
-      let savedContains = saved.contains;
-      try {
-        if (typeof savedContains === 'string') savedContains = JSON.parse(savedContains);
-        if (typeof savedContains === 'string') savedContains = JSON.parse(savedContains);
-      } catch (e) { }
-      saved.contains = Array.isArray(savedContains) ? savedContains : [];
-      setProducts((prev) => form.id ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev].sort((a, b) => a.sort_order - b.sort_order));
+
+      if (form.id) {
+        await updateDoc(doc(db, "products", form.id), updates);
+      } else {
+        updates.created_at = new Date();
+        updates.status = 1;
+        updates.sort_order = products.length + 1;
+        await addDoc(collection(db, "products"), updates);
+      }
+
       setShowModal(false);
       resetForm();
       showPopup({ title: "Success", message: "Product saved successfully", type: "success" });
     } catch (error) {
-      showPopup({ title: "System Error", message: "Server error", type: "error" });
+      console.error(error);
+      showPopup({ title: "System Error", message: "Operation failed", type: "error" });
     }
   };
 
@@ -305,24 +322,22 @@ export default function ProductPage() {
       type: "confirm",
       onConfirm: async () => {
         try {
-          await fetch(`${API}/products/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-          setProducts((prev) => prev.filter((item) => item.id !== id));
+          await deleteDoc(doc(db, "products", id));
           showPopup({ title: "Deleted", message: "Product has been removed.", type: "success" });
-        } catch (err) { }
+        } catch (err) {
+          console.error(err);
+        }
       }
     });
   };
 
   const handleToggleStatus = async (product) => {
     const newStatus = product.status === 1 ? 0 : 1;
-    setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p)));
     try {
-      await fetch(`${API}/products/${product.id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: product.name, status: newStatus }),
-      });
-    } catch (err) { }
+      await updateDoc(doc(db, "products", product.id), { status: newStatus });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const onDragEnd = async (result) => {
@@ -336,12 +351,17 @@ export default function ProductPage() {
     const [moved] = items.splice(actualSourceIdx, 1);
     items.splice(actualDestIdx, 0, moved);
     const updated = items.map((p, i) => ({ ...p, sort_order: i + 1 }));
-    setProducts(updated);
-    await fetch(`${API}/products/reorder`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ order: updated })
+    const batch = writeBatch(db);
+    items.forEach((p, i) => {
+      const ref = doc(db, "products", p.id);
+      batch.update(ref, { sort_order: i + 1 });
     });
+    
+    try {
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to reorder", err);
+    }
   };
 
   const handleEdit = (p) => {
@@ -364,7 +384,7 @@ export default function ProductPage() {
   const formatGBP = (v) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(v || 0);
 
   const ProductCard = ({ p }) => {
-    const imgUrl = p.image ? `${API_BASE}/uploads/${p.image}` : null;
+    const imgUrl = p.image || null;
     const status = p.status === 1;
     const hasDiscount = p.discountPrice && Number(p.discountPrice) > Number(p.price);
     const discAmt = hasDiscount ? Number(p.discountPrice) - Number(p.price) : 0;
@@ -562,7 +582,7 @@ export default function ProductPage() {
                                       <div className="px-6 py-2.5 flex items-center">
                                         <div className="w-11 h-11 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
                                           {p.image ? (
-                                            <img src={`${API_BASE}/uploads/${p.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                            <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                                           ) : (
                                             <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">VOID</div>
                                           )}

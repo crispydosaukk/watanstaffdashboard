@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
+import { db, secondaryAuth } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, orderBy, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Users as UsersIcon, ChevronDown, Check, User, Mail, Lock } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
@@ -112,44 +114,41 @@ export default function Users() {
 
   // Load roles
   useEffect(() => {
-    (async () => {
-      try {
-        setRolesLoading(true);
-        const res = await api.get("/roles");
-        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
-        setRoleOptions(list.map(r => ({ id: r.id, title: r.title })));
-        setRolesError("");
-      } catch (e) {
-        setRolesError(e?.message || "Failed to load roles");
-      } finally {
-        setRolesLoading(false);
-      }
-    })();
+    const q = query(collection(db, "roles"), orderBy("title", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRoleOptions(list.map(r => ({ id: r.id, title: r.title })));
+      setRolesError("");
+      setRolesLoading(false);
+    }, (err) => {
+      setRolesError(err.message);
+      setRolesLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   // Load users
-  const fetchUsers = async () => {
-    try {
-      setUsersLoading(true);
-      const res = await api.get("/users");
-      const list = Array.isArray(res?.data?.data) ? res.data.data : [];
-      setUsers(list);
+  useEffect(() => {
+    const q = query(collection(db, "users"), orderBy("name", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setUsersError("");
-    } catch (e) {
-      setUsersError(e?.message || "Failed to load users");
-    } finally {
       setUsersLoading(false);
-    }
-  };
-  useEffect(() => { fetchUsers(); }, []);
+    }, (err) => {
+      setUsersError(err.message);
+      setUsersLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Search
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return users;
     return users.filter((u) => {
-      const role = (u.role_title || "").toLowerCase();
-      const pwd = u.has_password ? "password set" : "no password";
+      const roleObj = roleOptions.find(r => r.id === u.role_id);
+      const role = (roleObj?.title || "").toLowerCase();
+      const pwd = u.password ? "password set" : "no password";
       return (
         (u.name || "").toLowerCase().includes(needle) ||
         (u.email || "").toLowerCase().includes(needle) ||
@@ -157,7 +156,7 @@ export default function Users() {
         pwd.includes(needle)
       );
     });
-  }, [q, users]);
+  }, [q, users, roleOptions]);
 
   useEffect(() => setPage(1), [q, pageSize]);
 
@@ -173,13 +172,29 @@ export default function Users() {
     try {
       setSaving(true);
       const role_id = cRoleIds[0] || null;
-      await api.post("/users", { name: cName, email: cEmail, password: cPassword, role_id });
+
+      // 1. Create user in Firebase Auth using secondary connection (prevents logging admin out)
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, cEmail, cPassword);
+      const uid = userCredential.user.uid;
+      
+      // 2. Immediately sign out the secondary session
+      await signOut(secondaryAuth);
+
+      // 3. Save profile data to Firestore using the new Firebase Auth UID
+      await setDoc(doc(db, "users", uid), {
+        name: cName,
+        email: cEmail,
+        password: cPassword, // Stored for admin reference
+        role_id,
+        role_title: roleOptions.find(r => r.id === role_id)?.title || "User",
+        created_at: new Date()
+      });
+
       setCName(""); setCEmail(""); setCPassword(""); setCRoleIds([]);
       setOpenCreate(false);
-      await fetchUsers();
       showPopup({ title: "User Created", message: `Successfully added ${cName}.`, type: "success" });
     } catch (e) {
-      showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to create user", type: "error" });
+      showPopup({ title: "Error", message: e.message || "Failed to create user", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -191,7 +206,7 @@ export default function Users() {
     setEName(u.name || "");
     setEEmail(u.email || "");
     setEPassword("");
-    setERoleIds(u.role_id ? [Number(u.role_id)] : []);
+    setERoleIds(u.role_id ? [u.role_id] : []);
     setOpenEdit(true);
   };
 
@@ -201,14 +216,14 @@ export default function Users() {
     try {
       setUpdating(true);
       const role_id = eRoleIds[0] || null;
-      const body = { name: eName, email: eEmail, role_id };
-      if (ePassword.trim()) body.password = ePassword.trim();
-      await api.put(`/users/${eId}`, body);
+      const data = { name: eName, email: eEmail, role_id, updated_at: new Date() };
+      if (ePassword.trim()) data.password = ePassword.trim();
+      
+      await updateDoc(doc(db, "users", eId), data);
       setOpenEdit(false);
-      await fetchUsers();
       showPopup({ title: "Success", message: "User updated successfully.", type: "success" });
     } catch (e) {
-      showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to update user", type: "error" });
+      showPopup({ title: "Error", message: e.message || "Failed to update user", type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -222,11 +237,10 @@ export default function Users() {
       type: "confirm",
       onConfirm: async () => {
         try {
-          await api.delete(`/users/${u.id}`);
-          await fetchUsers();
+          await deleteDoc(doc(db, "users", u.id));
           showPopup({ title: "Deleted", message: "User has been removed.", type: "success" });
         } catch (e) {
-          showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to delete user", type: "error" });
+          showPopup({ title: "Error", message: e.message || "Failed to delete user", type: "error" });
         }
       }
     });
@@ -315,13 +329,16 @@ export default function Users() {
                         <td className="px-8 py-6 font-bold text-[#00f2ff] group-hover:text-white transition-colors tracking-wide">{u.name}</td>
                         <td className="px-8 py-6 text-white/60 font-medium tracking-wide">{u.email}</td>
                         <td className="px-8 py-6">
-                          {u.role_title ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-bold tracking-wide bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
-                              {u.role_title}
-                            </span>
-                          ) : (
-                            <span className="text-white/20 italic font-medium text-[10px] tracking-wide">No Role</span>
-                          )}
+                          {(() => {
+                            const r = roleOptions.find(opt => opt.id === u.role_id);
+                            return r ? (
+                              <span className="inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-bold tracking-wide bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
+                                {r.title}
+                              </span>
+                            ) : (
+                              <span className="text-white/20 italic font-medium text-[10px] tracking-wide">No Role</span>
+                            );
+                          })()}
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-3">
@@ -406,6 +423,10 @@ export default function Users() {
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-5 pr-2">
+                {/* Dummy fields to capture aggressive browser autofill */}
+                <input type="text" name="email" style={{ display: 'none' }} />
+                <input type="password" name="password" style={{ display: 'none' }} />
+
                 <div>
                   <label className="text-sm font-medium text-white/80 mb-2 block">Full Name</label>
                   <div className="relative">
@@ -422,7 +443,11 @@ export default function Users() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
-                      type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)}
+                      type="email" 
+                      name="new_user_email"
+                      value={cEmail} 
+                      onChange={(e) => setCEmail(e.target.value)}
+                      autoComplete="off"
                       className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="name@example.com"
                     />
@@ -433,7 +458,11 @@ export default function Users() {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
-                      type="password" value={cPassword} onChange={(e) => setCPassword(e.target.value)}
+                      type="password" 
+                      name="new_user_password"
+                      value={cPassword} 
+                      onChange={(e) => setCPassword(e.target.value)}
+                      autoComplete="new-password"
                       className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Set initial password"
                     />
@@ -485,6 +514,10 @@ export default function Users() {
               </div>
 
               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-5 pr-2">
+                {/* Dummy fields to capture aggressive browser autofill */}
+                <input type="text" name="email" style={{ display: 'none' }} />
+                <input type="password" name="password" style={{ display: 'none' }} />
+
                 <div>
                   <label className="text-sm font-medium text-white/80 mb-2 block">Full Name</label>
                   <div className="relative">
@@ -501,7 +534,11 @@ export default function Users() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
-                      type="email" value={eEmail} onChange={(e) => setEEmail(e.target.value)}
+                      type="email" 
+                      name="edit_user_email"
+                      value={eEmail} 
+                      onChange={(e) => setEEmail(e.target.value)}
+                      autoComplete="off"
                       className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="name@example.com"
                     />
@@ -512,7 +549,11 @@ export default function Users() {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input
-                      type="password" value={ePassword} onChange={(e) => setEPassword(e.target.value)}
+                      type="password" 
+                      name="edit_user_password"
+                      value={ePassword} 
+                      onChange={(e) => setEPassword(e.target.value)}
+                      autoComplete="new-password"
                       className="w-full pl-10 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/50"
                       placeholder="Blank to keep current"
                     />

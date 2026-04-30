@@ -6,31 +6,37 @@ import {
 } from "lucide-react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
-import api from "../../api.js";
+import { db, storage } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, where, getDocs, orderBy } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { usePopup } from "../../context/PopupContext.jsx";
 import Footer from "../../components/common/footer.jsx";
 
-const IMAGE_BASE = (import.meta.env.VITE_API_URL || "http://localhost:4000").replace(/\/api\/?$/, "");
-
-function getInitials(name = "") {
-  const parts = name.trim().split(" ");
-  return parts.length >= 2
-    ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-    : name.substring(0, 2).toUpperCase();
+function getInitials(name) {
+  if (!name) return "?";
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
 }
-
 function Avatar({ src, name, size = "md" }) {
-  const [imgErr, setImgErr] = useState(false);
+  const [imgUrl, setImgUrl] = useState(null);
   const cls = size === "lg"
     ? "w-20 h-20 rounded-[2rem] text-xl"
     : "w-11 h-11 rounded-xl text-sm";
 
-  if (src && !imgErr) {
+  useEffect(() => {
+    if (src && (src.startsWith('http') || src.startsWith('blob:'))) {
+      setImgUrl(src);
+    } else if (src) {
+      // If it's a Firebase storage path or just a filename
+      const imageRef = ref(storage, `profiles/${src}`);
+      getDownloadURL(imageRef).then(url => setImgUrl(url)).catch(() => setImgUrl(null));
+    }
+  }, [src]);
+
+  if (imgUrl) {
     return (
       <img
-        src={`${IMAGE_BASE}/uploads/${src}`}
+        src={imgUrl}
         alt={name}
-        onError={() => setImgErr(true)}
         className={`${cls} object-cover border border-white/10`}
       />
     );
@@ -71,6 +77,7 @@ export default function AllStaffPage() {
   const [search, setSearch] = useState("");
   const [filterRestaurant, setFilterRestaurant] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [restaurantsMap, setRestaurantsMap] = useState({});
 
   // Edit modal state
   const [showModal, setShowModal] = useState(false);
@@ -93,17 +100,38 @@ export default function AllStaffPage() {
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
 
-  useEffect(() => { fetchAllStaff(); }, []);
+  useEffect(() => {
+    setLoading(true);
 
-  const fetchAllStaff = async () => {
-    setLoading(true); setError("");
-    try {
-      const res = await api.get("/all-staff");
-      if (res.data.status === 1) setStaff(res.data.data || []);
-      else setError(res.data.message || "Failed to load staff.");
-    } catch { setError("Could not connect to server."); }
-    finally { setLoading(false); }
-  };
+    const unsubRestaurants = onSnapshot(collection(db, "restaurants"), (snapshot) => {
+      const rMap = {};
+      snapshot.forEach(doc => {
+        rMap[doc.id] = doc.data().restaurant_name || "Unknown Restaurant";
+      });
+      setRestaurantsMap(rMap);
+    }, (err) => {
+      console.error("Failed to load restaurants:", err);
+    });
+
+    const q = query(collection(db, "staff"), orderBy("full_name", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const staffList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setStaff(staffList);
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError("Failed to load staff.");
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubRestaurants();
+    };
+  }, []);
 
   const handleOpenModal = (item) => {
     setEditingId(item.id);
@@ -114,9 +142,9 @@ export default function AllStaffPage() {
       phone_number: item.phone_number || "",
       designation: item.designation || "",
       gender: item.gender || "Male",
-      dob: item.dob ? String(item.dob).split("T")[0] : "",
+      dob: item.dob || "",
     });
-    setImagePreview(item.profile_image ? `${IMAGE_BASE}/uploads/${item.profile_image}` : null);
+    setImagePreview(null); // Will be handled by Avatar or similar logic if needed
     setImageFile(null);
     setShowModal(true);
   };
@@ -135,17 +163,22 @@ export default function AllStaffPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => { if (formData[key]) data.append(key, formData[key]); });
-      if (imageFile) data.append("profile_image", imageFile);
-      const res = await api.put(`/staff/${editingId}`, data, { headers: { "Content-Type": "multipart/form-data" } });
-      if (res.data.status === 1) {
-        showPopup({ title: "Success", message: "Account updated successfully", type: "success" });
-        setShowModal(false);
-        fetchAllStaff();
+      const updates = { ...formData };
+      if (!updates.password) delete updates.password;
+
+      if (imageFile) {
+        const imageRef = ref(storage, `profiles/${editingId}_${Date.now()}`);
+        await uploadBytes(imageRef, imageFile);
+        updates.profile_image = await getDownloadURL(imageRef);
       }
+
+      await updateDoc(doc(db, "staff", editingId), updates);
+      
+      showPopup({ title: "Success", message: "Account updated successfully", type: "success" });
+      setShowModal(false);
     } catch (err) {
-      showPopup({ title: "Error", message: err.response?.data?.message || "Operation failed", type: "error" });
+      console.error(err);
+      showPopup({ title: "Error", message: "Operation failed", type: "error" });
     } finally { setSaving(false); }
   };
 
@@ -153,18 +186,25 @@ export default function AllStaffPage() {
     setLoadingAttendance(true);
     setShowAttendanceModal(true);
     try {
-      const queryParams = new URLSearchParams();
-      if (params.from) queryParams.append("from", params.from);
-      if (params.to) queryParams.append("to", params.to);
+      let q = query(collection(db, "attendance"), where("staff_id", "==", id), orderBy("clock_in", "desc"));
+      
+      const snapshot = await getDocs(q);
+      const records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        // Convert Firebase Timestamps to JS Dates if needed
+        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
+        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+      }));
 
-      const res = await api.get(`/staff/attendance/${id}?${queryParams.toString()}`);
-      if (res.data.status === 1) {
-        setAttendanceData(res.data.data);
-        setAttendanceFilters({
-          from: res.data.data.from,
-          to: res.data.data.to
-        });
-      }
+      const staffMember = staff.find(s => s.id === id);
+      setAttendanceData({ 
+        staff: staffMember, 
+        records: records,
+        from: params.from || "",
+        to: params.to || ""
+      });
+
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to fetch attendance", type: "error" });
@@ -228,15 +268,14 @@ export default function AllStaffPage() {
     if (!editingAttendance) return;
     setUpdatingAttendance(true);
     try {
-      const res = await api.put(`/staff/attendance/${editingAttendance.id}`, {
-        clock_in: editingAttendance.clock_in,
-        clock_out: editingAttendance.clock_out
+      await updateDoc(doc(db, "attendance", editingAttendance.id), {
+        clock_in: new Date(editingAttendance.clock_in),
+        clock_out: new Date(editingAttendance.clock_out)
       });
-      if (res.data.status === 1) {
-        showPopup({ title: "Success", message: "Attendance updated", type: "success" });
-        setEditingAttendance(null);
-        handleViewAttendance(attendanceData.staff.id);
-      }
+      
+      showPopup({ title: "Success", message: "Attendance updated", type: "success" });
+      setEditingAttendance(null);
+      handleViewAttendance(attendanceData.staff.id);
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to update attendance", type: "error" });
@@ -255,13 +294,8 @@ export default function AllStaffPage() {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      const data = new FormData();
-      data.append("is_active", currentStatus ? "0" : "1");
-      const res = await api.put(`/staff/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } });
-      if (res.data.status === 1) {
-        showPopup({ title: "Updated", message: `Account ${currentStatus ? "deactivated" : "activated"}`, type: "success" });
-        fetchAllStaff();
-      }
+      await updateDoc(doc(db, "staff", id), { is_active: !currentStatus });
+      showPopup({ title: "Updated", message: `Account ${currentStatus ? "deactivated" : "activated"}`, type: "success" });
     } catch {
       showPopup({ title: "Error", message: "Failed to update status", type: "error" });
     }
@@ -273,14 +307,37 @@ export default function AllStaffPage() {
       const staffMember = staff.find(sm => sm.id === staffId);
       if (!staffMember) throw new Error("Staff member not found");
 
-      const res = await api.get(`/staff/attendance/${staffId}`, {
-        params: { from: attendanceFilters.from, to: attendanceFilters.to }
-      });
-      setAttendanceData({ staff: staffMember, records: res.data.data.records });
+      let q = query(
+        collection(db, "attendance"),
+        where("staff_id", "==", staffId),
+        orderBy("clock_in", "desc")
+      );
+
+      // Apply date filters if available
+      if (attendanceFilters.from) {
+        const fromDate = new Date(attendanceFilters.from);
+        fromDate.setHours(0, 0, 0, 0);
+        q = query(q, where("clock_in", ">=", fromDate));
+      }
+      if (attendanceFilters.to) {
+        const toDate = new Date(attendanceFilters.to);
+        toDate.setHours(23, 59, 59, 999);
+        q = query(q, where("clock_in", "<=", toDate));
+      }
+
+      const snapshot = await getDocs(q);
+      const records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
+        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+      }));
+
+      setAttendanceData({ staff: staffMember, records: records });
       setShowReportModal(true);
     } catch (err) {
       console.error(err);
-      showPopup({ title: "Error", message: "Failed to load report", type: "error" });
+      showPopup({ title: "Error", message: "Failed to load report from Firestore", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -292,30 +349,38 @@ export default function AllStaffPage() {
 
   const restaurants = useMemo(() => {
     const map = new Map();
-    staff.forEach((s) => { if (s.restaurant_id) map.set(s.restaurant_id, s.restaurant_name || `Restaurant #${s.restaurant_id}`); });
+    staff.forEach((s) => { 
+      const rId = s.restaurant_id || s.created_by;
+      if (rId) {
+        map.set(rId, restaurantsMap[rId] || s.restaurant_name || `Restaurant #${rId}`);
+      }
+    });
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [staff]);
+  }, [staff, restaurantsMap]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return staff.filter((s) => {
+      const rId = s.restaurant_id || s.created_by;
+      const rName = (rId ? restaurantsMap[rId] : null) || s.restaurant_name || "";
       const matchSearch = !q || s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) ||
-        s.designation?.toLowerCase().includes(q) || s.employee_id?.toLowerCase().includes(q) || s.restaurant_name?.toLowerCase().includes(q);
-      const matchRestaurant = filterRestaurant === "all" || String(s.restaurant_id) === String(filterRestaurant);
+        s.designation?.toLowerCase().includes(q) || s.employee_id?.toLowerCase().includes(q) || rName.toLowerCase().includes(q);
+      const matchRestaurant = filterRestaurant === "all" || String(s.restaurant_id) === String(filterRestaurant) || String(s.created_by) === String(filterRestaurant);
       const matchStatus = filterStatus === "all" || (filterStatus === "active" && s.is_active) || (filterStatus === "inactive" && !s.is_active);
       return matchSearch && matchRestaurant && matchStatus;
     });
-  }, [staff, search, filterRestaurant, filterStatus]);
+  }, [staff, search, filterRestaurant, filterStatus, restaurantsMap]);
 
   const grouped = useMemo(() => {
     const map = new Map();
     filtered.forEach((s) => {
-      const key = s.restaurant_name || "Unknown Restaurant";
+      const rId = s.restaurant_id || s.created_by;
+      const key = (rId ? restaurantsMap[rId] : null) || s.restaurant_name || "Unknown Restaurant";
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(s);
     });
     return Array.from(map.entries());
-  }, [filtered]);
+  }, [filtered, restaurantsMap]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#071428] font-sans text-white overflow-x-hidden">
@@ -382,7 +447,7 @@ export default function AllStaffPage() {
               <div className="flex flex-col items-center justify-center py-32 text-center">
                 <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 mb-4"><X size={32} className="text-red-400" /></div>
                 <p className="text-white/60 font-semibold mb-2">{error}</p>
-                <button onClick={fetchAllStaff} className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30 hover:bg-[#D0B079]/30 transition-all">Retry</button>
+                <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2.5 rounded-xl text-sm font-bold bg-[#D0B079]/20 text-[#D0B079] border border-[#D0B079]/30 hover:bg-[#D0B079]/30 transition-all">Retry</button>
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 text-center">

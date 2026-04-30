@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { can } from "../../utils/perm";
 import { usePopup } from "../../context/PopupContext";
+import { useAuth } from "../../context/AuthContext";
+
 
 function isSuperAdmin() {
   try {
@@ -76,7 +78,9 @@ function Group({ label, icon, children, defaultOpen = false, hidden = false, ope
 
 export default function Sidebar({ open, onClose }) {
   const { showPopup } = usePopup();
+  const { logout } = useAuth();
   const navigate = useNavigate();
+
   const location = useLocation();
 
   useEffect(() => {
@@ -99,9 +103,8 @@ export default function Sidebar({ open, onClose }) {
     () => [
       { label: "Dashboard", to: "/dashboard", icon: iconDashboard(), perm: "dashboard" },
       { label: "Restaurant Profile", to: "/restuarent", icon: iconRestaurant(), perm: "restaurant" },
+      { label: "All Staff", to: "/allstaff", icon: iconAllStaff(), perm: "all_staff" },
       { label: "Staff Management", to: "/staff", icon: iconUsers(), perm: "staff_management" },
-      // { label: "Customer Info", to: "/customerinfo", icon: iconCustomer(), perm: "customer_info" },
-      // { label: "Customer Details", to: "/customerdetails", icon: iconCustomerDetails(), perm: "customer_details" },
     ],
     []
   );
@@ -209,11 +212,6 @@ export default function Sidebar({ open, onClose }) {
             <Item key={m.label} to={m.to} label={m.label} icon={m.icon} />
           ))}
 
-          {/* Super Admin Only: All Staff */}
-          {isSuperAdmin() && (
-            <Item to="/all-staff" label="All Staff" icon={iconAllStaff()} />
-          )}
-
           <Group
             label="Access Control"
             icon={iconShield()}
@@ -245,12 +243,18 @@ export default function Sidebar({ open, onClose }) {
                 title: "Confirm Logout",
                 message: "Are you sure you want to log out?",
                 type: "confirm",
-                onConfirm: () => {
-                  localStorage.clear();
-                  navigate("/login", { replace: true });
+                onConfirm: async () => {
+                  try {
+                    await logout();
+                    localStorage.clear();
+                    navigate("/login", { replace: true });
+                  } catch (err) {
+                    console.error("Logout error:", err);
+                  }
                 }
               });
             }}
+
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 border border-white/10 text-white/70 hover:text-white hover:border-white/20"
             style={{ background: 'rgba(255,255,255,0.06)' }}
           >
@@ -267,7 +271,6 @@ export default function Sidebar({ open, onClose }) {
   );
 }
 
-/* icons unchanged */
 function iconAllStaff() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
@@ -291,20 +294,6 @@ function iconRestaurant() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
       <path d="M6 3v9a2 2 0 0 0 4 0V3M6 8h4M14 3h2a3 3 0 0 1 3 3v15h-3v-7h-2V3z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function iconCategory() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path d="M3 9h6V3H3v6zm12 0h6V3h-6v6zM3 21h6v-6H3v6zm12 0h6v-6h-6v6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function iconProduct() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path d="M4 7l8-4 8 4v10l-8 4-8-4V7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -347,115 +336,5 @@ function iconUser() {
     </svg>
   );
 }
-function iconLogout() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-      <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 12H9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 19H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
-function iconCustomer() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path
-        d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zM3 21a9 9 0 0 1 18 0"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function iconOrders() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path
-        d="M4 6h16v12H4z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M4 10h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M9 14h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function iconSettings() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path
-        d="M12 4.5l1.2 1.8a1 1 0 0 0 .8.4h2.1a1 1 0 0 1 .98 1.2l-.3 1.4a1 1 0 0 0 .26.9l1.5 1.5a1 1 0 0 1 0 1.4l-1.5 1.5a1 1 0 0 0-.26.9l.3 1.4a1 1 0 0 1-.98 1.2H14a1 1 0 0 0-.8.4L12 19.5a1 1 0 0 1-1.64 0L9.2 17.7a1 1 0 0 0-.8-.4H6.3a1 1 0 0 1-.98-1.2l.3-1.4a1 1 0 0 0-.26-.9L3.9 12a1 1 0 0 1 0-1.4l1.46-1.46a1 1 0 0 0 .26-.9l-.3-1.4A1 1 0 0 1 6.3 6.7h2.1a1 1 0 0 0 .8-.4L10.36 4.5a1 1 0 0 1 1.64 0z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="2.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-    </svg>
-  );
-}
-
-function iconCustomerDetails() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path
-        d="M17 20h5v-2a3 3 0 0 0-5.3-1.5M16 3.13a4 4 0 0 1 0 7.75M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zM3 21a9 9 0 0 1 18 0"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function iconStorePlus() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9zm0-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4H3V5zm12 9h-6m3-3v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function iconTag() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 7h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function iconReservation() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
-      <rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M3 9h18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8 14h3m-3 3.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="17" cy="16" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  );
-}
-
-function iconFinance() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21h4M7 21h10M8 12h7M12 21V7a2 2 0 0 1 2-2h1" />
-    </svg>
-  );
-}
 

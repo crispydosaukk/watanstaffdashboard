@@ -5,7 +5,8 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { v4 as uuidv4 } from "uuid";
-import api from "../../api.js";
+import { db } from "../../lib/firebase";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import {
   Store, MapPin, Phone, Mail, X, Clock, Plus, Trash2, Save,
   Calendar, Loader2, Shield
@@ -35,8 +36,6 @@ const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "t
 
 export default function Restuarent() {
   const { showPopup } = usePopup();
-  const API = import.meta.env.VITE_API_URL;
-  const API_BASE = API ? API.replace(/\/api\/?$/i, "") : "";
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [info, setInfo] = useState({
     restaurant_name: "",
@@ -134,69 +133,70 @@ export default function Restuarent() {
   const updateTiming = (id, changes) => setTimings((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)));
   const removeTiming = (id) => setTimings((prev) => prev.filter((t) => t.id !== id));
 
-  function frontendToApiPayload() {
-    const toSqlTime = (s) => (!s ? null : /^\d{1,2}:\d{2}$/.test(s) ? s + ":00" : s);
-
-    return {
-      restaurant_name: info.restaurant_name || null,
-      company_name: info.company_name || null,
-      restaurant_address: info.address || null,
-      restaurant_phonenumber: info.phone || null,
-      restaurant_email: info.email || null,
-      latitude: info.latitude || null,
-      longitude: info.longitude || null,
-      timings: timings.map((t) => ({
-        day: t.day,
-        opening_time: toSqlTime(t.start),
-        closing_time: toSqlTime(t.end),
-        is_active: !!t.is_active
-      }))
-    };
-  }
-
-  function apiToFrontend(restaurant) {
-    if (!restaurant) return;
-
-    setInfo({
-      restaurant_name: restaurant.restaurant_name ?? "",
-      company_name: restaurant.company_name ?? "",
-      address: restaurant.restaurant_address ?? "",
-      phone: restaurant.restaurant_phonenumber ?? "",
-      email: restaurant.restaurant_email ?? "",
-      latitude: restaurant.latitude ?? "",
-      longitude: restaurant.longitude ?? "",
-    });
-
-    if (restaurant.timings?.length) {
-      setTimings(
-        restaurant.timings.map((t) => ({
-          id: uuidv4(),
-          day: t.day,
-          start: t.opening_time?.substring(0, 5) || "",
-          end: t.closing_time?.substring(0, 5) || "",
-          is_active: !!t.is_active
-        }))
-      );
-    }
-  }
-
   async function loadRestaurant() {
     setLoading(true);
     try {
-      const res = await api.get("/restaurant");
-      apiToFrontend(res?.data?.data);
-    } finally { setLoading(false); }
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const restaurantId = user.uid || "";
+      if (!restaurantId) { setLoading(false); return; }
+
+      const docRef = doc(db, "restaurants", restaurantId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setInfo({
+          restaurant_name: data.restaurant_name ?? "",
+          company_name: data.company_name ?? "",
+          address: data.restaurant_address ?? "",
+          phone: data.restaurant_phonenumber ?? "",
+          email: data.restaurant_email ?? "",
+          latitude: data.latitude ?? "",
+          longitude: data.longitude ?? "",
+        });
+
+        if (data.timings?.length) {
+          setTimings(data.timings.map(t => ({
+            id: uuidv4(),
+            day: t.day,
+            start: t.opening_time || "",
+            end: t.closing_time || "",
+            is_active: !!t.is_active
+          })));
+        }
+      }
+    } catch (err) {
+      console.error("Load failed:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveAll() {
     setSaving(true);
     try {
-      const payload = frontendToApiPayload();
-      const res = await api.post("/restaurant", payload);
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const restaurantId = user.uid || "";
+      if (!restaurantId) { setSaving(false); return; }
 
-      if (res?.data?.data) {
-        apiToFrontend(res.data.data);
-      }
+      const updates = {
+        restaurant_name: info.restaurant_name,
+        company_name: info.company_name,
+        restaurant_address: info.address,
+        restaurant_phonenumber: info.phone,
+        restaurant_email: info.email,
+        latitude: info.latitude,
+        longitude: info.longitude,
+        timings: timings.map(t => ({
+          day: t.day,
+          opening_time: t.start,
+          closing_time: t.end,
+          is_active: t.is_active
+        })),
+        updated_at: new Date()
+      };
+
+      await setDoc(doc(db, "restaurants", restaurantId), updates, { merge: true });
 
       showPopup({
         title: "Success",

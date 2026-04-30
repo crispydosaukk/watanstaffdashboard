@@ -18,52 +18,45 @@ function getUser() {
   }
 }
 
-export function can(required) {
+export function can(required, passedUser, passedPerms) {
   if (!required) return true;
 
-  const user = getUser();
+  const user = passedUser || getUser();
   const roleTitle = (user.role_title || user.role || "").toLowerCase();
 
   // 🔥 SUPER ADMIN BYPASS
-  if (user.role_id === 6 || roleTitle.includes("super")) {
+  if (String(user.role_id) === "6" || roleTitle.includes("super") || roleTitle.includes("admin") || String(user.role_id) === "1") {
     return true;
   }
 
   // normal permissions for other roles
-  const perms = getPerms();
+  const perms = (passedPerms || getPerms()).map(p => String(p).toLowerCase());
   return perms.includes(String(required).toLowerCase());
 }
+
 
 /**
  * Returns the first route the user has permission for.
  * Defaults to '/dashboard' if they have it, or the first available.
  * If no permissions, returns '/login'.
  */
-export function getSafePath() {
-  const user = getUser();
+export function getSafePath(passedUser, passedPerms) {
+  const user = passedUser || getUser();
   const roleTitle = (user.role_title || user.role || "").toLowerCase();
 
   // Super Admin bypass
-  if (user.role_id === 6 || roleTitle.includes("super")) {
+  if (String(user.role_id) === "6" || roleTitle.includes("super") || roleTitle.includes("admin") || String(user.role_id) === "1") {
     return "/dashboard";
   }
 
-  const perms = getPerms().map(p => p.toLowerCase());
+  const perms = (passedPerms || getPerms()).map(p => String(p).toLowerCase());
 
   const map = [
     { perm: "dashboard", path: "/dashboard" },
+    { perm: "staff_management", path: "/staff" },
+    { perm: "all_staff", path: "/allstaff" },
     { perm: "restaurant", path: "/restuarent" },
     { perm: "access", path: "/access" },
-    { perm: "category", path: "/category" },
-    { perm: "product", path: "/product" },
-    { perm: "customer_info", path: "/customerinfo" },
-    { perm: "customer_details", path: "/customerdetails" },
-    { perm: "order_management", path: "/orders" },
-    { perm: "table_reservations", path: "/table-reservations" },
-    { perm: "settings", path: "/settings" },
-    { perm: "restaurant_registration", path: "/restaurantregistration" },
-    { perm: "promotional_offers", path: "/offers" },
-    { perm: "finance_management", path: "/finance" }
   ];
 
   for (const item of map) {
@@ -74,4 +67,5 @@ export function getSafePath() {
 
   return "/login"; // fallback if no perms at all
 }
+
 

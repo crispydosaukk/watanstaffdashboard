@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
+import { db } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, orderBy } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Shield, ChevronDown, Check } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
@@ -106,37 +107,31 @@ export default function Roles() {
   const [searchTerm, setSearchTerm] = useState("");
   const pageSize = 10;
 
+  // Load Permissions
   useEffect(() => {
-    (async () => {
-      try {
-        setPermLoading(true);
-        const res = await api.get("/permissions");
-        const list = Array.isArray(res?.data?.data) ? res.data.data : [];
-        setPermissions(list);
-        setPermError("");
-      } catch (e) {
-        setPermError(e?.message || "Failed to load permissions");
-      } finally {
-        setPermLoading(false);
-      }
-    })();
+    const q = query(collection(db, "permissions"), orderBy("title", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setPermissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setPermLoading(false);
+    }, (err) => {
+      setPermError(err.message);
+      setPermLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const fetchRoles = async () => {
-    try {
-      setRolesLoading(true);
-      const res = await api.get("/roles");
-      const list = Array.isArray(res?.data?.data) ? res.data.data : [];
-      setRoles(list);
-      setRolesError("");
-    } catch (e) {
-      setRolesError(e?.message || "Failed to load roles");
-    } finally {
+  // Load Roles
+  useEffect(() => {
+    const q = query(collection(db, "roles"), orderBy("title", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setRoles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setRolesLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchRoles(); }, []);
+    }, (err) => {
+      setRolesError(err.message);
+      setRolesLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Multi-select helpers
   const allIds = useMemo(() => permissions.map((p) => p.id), [permissions]);
@@ -155,15 +150,17 @@ export default function Roles() {
     if (!roleTitle.trim()) return;
     try {
       setSubmitting(true);
-      const permission_ids = selectedIds.map(Number).filter(Boolean);
-      await api.post("/roles", { title: roleTitle.trim(), permission_ids });
-      await fetchRoles();
+      await addDoc(collection(db, "roles"), {
+        title: roleTitle.trim(),
+        permission_ids: selectedIds,
+        created_at: new Date()
+      });
       setRoleTitle("");
       setSelectedIds([]);
       setOpenCreate(false);
       showPopup({ title: "Success", message: `Role "${roleTitle}" created.`, type: "success" });
     } catch (e) {
-      showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to create role", type: "error" });
+      showPopup({ title: "Error", message: e.message || "Failed to create role", type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -173,8 +170,7 @@ export default function Roles() {
   const onEdit = (role) => {
     setEditRole(role);
     setEditTitle(role?.title || "");
-    const pre = (role?.permissions || []).map((p) => p.id);
-    setEditSelectedIds(pre);
+    setEditSelectedIds(role?.permission_ids || []);
     setOpenEdit(true);
   };
 
@@ -183,16 +179,18 @@ export default function Roles() {
     if (!editTitle.trim()) return;
     try {
       setUpdating(true);
-      const permission_ids = editSelectedIds.map(Number).filter(Boolean);
-      await api.put(`/roles/${editRole.id}`, { title: editTitle.trim(), permission_ids });
-      await fetchRoles();
+      await updateDoc(doc(db, "roles", editRole.id), {
+        title: editTitle.trim(),
+        permission_ids: editSelectedIds,
+        updated_at: new Date()
+      });
       setOpenEdit(false);
       setEditRole(null);
       setEditTitle("");
       setEditSelectedIds([]);
       showPopup({ title: "Success", message: "Role updated successfully.", type: "success" });
     } catch (e) {
-      showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to update role", type: "error" });
+      showPopup({ title: "Error", message: e.message || "Failed to update role", type: "error" });
     } finally {
       setUpdating(false);
     }
@@ -209,11 +207,10 @@ export default function Roles() {
       onConfirm: async () => {
         try {
           setDeletingId(role.id);
-          await api.delete(`/roles/${role.id}`);
-          await fetchRoles();
+          await deleteDoc(doc(db, "roles", role.id));
           showPopup({ title: "Deleted", message: "Role removed successfully.", type: "success" });
         } catch (e) {
-          showPopup({ title: "Error", message: e?.response?.data?.message || "Failed to delete role", type: "error" });
+          showPopup({ title: "Error", message: e.message || "Failed to delete role", type: "error" });
         } finally {
           setDeletingId(null);
         }
@@ -227,20 +224,26 @@ export default function Roles() {
     if (!q) return roles;
     return roles.filter((r) => {
       const inTitle = String(r.title || "").toLowerCase().includes(q);
-      const inPerms = (r.permissions || []).some((p) => String(p.title || "").toLowerCase().includes(q));
+      const inPerms = (r.permission_ids || []).some((pid) => {
+        const p = permissions.find(x => x.id === pid);
+        return p?.title?.toLowerCase().includes(q);
+      });
       return inTitle || inPerms;
     });
-  }, [roles, searchTerm]);
+  }, [roles, permissions, searchTerm]);
 
-  const renderPermissionsInline = (permArr = []) => {
-    if (!permArr.length) return <span className="text-white/40 italic">No permissions</span>;
+  const renderPermissionsInline = (permIds = []) => {
+    if (!permIds.length) return <span className="text-white/40 italic">No permissions</span>;
     return (
       <div className="flex flex-wrap gap-1.5">
-        {permArr.map((p, i) => (
-          <span key={p.id || i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
-            {p.title}
-          </span>
-        ))}
+        {permIds.map((pid, i) => {
+          const p = permissions.find(x => x.id === pid);
+          return (
+            <span key={pid || i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#D0B079]/10 text-[#D0B079] border border-[#D0B079]/20">
+              {p?.title || "Unknown"}
+            </span>
+          );
+        })}
       </div>
     );
   };
@@ -326,7 +329,7 @@ export default function Roles() {
                         <td className="px-8 py-6 text-white font-bold">{idx + 1}</td>
                         <td className="px-8 py-6 font-bold text-[#00f2ff] tracking-wide">{r.title}</td>
                         <td className="px-8 py-6">
-                          {renderPermissionsInline(r.permissions)}
+                          {renderPermissionsInline(r.permission_ids || r.permissions)}
                         </td>
                         <td className="px-8 py-6 text-right">
                           <div className="flex items-center justify-end gap-3">

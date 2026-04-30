@@ -4,7 +4,8 @@ import { useLocation } from "react-router-dom";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
+import { db } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, where, orderBy, limit } from "firebase/firestore";
 import ReadyInModal from "../../components/common/ReadyInModal.jsx";
 import {
   Search, RefreshCw, Filter, Calendar, PoundSterling, User, Truck,
@@ -127,33 +128,28 @@ export default function Orders() {
 
   useEffect(() => { localStorage.setItem("orderAutoRefresh", autoRefresh); }, [autoRefresh]);
 
-  const loadOrders = async () => {
-    try {
-      const res = await api.get("/mobile/orders");
-      if (res.data.status === 1 && Array.isArray(res.data.orders)) {
-        const mapped = res.data.orders.map((o) => ({ ...o, restaurant_name: o.restaurant_name || "-" }));
-        setOrders(prev => JSON.stringify(prev) === JSON.stringify(mapped) ? prev : mapped);
-      }
-    } catch (err) { }
-  };
-
   useEffect(() => {
-    const handleAutoRefresh = () => {
-      loadOrders();
-    };
-    window.addEventListener('dashboard-refresh', handleAutoRefresh);
-    return () => window.removeEventListener('dashboard-refresh', handleAutoRefresh);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const restaurantId = String(user.restaurant_id || "");
+
+    const q = restaurantId 
+      ? query(collection(db, "orders"), where("restaurant_id", "==", restaurantId), orderBy("created_at", "desc"), limit(100))
+      : query(collection(db, "orders"), orderBy("created_at", "desc"), limit(100));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const mapped = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        // Ensure created_at is a Date object if it's a Firestore Timestamp
+        created_at: doc.data().created_at?.toDate ? doc.data().created_at.toDate() : doc.data().created_at
+      }));
+      setOrders(mapped);
+    }, (err) => {
+      console.error("Orders sync error:", err);
+    });
+
+    return () => unsubscribe();
   }, []);
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  useEffect(() => {
-    let interval;
-    if (autoRefresh) interval = setInterval(loadOrders, 30000);
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
 
   useEffect(() => {
     let data = [...orders];
@@ -166,14 +162,7 @@ export default function Orders() {
   }, [searchOrder, filterPayment, filterStatus, fromDate, toDate, orders]);
 
   const groupedOrders = useMemo(() => {
-    const map = {};
-    filteredOrders.forEach((o, idx) => {
-      const key = o.order_number || `ORDER_${idx}`;
-      if (!map[key]) map[key] = { ...o, items: [], grand_total: 0 };
-      map[key].items.push(o);
-      map[key].grand_total += safeNumber(o.grand_total);
-    });
-    return Object.values(map);
+    return filteredOrders;
   }, [filteredOrders]);
 
   const totalPages = Math.ceil(groupedOrders.length / rowsPerPage) || 1;
@@ -181,9 +170,19 @@ export default function Orders() {
 
   const updateOrderStatus = async (orderNumber, status, readyInMinutes = null) => {
     try {
-      await api.post("/mobile/orders/update-status", { order_number: orderNumber, status, ready_in_minutes: readyInMinutes });
-      loadOrders();
-    } catch (error) { showPopup({ title: "Update Failed", message: "Error", type: "error" }); }
+      // Find the document ID for this order number
+      const order = orders.find(o => o.order_number === orderNumber);
+      if (!order) return;
+      
+      const orderRef = doc(db, "orders", order.id);
+      const updates = { order_status: status };
+      if (readyInMinutes) updates.ready_in_minutes = readyInMinutes;
+      
+      await updateDoc(orderRef, updates);
+    } catch (error) { 
+      console.error(error);
+      showPopup({ title: "Update Failed", message: "Error updating order status", type: "error" }); 
+    }
   };
 
   const confirmCollection = (order) => {
@@ -240,7 +239,8 @@ export default function Orders() {
                     <span className="text-xs font-bold text-white/60 tracking-wide">Live Sync</span>
                   </label>
                   <div className="w-px h-6 bg-white/10"></div>
-                  <button onClick={loadOrders} className="p-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] rounded-2xl transition-all border border-[#D0B079]/30 active:scale-90"><RefreshCw size={16} /></button>
+                  <div className="w-px h-6 bg-white/10"></div>
+                  <button className="p-2.5 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 text-[#D0B079] rounded-2xl transition-all border border-[#D0B079]/30 active:scale-90"><RefreshCw size={16} /></button>
                 </div>
               </div>
 

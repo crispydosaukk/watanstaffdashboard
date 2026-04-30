@@ -1,8 +1,0 @@
-# Ignore environment file
-.env
-
-# Ignore node modules
-node_modules/
-
-# Ignore user uploaded images
-public/uploads/

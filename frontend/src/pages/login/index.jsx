@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api";
 import { FiLogIn, FiEye, FiEyeOff } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
 import { getSafePath } from "../../utils/perm";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,17 +13,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [mounted, setMounted] = useState(false);
+  const { login, user, userData, perms } = useAuth();
 
   useEffect(() => {
     const rememberFlag = localStorage.getItem("remember");
-    const token = localStorage.getItem("token");
-    if (token && !rememberFlag) {
-      localStorage.removeItem("token");
+    const userStr = localStorage.getItem("user");
+    if (userStr && !rememberFlag && !user) {
       localStorage.removeItem("user");
       localStorage.removeItem("perms");
     }
     setTimeout(() => setMounted(true), 40);
   }, []);
+
+  // Redirect only after AuthContext has fully loaded the user data
+  useEffect(() => {
+    if (user && userData) {
+      const path = getSafePath(userData, perms);
+      if (path === "/login") {
+        setErr("Account has no assigned dashboard permissions.");
+        setLoading(false);
+      } else {
+        navigate(path, { replace: true });
+      }
+    }
+  }, [user, userData, perms, navigate]);
+
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -37,20 +51,16 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      const { data } = await api.post("/auth/login", { email, password, remember });
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("userid", data.user.id);
-      localStorage.setItem("perms", JSON.stringify(data.permissions || []));
+      await login(email, password);
+      
       remember ? localStorage.setItem("remember", "1") : localStorage.removeItem("remember");
 
-      navigate(getSafePath(), { replace: true });
+      // The redirect is now handled by the useEffect above
     } catch (error) {
-      setErr(error?.response?.data?.message || "Invalid email or password");
-    } finally {
+      console.error("Login error:", error);
+      setErr("Invalid email or password");
       setLoading(false);
-    }
+    } 
   };
 
   return (

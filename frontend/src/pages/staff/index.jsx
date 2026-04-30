@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
-import {
-  Users, Plus, Search, Mail, Phone, Shield, Calendar, Trash2, Edit2, X, Camera, Save, Loader2, User, ChevronRight, Briefcase, UserCheck, XCircle, CheckCircle2, Eye, Clock, Printer, FileText, Download
-} from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
+import { db, storage } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, getDoc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Shield, Search, Plus, Briefcase, Mail, Phone, Eye, Printer, Edit2, Trash2, Users, UserCheck, X, Camera, Calendar, Loader2, Save, Clock, User } from "lucide-react";
 
 const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "text", required = false, autoComplete = "off" }) => (
   <div className="space-y-2 group">
@@ -37,49 +37,43 @@ export default function StaffManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    full_name: "",
-    email: "",
-    password: "",
-    phone_number: "",
-    designation: "",
-    gender: "Male",
-    dob: "",
-  });
-  
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const fileInputRef = useRef(null);
+  const [formData, setFormData] = useState({});
+  const [filterStatus, setFilterStatus] = useState("all");
 
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [attendanceFilters, setAttendanceFilters] = useState({ from: "", to: "" });
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [attendanceData, setAttendanceData] = useState(null);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
-  const [attendanceFilters, setAttendanceFilters] = useState({ from: "", to: "" });
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL;
-  const BASE_URL = API_URL ? API_URL.replace(/\/api\/?$/i, "") : "";
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchStaff();
-  }, []);
+    setLoading(true);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const fetchStaff = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/staff");
-      if (res.data.status === 1) {
-        setStaff(res.data.data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
+    // Filter by created_by so each manager only sees their own staff.
+    // Sorting done client-side to avoid needing a composite Firestore index.
+    const q = user.uid
+      ? query(collection(db, "staff"), where("created_by", "==", user.uid))
+      : query(collection(db, "staff"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const staffList = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (a.full_name || "").localeCompare(b.full_name || ""));
+      setStaff(staffList);
       setLoading(false);
-    }
-  };
+    }, (err) => {
+      console.error(err);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -91,13 +85,9 @@ export default function StaffManagement() {
         phone_number: item.phone_number || "",
         designation: item.designation || "",
         gender: item.gender || "Male",
-        dob: item.dob ? item.dob.split("T")[0] : "",
+        dob: item.dob || "",
       });
-      if (item.profile_image) {
-        setImagePreview(`${BASE_URL}/uploads/${item.profile_image}`);
-      } else {
-        setImagePreview(null);
-      }
+      setImagePreview(item.profile_image || null);
     } else {
       setEditingId(null);
       setFormData({
@@ -127,43 +117,72 @@ export default function StaffManagement() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    
+
     try {
-      const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key]) data.append(key, formData[key]);
-      });
-      
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const restaurantId = user.uid || "";
+      const isSuperAdmin = Number(user.role_id) === 6;
+
+      if (restaurantId && !isSuperAdmin) {
+
+        const restDoc = await getDoc(doc(db, "restaurants", restaurantId));
+        if (restDoc.exists()) {
+          const restData = restDoc.data();
+          if (!restData.restaurant_name || restData.restaurant_name.trim() === "") {
+            showPopup({
+              title: "Profile Incomplete",
+              message: "Please fill in your Restaurant Name in the Restaurant Profile before adding staff.",
+              type: "error"
+            });
+            return;
+          }
+        } else {
+          showPopup({
+            title: "Profile Incomplete",
+            message: "Please setup your Restaurant Profile before adding staff.",
+            type: "error"
+          });
+          return;
+        }
+      }
+
+      setSaving(true);
+
+      const updates = {
+        ...formData,
+        restaurant_id: String(user.restaurant_id || ""),
+        updated_at: new Date()
+      };
+
+      if (!updates.password) delete updates.password;
+
       if (imageFile) {
-        data.append("profile_image", imageFile);
+        const imageRef = ref(storage, `profiles/${editingId || 'new'}_${Date.now()}`);
+        await uploadBytes(imageRef, imageFile);
+        updates.profile_image = await getDownloadURL(imageRef);
       }
 
-      let res;
       if (editingId) {
-        res = await api.put(`/staff/${editingId}`, data, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        await updateDoc(doc(db, "staff", editingId), updates);
       } else {
-        res = await api.post("/staff", data, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        updates.created_at = new Date();
+        updates.is_active = true;
+        updates.created_by = user.uid || "";
+        await addDoc(collection(db, "staff"), updates);
       }
 
-      if (res.data.status === 1) {
-        showPopup({
-          title: "Success",
-          message: editingId ? "Account updated successfully" : "Staff account created",
-          type: "success"
-        });
-        setShowModal(false);
-        fetchStaff();
-      }
+
+      showPopup({
+        title: "Success",
+        message: editingId ? "Account updated successfully" : "Staff account created",
+        type: "success"
+      });
+      setShowModal(false);
     } catch (err) {
       console.error(err);
       showPopup({
         title: "Error",
-        message: err.response?.data?.message || "Operation failed",
+        message: "Operation failed",
         type: "error"
       });
     } finally {
@@ -178,11 +197,8 @@ export default function StaffManagement() {
       type: "confirm",
       onConfirm: async () => {
         try {
-          const res = await api.delete(`/staff/${id}`);
-          if (res.data.status === 1) {
-            showPopup({ title: "Removed", message: "Account deleted", type: "success" });
-            fetchStaff();
-          }
+          await deleteDoc(doc(db, "staff", id));
+          showPopup({ title: "Removed", message: "Account deleted", type: "success" });
         } catch (err) {
           console.error(err);
           showPopup({ title: "Error", message: "Failed to delete", type: "error" });
@@ -193,15 +209,8 @@ export default function StaffManagement() {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      const data = new FormData();
-      data.append("is_active", currentStatus ? "0" : "1");
-      const res = await api.put(`/staff/${id}`, data, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      if (res.data.status === 1) {
-        showPopup({ title: "Updated", message: `Account ${currentStatus ? 'deactivated' : 'activated'}`, type: "success" });
-        fetchStaff();
-      }
+      await updateDoc(doc(db, "staff", id), { is_active: !currentStatus });
+      showPopup({ title: "Updated", message: `Account ${currentStatus ? 'deactivated' : 'activated'}`, type: "success" });
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to update status", type: "error" });
@@ -212,20 +221,25 @@ export default function StaffManagement() {
     try {
       setLoadingAttendance(true);
       setShowAttendanceModal(true);
-      
-      const params = filters || attendanceFilters;
-      const queryParams = new URLSearchParams();
-      if (params.from) queryParams.append("from", params.from);
-      if (params.to) queryParams.append("to", params.to);
 
-      const res = await api.get(`/staff/attendance/${id}?${queryParams.toString()}`);
-      if (res.data.status === 1) {
-        setAttendanceData(res.data.data);
-        setAttendanceFilters({
-          from: res.data.data.from,
-          to: res.data.data.to
-        });
-      }
+      const params = filters || attendanceFilters;
+      let q = query(collection(db, "attendance"), where("staff_id", "==", id), orderBy("clock_in", "desc"));
+
+      const snapshot = await getDocs(q);
+      const records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
+        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+      }));
+
+      const staffMember = staff.find(s => s.id === id);
+      setAttendanceData({
+        staff: staffMember,
+        records: records,
+        from: params.from || "",
+        to: params.to || ""
+      });
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to fetch attendance", type: "error" });
@@ -236,14 +250,14 @@ export default function StaffManagement() {
 
   const groupedRecords = useMemo(() => {
     if (!attendanceData || !Array.isArray(attendanceData.records)) return [];
-    
+
     const groups = {};
     attendanceData.records.forEach(record => {
       if (!record || !record.date) return;
-      
+
       // Use the date part only for grouping
       const dateKey = (record.date instanceof Date ? record.date.toISOString() : String(record.date)).split('T')[0];
-      
+
       if (!groups[dateKey]) {
         groups[dateKey] = {
           date: record.date,
@@ -253,9 +267,9 @@ export default function StaffManagement() {
           sessions: []
         };
       }
-      
+
       const g = groups[dateKey];
-      
+
       // Update first in for the day summary
       if (record.clock_in) {
         if (!g.first_in || new Date(record.clock_in) < new Date(g.first_in)) {
@@ -272,7 +286,7 @@ export default function StaffManagement() {
       g.total_minutes += (record.total_minutes || 0);
       g.sessions.push(record);
     });
-    
+
     return Object.values(groups).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [attendanceData?.records]);
 
@@ -289,15 +303,13 @@ export default function StaffManagement() {
     if (!editingAttendance) return;
     setUpdatingAttendance(true);
     try {
-      const res = await api.put(`/staff/attendance/${editingAttendance.id}`, {
-        clock_in: editingAttendance.clock_in,
-        clock_out: editingAttendance.clock_out
+      await updateDoc(doc(db, "attendance", editingAttendance.id), {
+        clock_in: new Date(editingAttendance.clock_in),
+        clock_out: new Date(editingAttendance.clock_out)
       });
-      if (res.data.status === 1) {
-        showPopup({ title: "Success", message: "Attendance updated", type: "success" });
-        setEditingAttendance(null);
-        handleViewAttendance(attendanceData.staff.id);
-      }
+      showPopup({ title: "Success", message: "Attendance updated", type: "success" });
+      setEditingAttendance(null);
+      handleViewAttendance(attendanceData.staff.id);
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to update attendance", type: "error" });
@@ -312,14 +324,37 @@ export default function StaffManagement() {
       const staffMember = staff.find(s => s.id === staffId);
       if (!staffMember) throw new Error("Staff member not found");
 
-      const res = await api.get(`/staff/attendance/${staffId}`, {
-        params: { from: attendanceFilters.from, to: attendanceFilters.to }
-      });
-      setAttendanceData({ staff: staffMember, records: res.data.data.records });
+      let q = query(
+        collection(db, "attendance"),
+        where("staff_id", "==", staffId),
+        orderBy("clock_in", "desc")
+      );
+
+      // Apply date filters if available
+      if (attendanceFilters.from) {
+        const fromDate = new Date(attendanceFilters.from);
+        fromDate.setHours(0, 0, 0, 0);
+        q = query(q, where("clock_in", ">=", fromDate));
+      }
+      if (attendanceFilters.to) {
+        const toDate = new Date(attendanceFilters.to);
+        toDate.setHours(23, 59, 59, 999);
+        q = query(q, where("clock_in", "<=", toDate));
+      }
+
+      const snapshot = await getDocs(q);
+      const records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        clock_in: doc.data().clock_in?.toDate ? doc.data().clock_in.toDate() : doc.data().clock_in,
+        clock_out: doc.data().clock_out?.toDate ? doc.data().clock_out.toDate() : doc.data().clock_out,
+      }));
+
+      setAttendanceData({ staff: staffMember, records: records });
       setShowReportModal(true);
     } catch (err) {
       console.error(err);
-      showPopup({ title: "Error", message: "Failed to load report", type: "error" });
+      showPopup({ title: "Error", message: "Failed to load report from Firestore", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -337,11 +372,18 @@ export default function StaffManagement() {
     return `${minutes < 0 ? "-" : ""}${h}h ${m}m`;
   };
 
-  const filteredStaff = staff.filter(s => 
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) || 
-    s.email?.toLowerCase().includes(search.toLowerCase()) ||
-    s.designation?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredStaff = staff.filter(s => {
+    const matchSearch = s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.email?.toLowerCase().includes(search.toLowerCase()) ||
+      s.designation?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchStatus = filterStatus === "all" || 
+      (filterStatus === "active" && s.is_active) || 
+      (filterStatus === "inactive" && !s.is_active);
+
+    return matchSearch && matchStatus;
+  });
+
 
   return (
     <div className="min-h-screen flex flex-col bg-[#071428] font-sans selection:bg-[#D0B079]/30 text-white overflow-x-hidden">
@@ -351,50 +393,55 @@ export default function StaffManagement() {
       <div className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${sidebarOpen ? "lg:pl-72" : "lg:pl-0"}`}>
         <main className="flex-1 pt-28 pb-20 px-6 sm:px-10">
           <div className="max-w-6xl mx-auto">
-            
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-6"
               >
-                <div className="flex items-center gap-3 text-[#D0B079] font-bold text-xs">
-                  <Shield size={14} />
-                  <span>Administrative access</span>
-                </div>
-                <h1 className="text-4xl font-semibold tracking-tight text-white flex items-center gap-4">
+                <h1 className="text-3xl font-semibold tracking-tight text-white flex items-center gap-4 whitespace-nowrap">
                   Staff management
-                  <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-white/40 tracking-wider">
+                  <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-white/40 tracking-wider">
                     {staff.length} Members
                   </span>
                 </h1>
-                <p className="text-white/40 text-lg font-medium max-w-xl">
-                  Register and manage staff accounts for your restaurant. Access control and profile management.
-                </p>
               </motion.div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="relative group w-full sm:w-72">
-                  <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#D0B079] transition-colors" />
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+                <div className="relative group w-full sm:w-64">
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#D0B079] transition-colors" />
                   <input
                     type="text"
                     placeholder="Search directory..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-semibold placeholder-white/20 focus:outline-none focus:border-[#D0B079]/50 transition-all text-sm"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-semibold placeholder-white/20 focus:outline-none focus:border-[#D0B079]/50 transition-all text-xs"
                   />
                 </div>
+
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full sm:w-auto px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white/70 font-semibold focus:outline-none focus:border-[#D0B079]/50 transition-all text-xs cursor-pointer [&>option]:bg-[#071428]"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleOpenModal()}
-                  className="w-full sm:w-auto px-8 py-4 bg-[#D0B079] hover:bg-[#b8965f] text-slate-900 font-semibold rounded-2xl shadow-xl shadow-[#D0B079]/10 transition-all flex items-center justify-center gap-3 text-sm"
+                  className="w-full sm:w-auto px-6 py-3.5 bg-[#D0B079] hover:bg-[#b8965f] text-slate-900 font-bold rounded-2xl shadow-xl shadow-[#D0B079]/10 transition-all flex items-center justify-center gap-2 text-xs whitespace-nowrap"
                 >
-                  <Plus size={18} />
+                  <Plus size={16} />
                   Register staff
                 </motion.button>
               </div>
             </div>
+
 
             <div className="flex flex-col gap-4">
               <AnimatePresence mode="popLayout">
@@ -415,8 +462,8 @@ export default function StaffManagement() {
                       <div className="flex items-center gap-6 flex-1 min-w-0">
                         <div className="relative shrink-0">
                           {item.profile_image ? (
-                            <img 
-                              src={`${BASE_URL}/uploads/${item.profile_image}`} 
+                            <img
+                              src={item.profile_image}
                               alt={item.full_name}
                               className="w-16 h-16 rounded-2xl object-cover border border-white/10 group-hover:scale-105 transition-transform duration-500"
                             />
@@ -453,40 +500,40 @@ export default function StaffManagement() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <button 
-                          onClick={() => handleToggleStatus(item.id, item.is_active)} 
+                        <button
+                          onClick={() => handleToggleStatus(item.id, item.is_active)}
                           className={`relative inline-flex h-9 w-14 items-center rounded-xl transition-colors focus:outline-none ${item.is_active ? 'bg-green-500/20' : 'bg-white/5'} hover:bg-white/10`}
                           title={item.is_active ? "Deactivate user" : "Activate user"}
                         >
                           <span className={`inline-block h-6 w-6 transform rounded-lg transition-transform ${item.is_active ? 'translate-x-7 bg-green-500' : 'translate-x-1 bg-white/30'}`} />
                         </button>
-                        
+
                         <div className="h-8 w-px bg-white/5 mx-2 hidden md:block" />
 
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => handleViewAttendance(item.id)}
                             className="p-2.5 bg-white/5 hover:bg-blue-500/20 text-white/40 hover:text-blue-400 rounded-xl border border-white/5 transition-all"
                             title="View attendance"
                           >
                             <Eye size={18} />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleOpenReport(item.id)}
                             className="p-2.5 bg-white/5 hover:bg-emerald-500/20 text-white/40 hover:text-emerald-400 rounded-xl border border-white/5 transition-all"
                             title="Generate report"
                           >
                             <Printer size={18} />
                           </button>
-                          <button 
-                            onClick={() => handleOpenModal(item)} 
+                          <button
+                            onClick={() => handleOpenModal(item)}
                             className="p-2.5 bg-white/5 hover:bg-[#D0B079]/20 text-white/40 hover:text-[#D0B079] rounded-xl border border-white/5 transition-all"
                             title="Edit profile"
                           >
                             <Edit2 size={18} />
                           </button>
-                          <button 
-                            onClick={() => handleDelete(item.id)} 
+                          <button
+                            onClick={() => handleDelete(item.id)}
                             className="p-2.5 bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-400 rounded-xl border border-white/5 transition-all"
                             title="Delete account"
                           >
@@ -522,7 +569,7 @@ export default function StaffManagement() {
               onClick={() => setShowModal(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-xl"
             />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -547,10 +594,10 @@ export default function StaffManagement() {
 
               <form onSubmit={handleSave} className="p-12 overflow-y-auto max-h-[70vh] custom-scrollbar" autoComplete="off">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-                  
+
                   <div className="lg:col-span-4 flex flex-col items-center">
-                    <div 
-                      className="relative group cursor-pointer" 
+                    <div
+                      className="relative group cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <div className="h-52 w-52 rounded-[3rem] overflow-hidden border-2 border-dashed border-white/20 group-hover:border-[#D0B079] transition-all duration-500 bg-white/[0.02] flex items-center justify-center">
@@ -578,11 +625,10 @@ export default function StaffManagement() {
                               key={g}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, gender: g }))}
-                              className={`py-4 rounded-2xl font-semibold text-xs uppercase tracking-widest transition-all border ${
-                                formData.gender === g 
-                                ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-xl shadow-[#D0B079]/20' 
-                                : 'bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
-                              }`}
+                              className={`py-4 rounded-2xl font-semibold text-xs uppercase tracking-widest transition-all border ${formData.gender === g
+                                  ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-xl shadow-[#D0B079]/20'
+                                  : 'bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
+                                }`}
                             >
                               {g}
                             </button>
@@ -698,7 +744,7 @@ export default function StaffManagement() {
               onClick={() => setShowAttendanceModal(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-xl"
             />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -725,8 +771,8 @@ export default function StaffManagement() {
                 <div className="flex flex-col md:flex-row items-end gap-6 bg-white/[0.02] p-6 rounded-3xl border border-white/5">
                   <div className="space-y-2 flex-1">
                     <label className="text-[10px] font-semibold text-white/30 tracking-widest ml-1">From date</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={attendanceFilters.from}
                       onChange={(e) => setAttendanceFilters(p => ({ ...p, from: e.target.value }))}
                       className="w-full px-5 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all"
@@ -734,14 +780,14 @@ export default function StaffManagement() {
                   </div>
                   <div className="space-y-2 flex-1">
                     <label className="text-[10px] font-semibold text-white/30 tracking-widest ml-1">To date</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={attendanceFilters.to}
                       onChange={(e) => setAttendanceFilters(p => ({ ...p, to: e.target.value }))}
                       className="w-full px-5 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all"
                     />
                   </div>
-                  <button 
+                  <button
                     onClick={() => handleViewAttendance(attendanceData?.staff?.id)}
                     className="px-8 py-3 bg-[#D0B079] text-slate-900 font-semibold rounded-xl text-xs tracking-widest hover:bg-[#b8965f] transition-all"
                   >
@@ -787,7 +833,7 @@ export default function StaffManagement() {
                                   {editingAttendance?.id === session.id ? (
                                     <div className="space-y-1">
                                       <label className="text-[8px] uppercase text-white/40 font-bold">Clock In</label>
-                                      <input 
+                                      <input
                                         type="datetime-local"
                                         value={editingAttendance.clock_in}
                                         onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
@@ -807,7 +853,7 @@ export default function StaffManagement() {
                                   {editingAttendance?.id === session.id ? (
                                     <div className="space-y-1">
                                       <label className="text-[8px] uppercase text-white/40 font-bold">Clock Out</label>
-                                      <input 
+                                      <input
                                         type="datetime-local"
                                         value={editingAttendance.clock_out}
                                         onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
@@ -827,7 +873,7 @@ export default function StaffManagement() {
                                   <div className="flex items-center justify-end gap-4">
                                     {editingAttendance?.id === session.id ? (
                                       <div className="flex items-center gap-2">
-                                        <button 
+                                        <button
                                           onClick={handleUpdateAttendanceRecord}
                                           disabled={updatingAttendance}
                                           className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all disabled:opacity-50"
@@ -835,8 +881,8 @@ export default function StaffManagement() {
                                         >
                                           {updatingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                         </button>
-                                        <button 
-                                          onClick={() => setEditingAttendance(null)} 
+                                        <button
+                                          onClick={() => setEditingAttendance(null)}
                                           className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-white/10 transition-all"
                                           title="Cancel"
                                         >
@@ -846,14 +892,14 @@ export default function StaffManagement() {
                                     ) : (
                                       <>
                                         <div className="text-[#D0B079] font-black text-sm">{formatWorkTime(session.total_minutes)}</div>
-                                        <button 
+                                        <button
                                           onClick={() => {
                                             setEditingAttendance({
                                               id: session.id,
                                               clock_in: toLocalISO(session.clock_in),
                                               clock_out: toLocalISO(session.clock_out)
                                             });
-                                          }} 
+                                          }}
                                           className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-[#D0B079]/20 hover:text-[#D0B079] opacity-40 group-hover:opacity-100 transition-all"
                                           title="Edit this session"
                                         >
@@ -899,18 +945,18 @@ export default function StaffManagement() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl no-print" />
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-              
+
               <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex items-center justify-between no-print">
                 <div>
                   <h2 className="text-2xl font-semibold">Report preview</h2>
                   <p className="text-white/40 text-xs mt-1">Ready for printing or PDF export</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={handlePrint} 
+                  <button
+                    onClick={handlePrint}
                     className="px-6 py-3 bg-[#D0B079] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-[#b8965f] transition-all"
                   >
                     <Printer size={14} /> Print / Save as PDF

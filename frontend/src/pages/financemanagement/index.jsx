@@ -3,7 +3,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import api from "../../api.js";
+import { db } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, where, orderBy, getDocs, limit, startAfter, Timestamp } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PoundSterling, TrendingUp, TrendingDown, Wallet,
@@ -103,25 +104,60 @@ const FinanceManagement = () => {
     setLoading(true);
     if (page === 1) setStatsLoading(true);
     try {
-      const params = new URLSearchParams({
-        startDate,
-        endDate,
-        page,
-        limit: LIMIT,
-      });
-      if (search) params.append("search", search);
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const restaurantId = String(user.restaurant_id || "");
 
-      const res = await api.get(`/finance-summary?${params.toString()}`);
-      if (res.data.status === 1) {
-        const d = res.data.data;
-        setSummary({
-          gross_intake: d.gross_intake,
-          refund_outflow: d.refund_outflow,
-          net_liquidity: d.net_liquidity,
-        });
-        setTransactions(d.transactions || []);
-        setPagination(d.pagination || { total: 0, totalPages: 1 });
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      let q = query(
+        collection(db, "orders"),
+        where("created_at", ">=", start),
+        where("created_at", "<=", end),
+        orderBy("created_at", "desc")
+      );
+
+      if (restaurantId) {
+        q = query(q, where("restaurant_id", "==", restaurantId));
       }
+
+      const snapshot = await getDocs(q);
+      const allData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate ? doc.data().created_at.toDate() : new Date(doc.data().created_at)
+      }));
+
+      // Calculate Summary
+      let gross = 0;
+      let refunds = 0;
+      allData.forEach(tx => {
+        const total = parseFloat(tx.grand_total || 0);
+        if ([2, 5, 6].includes(Number(tx.order_status))) {
+          refunds += total;
+        } else {
+          gross += total;
+        }
+      });
+
+      setSummary({
+        gross_intake: gross,
+        refund_outflow: refunds,
+        net_liquidity: gross - refunds,
+      });
+
+      // Pagination local slice
+      const startIdx = (page - 1) * LIMIT;
+      const paginated = allData.slice(startIdx, startIdx + LIMIT);
+
+      setTransactions(paginated);
+      setPagination({
+        total: allData.length,
+        totalPages: Math.ceil(allData.length / LIMIT) || 1
+      });
+
     } catch (err) {
       console.error("Finance fetch failed:", err);
     } finally {
@@ -148,33 +184,27 @@ const FinanceManagement = () => {
       showPopup({ title: "Invalid Amount", message: "Please enter an amount greater than zero.", type: "error" });
       return;
     }
-    
-    if (amount > selectedTx.remaining + 0.01) {
-      showPopup({ title: "Amount Exceeded", message: `Cannot refund more than the remaining balance (£${selectedTx.remaining}).`, type: "error" });
-      return;
-    }
 
     try {
       setRefunding(true);
-      const res = await api.post("/order/refund", { 
-        order_number: selectedTx.order_number,
-        amount: amount
+      const orderRef = doc(db, "orders", selectedTx.id);
+      
+      await updateDoc(orderRef, {
+        order_status: 6, // Refunded
+        refunded_amount: amount,
+        updated_at: new Date()
       });
       
-      if (res.data.status === 1) {
-        showPopup({
-          title: "Refund Successful",
-          message: `Issued £${amount.toFixed(2)} refund for order #${selectedTx.order_number}.`,
-          type: "success"
-        });
-        setRefundModalOpen(false);
-        fetchData();
-      } else {
-        showPopup({ title: "Refund Failed", message: res.data.message || "Failed to process refund.", type: "error" });
-      }
+      showPopup({
+        title: "Refund Successful",
+        message: `Issued £${amount.toFixed(2)} refund for order #${selectedTx.order_number}.`,
+        type: "success"
+      });
+      setRefundModalOpen(false);
+      fetchData();
     } catch (err) {
       console.error("Refund error:", err);
-      showPopup({ title: "System Error", message: err.response?.data?.message || "Something went wrong.", type: "error" });
+      showPopup({ title: "System Error", message: "Failed to process refund in Firestore.", type: "error" });
     } finally {
       setRefunding(false);
     }
@@ -325,8 +355,8 @@ const FinanceManagement = () => {
                                   {txType}
                                 </span>
                               </td>
-                              <td className="px-8 py-6 text-right font-medium text-white/40">£{formatAmount(tx.gross_amount)}</td>
-                              <td className="px-8 py-6 text-right font-semibold text-white">£{formatAmount(tx.amount - (tx.refunded_amount || 0))}</td>
+                              <td className="px-8 py-6 text-right font-medium text-white/40">£{formatAmount(tx.grand_total)}</td>
+                              <td className="px-8 py-6 text-right font-semibold text-white">£{formatAmount(tx.grand_total - (tx.refunded_amount || 0))}</td>
                               <td className="px-8 py-6">
                                 <div className="flex items-center justify-center gap-2.5">
                                   <div className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`} />

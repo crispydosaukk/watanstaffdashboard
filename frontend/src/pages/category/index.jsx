@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Trash2, GripVertical, Search, Plus, X, Upload, Save, Check, RefreshCw, Store, Zap, ChevronRight, Globe, Image as ImageIcon, Info, Loader2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { usePopup } from "../../context/PopupContext";
+import { db, storage } from "../../lib/firebase";
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy, writeBatch } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function Category() {
   const { showPopup } = usePopup();
@@ -56,21 +59,25 @@ export default function Category() {
   // FETCH ALL CATEGORIES (SORT SAFE)
   // =============================
   useEffect(() => {
-    if (!API || !token) return;
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const restaurantId = String(user.restaurant_id || "");
 
-    fetch(`${API}/category`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) =>
-        setCategories(
-          Array.isArray(data)
-            ? [...data].sort((a, b) => a.sort_order - b.sort_order)
-            : []
-        )
-      )
-      .catch((err) => console.error("Error fetching categories:", err));
-  }, [API, token]);
+    const q = restaurantId 
+      ? query(collection(db, "categories"), where("restaurant_id", "==", restaurantId), orderBy("sort_order", "asc"))
+      : query(collection(db, "categories"), orderBy("sort_order", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const cats = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCategories(cats);
+    }, (err) => {
+      console.error("Error fetching categories:", err);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // =============================
   // SEARCH DEBOUNCE
@@ -91,16 +98,17 @@ export default function Category() {
       setGlobalSearchResults([]);
       return;
     }
-    const t = setTimeout(() => {
-      fetch(`${API}/category/search-global?q=${encodeURIComponent(globalSearchQuery)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => setGlobalSearchResults(Array.isArray(data) ? data : []))
-        .catch(err => console.error(err));
+    const t = setTimeout(async () => {
+      try {
+        const qStr = globalSearchQuery.trim().toLowerCase();
+        const snap = await getDocs(collection(db, "categories"));
+        const all = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const filtered = all.filter(c => c.name?.toLowerCase().includes(qStr));
+        setGlobalSearchResults(filtered);
+      } catch (err) { console.error(err); }
     }, 300);
     return () => clearTimeout(t);
-  }, [globalSearchQuery, showSearchModal, API, token]);
+  }, [globalSearchQuery, showSearchModal]);
 
   // =============================
   // ADMIN CATEGORY SEARCH
@@ -110,30 +118,31 @@ export default function Category() {
       setIntegrateResults([]);
       return;
     }
-    const t = setTimeout(() => {
-      fetch(`${API}/category/admin-search-global?q=${encodeURIComponent(integrateSearch)}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => setIntegrateResults(Array.isArray(data) ? data : []))
-        .catch(err => console.error(err));
+    const t = setTimeout(async () => {
+      try {
+        const qStr = integrateSearch.trim().toLowerCase();
+        const snap = await getDocs(collection(db, "categories"));
+        const all = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIntegrateResults(all.filter(c => c.name?.toLowerCase().includes(qStr)));
+      } catch (err) { console.error(err); }
     }, 300);
     return () => clearTimeout(t);
-  }, [integrateSearch, showIntegrateModal, API, token]);
+  }, [integrateSearch, showIntegrateModal]);
 
   // =============================
   // FETCH RESTAURANTS FOR INTEGRATE
   // =============================
   useEffect(() => {
     if (showIntegrateModal && isSuperAdmin) {
-      fetch(`${API}/restaurants`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => setRestaurants(data.data || []))
-        .catch(err => console.error(err));
+      const fetchRest = async () => {
+        try {
+          const snap = await getDocs(collection(db, "restaurants"));
+          setRestaurants(snap.docs.map(doc => ({ user_id: doc.id, ...doc.data() })));
+        } catch (e) {}
+      };
+      fetchRest();
     }
-  }, [showIntegrateModal, isSuperAdmin, API, token]);
+  }, [showIntegrateModal, isSuperAdmin]);
 
   const handleIntegrate = async () => {
     if (!selectedSourceCat || !targetRestaurantId) {
@@ -320,36 +329,29 @@ export default function Category() {
     );
     if (exists) return showPopup({ title: "Duplicate", message: "Name already exists", type: "warning" });
 
-    const fd = new FormData();
-    fd.append("name", nameTrim);
-    if (form.image) fd.append("image", form.image);
-
     try {
-      let res;
-      if (!isEdit) {
-        res = await fetch(`${API}/category`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: fd,
-        });
-        const newData = await res.json();
-        setCategories((prev) => [...prev, newData].sort((a, b) => a.sort_order - b.sort_order));
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const updates = { 
+        name: nameTrim,
+        restaurant_id: String(user.restaurant_id || ""),
+        updated_at: new Date()
+      };
 
-        showPopup({
-          title: "Added",
-          message: `Category "${nameTrim}" added. Import products?`,
-          type: "confirm",
-          onConfirm: async () => { await handleImportProducts(nameTrim, newData.id); }
-        });
-      } else {
-        res = await fetch(`${API}/category/${form.id}`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` },
-          body: fd,
-        });
-        const updated = await res.json();
-        setCategories((prev) => prev.map((c) => c.id === form.id ? { ...c, ...updated } : c).sort((a, b) => a.sort_order - b.sort_order));
+      if (form.image) {
+        const imageRef = ref(storage, `categories/${Date.now()}_${form.image.name}`);
+        await uploadBytes(imageRef, form.image);
+        updates.image = await getDownloadURL(imageRef);
+      }
+
+      if (isEdit) {
+        await updateDoc(doc(db, "categories", form.id), updates);
         showPopup({ title: "Success", message: "Updated successfully", type: "success" });
+      } else {
+        updates.created_at = new Date();
+        updates.status = 1;
+        updates.sort_order = categories.length + 1;
+        await addDoc(collection(db, "categories"), updates);
+        showPopup({ title: "Added", message: `Category "${nameTrim}" added.`, type: "success" });
       }
 
       setShowModal(false);
@@ -358,7 +360,7 @@ export default function Category() {
       setPreviewUrl("");
     } catch (err) {
       console.error("Save error:", err);
-      showPopup({ title: "Error", message: "Internal server error", type: "error" });
+      showPopup({ title: "Error", message: "Operation failed", type: "error" });
     }
   };
 
@@ -376,11 +378,7 @@ export default function Category() {
       type: "confirm",
       onConfirm: async () => {
         try {
-          await fetch(`${API}/category/${id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setCategories((prev) => prev.filter((c) => c.id !== id));
+          await deleteDoc(doc(db, "categories", id));
           showPopup({ title: "Deleted", message: "Category node purged.", type: "success" });
         } catch (e) {
           showPopup({ title: "Error", message: "Purge failed", type: "error" });
@@ -391,25 +389,24 @@ export default function Category() {
 
   const handleToggleStatus = async (cat) => {
     const newStatus = cat.status === 1 ? 0 : 1;
-    setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, status: newStatus } : c));
     try {
-      await fetch(`${API}/category/${cat.id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: cat.name, status: newStatus }),
-      });
-    } catch (err) { }
+      await updateDoc(doc(db, "categories", cat.id), { status: newStatus });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const saveOrder = async (newList) => {
-    const payload = newList.map((item, index) => ({ id: item.id, sort_order: index + 1 }));
+    const batch = writeBatch(db);
+    newList.forEach((item, index) => {
+      const ref = doc(db, "categories", item.id);
+      batch.update(ref, { sort_order: index + 1 });
+    });
     try {
-      await fetch(`${API}/category/reorder`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ order: payload }),
-      });
-    } catch (err) { }
+      await batch.commit();
+    } catch (err) {
+      console.error("Failed to reorder", err);
+    }
   };
 
   const onDragEnd = (result) => {
@@ -428,7 +425,7 @@ export default function Category() {
   };
 
   const CategoryCard = ({ item }) => {
-    const imgUrl = item.image ? `${API_BASE}/uploads/${item.image}` : null;
+    const imgUrl = item.image || null;
     const status = item.status === 1;
     return (
       <div className={`bg-white/[0.03] backdrop-blur-md border ${status ? 'border-white/[0.08]' : 'border-rose-500/20 opacity-60'} rounded-[1.5rem] p-5 shadow-2xl transition-all`}>
@@ -594,7 +591,7 @@ export default function Category() {
                                       <div className="px-6 py-2.5 flex items-center">
                                         <div className="w-11 h-11 rounded-xl overflow-hidden bg-black/20 border border-white/10 shadow-inner group flex-shrink-0">
                                           {item.image ? (
-                                            <img src={`${API_BASE}/uploads/${item.image}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                                            <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
                                           ) : (
                                             <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-white/20">NO IMAGE</div>
                                           )}
@@ -685,7 +682,7 @@ export default function Category() {
                   >
                     <input type="file" id="imageUp" className="hidden" accept="image/*" onChange={e => setForm({ ...form, image: e.target.files[0] })} />
                     {previewUrl || form.oldImage ? (
-                      <img src={previewUrl || `${API_BASE}/uploads/${form.oldImage}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                      <img src={previewUrl || form.oldImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
                     ) : (
                       <>
                         <Plus size={32} className="text-white/10 group-hover:text-yellow-400 transition-colors" />
