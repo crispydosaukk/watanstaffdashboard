@@ -233,44 +233,32 @@ export default function AllStaffPage() {
 
   const groupedRecords = useMemo(() => {
     if (!attendanceData || !Array.isArray(attendanceData.records)) return [];
-    
+
     const groups = {};
     attendanceData.records.forEach(record => {
       if (!record || !record.date) return;
-      
-      // Use the date part only for grouping
-      const dateKey = (record.date instanceof Date ? record.date.toISOString() : String(record.date)).split('T')[0];
-      
+
+      // Group by local date string to ensure sessions from the same local day stay together
+      const dateObj = record.date instanceof Date ? record.date : new Date(record.date);
+      const dateKey = dateObj.toLocaleDateString('en-CA'); // YYYY-MM-DD
+
       if (!groups[dateKey]) {
         groups[dateKey] = {
-          date: record.date,
-          first_in: record.clock_in,
-          last_out: record.clock_out,
+          date: dateObj,
+          dateKey: dateKey,
           total_minutes: 0,
           sessions: []
         };
       }
-      
-      const g = groups[dateKey];
-      
-      // Update first in for the day summary
-      if (record.clock_in) {
-        if (!g.first_in || new Date(record.clock_in) < new Date(g.first_in)) {
-          g.first_in = record.clock_in;
-        }
-      }
-      // Update last out for the day summary
-      if (record.clock_out) {
-        if (!g.last_out || new Date(record.clock_out) > new Date(g.last_out)) {
-          g.last_out = record.clock_out;
-        }
-      }
 
+      const g = groups[dateKey];
       g.total_minutes += (record.total_minutes || 0);
       g.sessions.push(record);
     });
-    
-    return Object.values(groups).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return Object.values(groups).sort((a, b) => {
+      return new Date(b.dateKey).getTime() - new Date(a.dateKey).getTime();
+    });
   }, [attendanceData?.records]);
 
   const toLocalISO = (dateStr) => {
@@ -681,147 +669,208 @@ export default function AllStaffPage() {
       <AnimatePresence>
         {showAttendanceModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowAttendanceModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
-            
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 40 }} transition={{ type: "spring", damping: 25 }}
-              className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
-              
-              <div className="bg-white/5 px-10 py-8 border-b border-white/10 flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAttendanceModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 40 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="bg-white/5 px-10 py-8 border-b border-white/10 flex items-center justify-between shrink-0">
                 <div>
                   <div className="flex items-center gap-3 text-[#D0B079] font-bold tracking-wider mb-2">
                     <Clock size={14} />
-                    <span className="text-[10px] font-semibold tracking-widest">Time tracking log</span>
+                    <span className="text-[10px] font-semibold tracking-widest uppercase">Attendance Intelligence</span>
                   </div>
                   <h2 className="text-3xl font-semibold tracking-tight">
-                    {attendanceData?.staff?.full_name}'s attendance
+                    {attendanceData?.staff?.full_name}'s Activity
                   </h2>
                 </div>
-                <button onClick={() => setShowAttendanceModal(false)} className="p-4 bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-500 rounded-2xl transition-all">
-                  <X size={24} />
-                </button>
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex items-center gap-6 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-0.5">Total Hours</p>
+                      <p className="text-lg font-black text-[#D0B079]">
+                        {formatWorkTime(attendanceData?.records?.reduce((sum, r) => sum + (r.total_minutes || 0), 0))}
+                      </p>
+                    </div>
+                    <div className="w-px h-8 bg-white/10" />
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-0.5">Sessions</p>
+                      <p className="text-lg font-black text-white">{attendanceData?.records?.length || 0}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAttendanceModal(false)} className="p-4 bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-500 rounded-2xl transition-all">
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
 
-              <div className="p-10 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
-                <div className="flex flex-col md:flex-row items-end gap-6 bg-white/[0.02] p-6 rounded-3xl border border-white/5">
-                  <div className="space-y-2 flex-1">
-                    <label className="text-[10px] font-semibold text-white/30 tracking-widest ml-1">From date</label>
-                    <input type="date" value={attendanceFilters.from} onChange={(e) => setAttendanceFilters(p => ({ ...p, from: e.target.value }))}
-                      className="w-full px-5 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all" />
+              <div className="p-10 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row items-end gap-6 bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                  <div className="space-y-2 flex-1 w-full">
+                    <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Start Date</label>
+                    <input
+                      type="date"
+                      value={attendanceFilters.from}
+                      onChange={(e) => setAttendanceFilters(p => ({ ...p, from: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-4 focus:ring-[#D0B079]/5 transition-all"
+                    />
                   </div>
-                  <div className="space-y-2 flex-1">
-                    <label className="text-[10px] font-semibold text-white/30 tracking-widest ml-1">To date</label>
-                    <input type="date" value={attendanceFilters.to} onChange={(e) => setAttendanceFilters(p => ({ ...p, to: e.target.value }))}
-                      className="w-full px-5 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all" />
+                  <div className="space-y-2 flex-1 w-full">
+                    <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">End Date</label>
+                    <input
+                      type="date"
+                      value={attendanceFilters.to}
+                      onChange={(e) => setAttendanceFilters(p => ({ ...p, to: e.target.value }))}
+                      className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-4 focus:ring-[#D0B079]/5 transition-all"
+                    />
                   </div>
-                  <button onClick={() => handleViewAttendance(attendanceData?.staff?.id, attendanceFilters)}
-                    className="px-8 py-3 bg-[#D0B079] text-slate-900 font-semibold rounded-xl text-xs tracking-widest hover:bg-[#b8965f] transition-all">
-                    Apply filter
+                  <button
+                    onClick={() => handleViewAttendance(attendanceData?.staff?.id, attendanceFilters)}
+                    className="w-full md:w-auto px-10 py-4 bg-[#D0B079] text-slate-900 font-bold rounded-2xl text-xs tracking-widest hover:bg-[#b8965f] shadow-xl shadow-[#D0B079]/10 transition-all active:scale-95"
+                  >
+                    REFRESH DATA
                   </button>
                 </div>
 
-                <div className="overflow-hidden rounded-3xl border border-white/5 bg-white/[0.01]">
+                {/* Table Container */}
+                <div className="overflow-hidden rounded-[2.5rem] border border-white/5 bg-white/[0.01] shadow-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-white/5">
-                        <th className="px-6 py-4 text-[10px] font-semibold tracking-widest text-white/40">Date</th>
-                        <th className="px-6 py-4 text-[10px] font-semibold tracking-widest text-white/40">Clock in</th>
-                        <th className="px-6 py-4 text-[10px] font-semibold tracking-widest text-white/40">Clock out</th>
-                        <th className="px-6 py-4 text-[10px] font-semibold tracking-widest text-white/40 text-right">Work hours</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Timeline</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-In Event</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-Out Event</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase text-right">Duration</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {loadingAttendance ? (
-                        <tr><td colSpan="4" className="px-6 py-20 text-center"><Loader2 className="animate-spin inline-block text-[#D0B079] mb-4" size={40} /><p className="text-white/20 font-bold tracking-widest text-xs">Fetching records...</p></td></tr>
+                        <tr>
+                          <td colSpan="4" className="px-6 py-32 text-center">
+                            <Loader2 className="animate-spin inline-block text-[#D0B079] mb-4" size={48} />
+                            <p className="text-white/20 font-black tracking-[0.2em] text-xs uppercase">Synchronizing Logs...</p>
+                          </td>
+                        </tr>
                       ) : groupedRecords.length > 0 ? (
                         groupedRecords.map((group) => (
-                          <React.Fragment key={group.date}>
+                          <React.Fragment key={group.dateKey}>
+                            {/* Day Header Row */}
+                            <tr className="bg-[#D0B079]/5 border-y border-[#D0B079]/10">
+                              <td colSpan="3" className="px-8 py-4">
+                                <div className="flex items-center gap-3">
+                                  <Calendar size={14} className="text-[#D0B079]" />
+                                  <span className="text-sm font-black text-white tracking-wide">
+                                    {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                                  </span>
+                                  <span className="px-2 py-0.5 bg-[#D0B079]/20 text-[#D0B079] text-[9px] font-black rounded-md uppercase tracking-widest">
+                                    {group.sessions.length} {group.sessions.length === 1 ? 'Session' : 'Sessions'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-8 py-4 text-right">
+                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mr-3">Day Total:</span>
+                                <span className="text-sm font-black text-[#D0B079]">{formatWorkTime(group.total_minutes)}</span>
+                              </td>
+                            </tr>
+                            
+                            {/* Session Rows */}
                             {group.sessions.map((session, sIdx) => (
-                              <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group">
-                                {sIdx === 0 && (
-                                  <td className="px-6 py-4 border-b border-white/5" rowSpan={group.sessions.length}>
-                                    <div className="text-white font-bold">{new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                                    {group.sessions.length > 1 && (
-                                      <div className="mt-1 flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079]/30" />
-                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{group.sessions.length} sessions recorded</span>
-                                      </div>
-                                    )}
-                                  </td>
-                                )}
-                                <td className="px-6 py-4 border-b border-white/5">
+                              <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group relative">
+                                <td className="px-8 py-5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-1.5 h-8 bg-white/5 rounded-full" />
+                                    <span className="text-white/20 font-black text-[10px] tracking-widest uppercase">Session #{group.sessions.length - sIdx}</span>
+                                  </div>
+                                </td>
+                                <td className="px-8 py-5">
                                   {editingAttendance?.id === session.id ? (
                                     <div className="space-y-1">
-                                      <label className="text-[8px] uppercase text-white/40 font-bold">Clock In</label>
-                                      <input 
+                                      <input
                                         type="datetime-local"
                                         value={editingAttendance.clock_in}
                                         onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
-                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-lg px-2 py-1.5 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079]"
+                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-3 py-2 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                      <span className="text-green-400 font-mono text-sm">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
+                                      <span className="text-white font-mono text-base font-medium">
                                         {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </span>
                                     </div>
                                   )}
                                 </td>
-                                <td className="px-6 py-4 border-b border-white/5">
+                                <td className="px-8 py-5">
                                   {editingAttendance?.id === session.id ? (
                                     <div className="space-y-1">
-                                      <label className="text-[8px] uppercase text-white/40 font-bold">Clock Out</label>
-                                      <input 
+                                      <input
                                         type="datetime-local"
                                         value={editingAttendance.clock_out}
                                         onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
-                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-lg px-2 py-1.5 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079]"
+                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-3 py-2 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
                                       />
                                     </div>
                                   ) : (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                      <span className="text-rose-400 font-mono text-sm">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
+                                      <span className="text-white font-mono text-base font-medium">
                                         {session.clock_out ? new Date(session.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </span>
                                     </div>
                                   )}
                                 </td>
-                                <td className="px-6 py-4 text-right border-b border-white/5">
-                                  <div className="flex items-center justify-end gap-4">
+                                <td className="px-8 py-5 text-right">
+                                  <div className="flex items-center justify-end gap-6">
                                     {editingAttendance?.id === session.id ? (
                                       <div className="flex items-center gap-2">
-                                        <button 
+                                        <button
                                           onClick={handleUpdateAttendanceRecord}
                                           disabled={updatingAttendance}
-                                          className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all disabled:opacity-50"
+                                          className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/30 transition-all disabled:opacity-50"
                                           title="Save changes"
                                         >
-                                          {updatingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                          {updatingAttendance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                         </button>
-                                        <button 
-                                          onClick={() => setEditingAttendance(null)} 
-                                          className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-white/10 transition-all"
+                                        <button
+                                          onClick={() => setEditingAttendance(null)}
+                                          className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 transition-all"
                                           title="Cancel"
                                         >
-                                          <X size={14} />
+                                          <X size={16} />
                                         </button>
                                       </div>
                                     ) : (
                                       <>
-                                        <div className="text-[#D0B079] font-black text-sm">{formatWorkTime(session.total_minutes)}</div>
-                                        <button 
+                                        <div className="flex flex-col items-end">
+                                          <span className={`text-sm font-black tracking-tight ${session.total_minutes === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
+                                            {formatWorkTime(session.total_minutes)}
+                                          </span>
+                                          {session.total_minutes === 0 && (
+                                            <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">Short Session</span>
+                                          )}
+                                        </div>
+                                        <button
                                           onClick={() => {
                                             setEditingAttendance({
                                               id: session.id,
                                               clock_in: toLocalISO(session.clock_in),
                                               clock_out: toLocalISO(session.clock_out)
                                             });
-                                          }} 
-                                          className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-[#D0B079]/20 hover:text-[#D0B079] opacity-40 group-hover:opacity-100 transition-all"
+                                          }}
+                                          className="p-2.5 bg-white/5 text-white/20 rounded-xl hover:bg-[#D0B079]/20 hover:text-[#D0B079] hover:border-[#D0B079]/30 border border-transparent transition-all opacity-0 group-hover:opacity-100"
                                           title="Edit this session"
                                         >
                                           <Edit2 size={14} />
@@ -832,15 +881,18 @@ export default function AllStaffPage() {
                                 </td>
                               </tr>
                             ))}
+                            {/* Spacer between days */}
+                            <tr className="h-4"><td colSpan="4"></td></tr>
                           </React.Fragment>
                         ))
                       ) : (
-                        <tr><td colSpan="4" className="px-6 py-20 text-center text-white/20 font-bold tracking-widest text-xs">No attendance records found for this period</td></tr>
+                        <tr>
+                          <td colSpan="4" className="px-6 py-32 text-center text-white/10 font-black tracking-[0.2em] text-xs uppercase">
+                            No logs found for this period
+                          </td>
+                        </tr>
                       )}
                     </tbody>
-                    {attendanceData?.records?.length > 0 && (
-                      <tfoot><tr className="bg-white/5 font-semibold"><td colSpan="3" className="px-6 py-6 text-right text-white/40 tracking-widest text-[10px]">Total hours worked</td><td className="px-6 py-6 text-right text-2xl text-[#D0B079]">{formatWorkTime(attendanceData.records.reduce((sum, r) => sum + (r.total_minutes || 0), 0))}</td></tr></tfoot>
-                    )}
                   </table>
                 </div>
               </div>
