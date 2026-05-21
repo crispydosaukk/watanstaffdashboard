@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
-import { db, secondaryAuth } from "../../lib/firebase";
+import { db, secondaryAuth, functionsInstance } from "../../lib/firebase";
 import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, orderBy, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Users as UsersIcon, ChevronDown, Check, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
@@ -109,6 +110,8 @@ export default function Users() {
   const [eEmail, setEEmail] = useState("");
   const [ePassword, setEPassword] = useState("");
   const [eRoleIds, setERoleIds] = useState([]);
+  const [oldEmail, setOldEmail] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [updating, setUpdating] = useState(false);
   const [showCPassword, setShowCPassword] = useState(false);
   const [showEPassword, setShowEPassword] = useState(false);
@@ -209,6 +212,8 @@ export default function Users() {
     setEEmail(u.email || "");
     setEPassword(u.password || "");
     setERoleIds(u.role_id ? [u.role_id] : []);
+    setOldEmail(u.email || "");
+    setOldPassword(u.password || "");
     setOpenEdit(true);
   };
 
@@ -218,12 +223,51 @@ export default function Users() {
     try {
       setUpdating(true);
       const role_id = eRoleIds[0] || null;
-      const data = { name: eName, email: eEmail, role_id, updated_at: new Date() };
-      if (ePassword.trim()) data.password = ePassword.trim();
+
+      let finalEmail = eEmail.trim();
+      let finalPassword = ePassword.trim();
+      let authSyncFailed = false;
+      let authSyncMessage = "";
+
+      // 1. Check if Email or Password changed - if so, sync with Firebase Auth via Cloud Function
+      const emailChanged = finalEmail !== oldEmail.trim();
+      const passwordChanged = finalPassword !== oldPassword.trim() && finalPassword !== "";
+
+      if (emailChanged || passwordChanged) {
+        try {
+          const updateFn = httpsCallable(functionsInstance, 'updateUserCredentials');
+          
+          const payload = { uid: eId, email: finalEmail };
+          if (passwordChanged) payload.password = finalPassword;
+
+          await updateFn(payload);
+          
+        } catch (authErr) {
+          console.error("Auth Sync Error:", authErr);
+          authSyncFailed = true;
+          authSyncMessage = authErr.message;
+          // Revert so Firestore stays in sync with actual Auth state
+          finalEmail = oldEmail.trim();
+          finalPassword = oldPassword.trim();
+        }
+      }
+
+      // 2. Update Firestore Profile
+      const data = { name: eName, email: finalEmail, role_id, updated_at: new Date() };
+      if (finalPassword) data.password = finalPassword;
       
       await updateDoc(doc(db, "users", eId), data);
       setOpenEdit(false);
-      showPopup({ title: "Success", message: "User updated successfully.", type: "success" });
+
+      if (authSyncFailed) {
+        showPopup({ 
+          title: "Update Failed", 
+          message: `Could not update credentials: ${authSyncMessage}. If it says 'user-not-found', this user was deleted from Auth and must be recreated.`, 
+          type: "warning" 
+        });
+      } else {
+        showPopup({ title: "Success", message: "User profile updated successfully.", type: "success" });
+      }
     } catch (e) {
       showPopup({ title: "Error", message: e.message || "Failed to update user", type: "error" });
     } finally {
@@ -239,8 +283,17 @@ export default function Users() {
       type: "confirm",
       onConfirm: async () => {
         try {
+          // 1. Delete from Firebase Auth first via Cloud Function (so email can be reused)
+          try {
+            const deleteAuthFn = httpsCallable(functionsInstance, 'deleteAuthUser');
+            await deleteAuthFn({ uid: u.id });
+          } catch (authErr) {
+            console.warn("Auth deletion skipped or failed:", authErr.message);
+          }
+
+          // 2. Then delete from Firestore
           await deleteDoc(doc(db, "users", u.id));
-          showPopup({ title: "Deleted", message: "User has been removed.", type: "success" });
+          showPopup({ title: "Deleted", message: "User has been removed from system.", type: "success" });
         } catch (e) {
           showPopup({ title: "Error", message: e.message || "Failed to delete user", type: "error" });
         }

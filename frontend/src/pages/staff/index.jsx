@@ -4,9 +4,10 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { usePopup } from "../../context/PopupContext";
-import { db, storage, secondaryAuth } from "../../lib/firebase";
+import { db, storage, secondaryAuth, functionsInstance } from "../../lib/firebase";
 import { collection, query, onSnapshot, doc, getDoc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy, setDoc, writeBatch } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Shield, Search, Plus, Briefcase, Mail, Phone, Eye, EyeOff, Printer, Edit2, Trash2, Users, UserCheck, X, Camera, Calendar, Loader2, Save, Clock, User, PoundSterling, Store } from "lucide-react";
@@ -66,6 +67,8 @@ export default function StaffManagement() {
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
+  const [oldEmail, setOldEmail] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -117,6 +120,8 @@ export default function StaffManagement() {
         gender: item.gender || "Male",
         dob: item.dob || "",
       });
+      setOldEmail(item.email || "");
+      setOldPassword(item.password || "");
       setImagePreview(item.profile_image || null);
     } else {
       setEditingId(null);
@@ -202,6 +207,29 @@ export default function StaffManagement() {
       }
 
       if (editingId) {
+        // Sync with Firebase Auth if email or password changed
+        const emailChanged = updates.email !== oldEmail;
+        const passwordChanged = updates.password && updates.password !== oldPassword;
+
+        if (emailChanged || passwordChanged) {
+          try {
+            const updateFn = httpsCallable(functionsInstance, 'updateUserCredentials');
+            const payload = { uid: editingId, email: updates.email };
+            if (passwordChanged) payload.password = updates.password;
+
+            await updateFn(payload);
+          } catch (authSyncErr) {
+            console.error("Auth Sync Error:", authSyncErr);
+            // Revert credentials for consistency
+            updates.email = oldEmail;
+            if (updates.password) updates.password = oldPassword;
+            showPopup({
+              title: "Auth Sync Warning",
+              message: `Could not update login credentials: ${authSyncErr.message}. Profile updated without changing login email/password.`,
+              type: "warning"
+            });
+          }
+        }
         await updateDoc(doc(db, "staff", editingId), updates);
       } else {
         try {

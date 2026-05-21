@@ -19,9 +19,11 @@ import RequirePerm from "./components/RequirePerm.jsx";
 import AllStaffPage from "./pages/allstaff/index.jsx";
 import StaffManagement from "./pages/staff/index.jsx";
 import NotificationsPage from "./pages/notifications/index.jsx";
+import PrivacyPolicy from "./pages/privacy-policy/index.jsx";
+import TermsConditions from "./pages/terms-conditions/index.jsx";
+import ContactSupport from "./pages/contact-support/index.jsx";
 import { getSafePath } from "./utils/perm";
 import { useAuth } from "./context/AuthContext";
-
 function PrivateRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;
@@ -45,6 +47,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/contact-support" element={<ContactSupport />} />
 
         <Route
           path="/dashboard"

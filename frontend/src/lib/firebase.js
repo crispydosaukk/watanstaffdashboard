@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -25,6 +26,7 @@ export const storage = getStorage(app);
 // Initialize a secondary app for Admin User Creation without logging out the current admin
 const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
 export const secondaryAuth = getAuth(secondaryApp);
+export const functionsInstance = getFunctions(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;
