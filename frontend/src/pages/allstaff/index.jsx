@@ -101,6 +101,17 @@ export default function AllStaffPage() {
     return roleId === "6" || roleTitle === "super admin";
   }, [userData]);
 
+  // ✅ Anyone with the 'all_staff' permission (or super admin) can use all filters freely
+  const canFilterAll = useMemo(() => {
+    if (isSuper) return true;
+    try {
+      const perms = JSON.parse(localStorage.getItem("perms") || "[]");
+      return perms.map(p => String(p).toLowerCase()).includes("all_staff");
+    } catch {
+      return false;
+    }
+  }, [isSuper]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -201,12 +212,20 @@ export default function AllStaffPage() {
       const roleId = String(userData.role_id || "");
       const roleTitle = String(userData.role_title || userData.role || "").toLowerCase().trim();
       const userIsSuper = roleId === "6" || roleTitle === "super admin";
-      
-      if (!userIsSuper && userData?.restaurant_id) {
-        setFilterRestaurant(String(userData.restaurant_id));
-        hasInitialized.current = true;
-      } else if (userIsSuper) {
+
+      // Check all_staff permission
+      let hasAllStaffPerm = false;
+      try {
+        const perms = JSON.parse(localStorage.getItem("perms") || "[]");
+        hasAllStaffPerm = perms.map(p => String(p).toLowerCase()).includes("all_staff");
+      } catch { /* ignore */ }
+
+      // Super admins and users with all_staff perm see all restaurants by default
+      if (userIsSuper || hasAllStaffPerm) {
         setFilterRestaurant("all");
+        hasInitialized.current = true;
+      } else if (userData?.restaurant_id) {
+        setFilterRestaurant(String(userData.restaurant_id));
         hasInitialized.current = true;
       }
     }
@@ -715,9 +734,9 @@ export default function AllStaffPage() {
                 )}
               </div>
               <select value={filterRestaurant} onChange={(e) => setFilterRestaurant(e.target.value)}
-                disabled={!isSuper}
+                disabled={!canFilterAll}
                 className="px-4 py-3 rounded-2xl text-sm bg-white/5 border border-white/10 text-white/80 focus:outline-none focus:border-[#D0B079]/50 transition-all cursor-pointer [&>option]:bg-[#0b1a3d] [&>option]:text-white disabled:opacity-50 disabled:cursor-not-allowed">
-                {isSuper && <option value="all">All restaurants</option>}
+                {canFilterAll && <option value="all">All restaurants</option>}
                 {restaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
               <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
