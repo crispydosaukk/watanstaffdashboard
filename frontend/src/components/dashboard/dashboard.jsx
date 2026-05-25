@@ -5,7 +5,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   Users, ArrowRight, CheckCircle, Clock, X,
-  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter
+  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User
 } from "lucide-react";
 
 
@@ -87,8 +87,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const roleTitle = (userData?.role_title || userData?.role || "").toLowerCase().trim();
-  const isSuper = roleTitle === "super admin";
+  const roleTitle = String(userData?.role_title || userData?.role || "").toLowerCase().trim();
+  const roleId = String(userData?.role_id || "");
+  const isSuper = roleId === "6" || roleTitle === "super admin" || roleTitle === "superadmin";
 
   const [stats, setStats] = useState({
     total_staff: 0,
@@ -109,8 +110,14 @@ export default function Dashboard() {
     to: ""
   });
   const [period, setPeriod] = useState("today");
-
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  // Super Admin: User/Staff filter
+  const [allStaffList, setAllStaffList] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
 
 
   useEffect(() => {
@@ -133,6 +140,8 @@ export default function Dashboard() {
     } else if (p === 'yesterday') {
       from.setDate(from.getDate() - 1);
       to.setDate(to.getDate() - 1);
+    } else if (p === '3days') {
+      from.setDate(from.getDate() - 2);
     } else if (p === 'week') {
       from.setDate(from.getDate() - 7);
     } else if (p === 'month') {
@@ -148,16 +157,18 @@ export default function Dashboard() {
         from: from.toISOString().split('T')[0],
         to: to.toISOString().split('T')[0]
       });
+      setShowPeriodMenu(false);
     }
   };
 
   useEffect(() => {
     const unsubStaff = onSnapshot(collection(db, "staff"), (snap) => {
       const staffList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAllStaffList(staffList);
       calculateStaffStats(staffList);
     });
     return () => unsubStaff();
-  }, [selectedRestaurant, dateRange, timeRange]);
+  }, [selectedRestaurant, selectedUser, dateRange, timeRange, isSuper, userData, restaurants]);
 
 
 
@@ -165,13 +176,33 @@ export default function Dashboard() {
     // 1. Determine the effective Restaurant ID
     const restaurantId = selectedRestaurant || String(userData?.restaurant_id || "");
     
+    // Check super admin status directly from current userData
+    const currentRoleTitle = String(userData?.role_title || userData?.role || "").toLowerCase().trim();
+    const currentRoleId = String(userData?.role_id || "");
+    const currentIsSuper = currentRoleId === "6" || currentRoleTitle === "super admin" || currentRoleTitle === "superadmin";
+    
     let filteredStaff = [];
 
-    if (isSuper && !selectedRestaurant) {
+    if (currentIsSuper && !selectedRestaurant) {
       // Super Admin viewing all
       filteredStaff = staffList;
+    } else if (currentIsSuper && selectedRestaurant) {
+      // Super Admin filtered by a specific restaurant
+      const selectedRest = restaurants.find(r => String(r.id) === String(selectedRestaurant));
+      const restName = selectedRest?.restaurant_name;
+
+      filteredStaff = staffList.filter(s => {
+        const sRestId = String(s.restaurant_id || "");
+        const sCreatedBy = String(s.created_by || "");
+        const sRestName = String(s.restaurant_name || "");
+        
+        return sRestId === String(selectedRestaurant) || 
+               sCreatedBy === String(selectedRestaurant) ||
+               (restName && sRestId === String(restName)) ||
+               (restName && sRestName === String(restName));
+      });
     } else if (restaurantId) {
-      // Filtered view (either Super Admin selecting one, or regular Admin restricted to one)
+      // Regular Admin restricted to their restaurant
       const selectedRest = restaurants.find(r => String(r.id) === String(restaurantId));
       const restName = selectedRest?.restaurant_name;
 
@@ -185,9 +216,17 @@ export default function Dashboard() {
                (restName && sRestId === String(restName)) ||
                (restName && sRestName === String(restName));
       });
+    } else if (currentIsSuper) {
+      // Super Admin fallback (no restaurant_id on user, no selection) - show all
+      filteredStaff = staffList;
     } else {
       // Restricted user with NO restaurant_id assigned - SHOW NOTHING
       filteredStaff = [];
+    }
+
+    // Apply user/staff filter (Super Admin only)
+    if (selectedUser && currentIsSuper) {
+      filteredStaff = filteredStaff.filter(s => s.id === selectedUser);
     }
 
 
@@ -314,69 +353,228 @@ export default function Dashboard() {
                 </h1>
                 <p className="text-white/60 mt-2 text-sm tracking-wider font-medium">Real-time overview of your team's attendance and performance</p>
                 
-                {isSuper && (
-                  <div className="relative mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mx-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-3xl mx-auto mt-6 z-40">
+                  {isSuper && (
+                    <>
+                      {/* Restaurant Dropdown Container */}
+                      <div className="relative w-full sm:w-auto">
+                        <button
+                          onClick={() => { setShowRestaurantMenu(!showRestaurantMenu); setShowUserMenu(false); setShowPeriodMenu(false); }}
+                          className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 text-white/80 font-semibold hover:bg-white/10 transition-all text-sm tracking-wider shadow-xl group"
+                        >
+                          <LayoutDashboard size={18} className="text-[#D0B079] group-hover:scale-110 transition-transform" />
+                          <span className="flex-1 sm:min-w-[160px] text-left">
+                            {selectedRestaurant ? (restaurants.find(r => String(r.id) === String(selectedRestaurant))?.restaurant_name || "Select Restaurant") : "All Restaurants"}
+                          </span>
+                          <ChevronDown size={16} className={`transition-transform duration-300 ${showRestaurantMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                          {showRestaurantMenu && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="absolute top-full left-0 mt-3 w-72 bg-[#0b1a3d] border border-white/10 rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden"
+                            >
+                              <div className="px-4 py-2 border-b border-white/5 mb-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Switch Restaurant View</p>
+                              </div>
+                              <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                <button
+                                  onClick={() => {
+                                    setSelectedRestaurant("");
+                                    setShowRestaurantMenu(false);
+                                  }}
+                                  className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${selectedRestaurant === "" ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'}`}
+                                >
+                                  All Restaurants
+                                  {selectedRestaurant === "" && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
+                                </button>
+                                {restaurants.map((r) => (
+                                  <button
+                                    key={r.id}
+                                    onClick={() => {
+                                      setSelectedRestaurant(String(r.id));
+                                      setShowRestaurantMenu(false);
+                                    }}
+                                    className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${String(selectedRestaurant) === String(r.id) ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'}`}
+                                  >
+                                    {r.restaurant_name}
+                                    {String(selectedRestaurant) === String(r.id) && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* User Dropdown Container */}
+                      <div className="relative w-full sm:w-auto">
+                        <button
+                          onClick={() => { setShowUserMenu(!showUserMenu); setShowRestaurantMenu(false); setShowPeriodMenu(false); }}
+                          className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 backdrop-blur-md rounded-2xl border font-semibold hover:bg-white/10 transition-all text-sm tracking-wider shadow-xl group ${
+                            selectedUser ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/80'
+                          }`}
+                        >
+                          <User size={18} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                          <span className="flex-1 sm:min-w-[120px] text-left truncate">
+                            {selectedUser ? (allStaffList.find(s => s.id === selectedUser)?.full_name || "Selected User") : "All Users"}
+                          </span>
+                          <ChevronDown size={16} className={`transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                          {showUserMenu && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="absolute top-full left-0 mt-3 w-80 bg-[#0b1a3d] border border-white/10 rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden"
+                            >
+                              <div className="px-4 py-2 border-b border-white/5 mb-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Filter by Staff Member</p>
+                              </div>
+                              <div className="px-3 py-2">
+                                <div className="relative">
+                                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                                  <input
+                                    type="text"
+                                    value={userSearch}
+                                    onChange={(e) => setUserSearch(e.target.value)}
+                                    placeholder="Search staff..."
+                                    className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-emerald-500/40 transition-all"
+                                  />
+                                </div>
+                              </div>
+                              <div className="max-h-56 overflow-y-auto custom-scrollbar">
+                                <button
+                                  onClick={() => {
+                                    setSelectedUser("");
+                                    setShowUserMenu(false);
+                                    setUserSearch("");
+                                  }}
+                                  className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${selectedUser === "" ? 'text-emerald-400 bg-emerald-500/5' : 'text-white/60'}`}
+                                >
+                                  All Users
+                                  {selectedUser === "" && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />}
+                                </button>
+                                {allStaffList
+                                  .filter(s => !userSearch || s.full_name?.toLowerCase().includes(userSearch.toLowerCase()) || s.email?.toLowerCase().includes(userSearch.toLowerCase()))
+                                  .map((s) => (
+                                  <button
+                                    key={s.id}
+                                    onClick={() => {
+                                      setSelectedUser(s.id);
+                                      setShowUserMenu(false);
+                                      setUserSearch("");
+                                    }}
+                                    className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between gap-2 ${selectedUser === s.id ? 'text-emerald-400 bg-emerald-500/5' : 'text-white/60'}`}
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#D0B079] shrink-0 overflow-hidden">
+                                        {s.profile_image ? <img src={s.profile_image} className="w-full h-full object-cover" alt="" /> : s.full_name?.[0]?.toUpperCase()}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="truncate text-sm">{s.full_name}</p>
+                                        <p className="text-[10px] text-white/30 truncate">{s.designation || 'Staff'}</p>
+                                      </div>
+                                    </div>
+                                    {selectedUser === s.id && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] shrink-0" />}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Period Filter Container */}
+                  <div className="relative w-full sm:w-auto">
                     <button
-                      onClick={() => setShowRestaurantMenu(!showRestaurantMenu)}
-                      className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 text-white/80 font-semibold hover:bg-white/10 transition-all text-sm tracking-wider shadow-xl group"
-                    >
-                      <LayoutDashboard size={18} className="text-[#D0B079] group-hover:scale-110 transition-transform" />
-                      <span className="flex-1 sm:min-w-[160px] text-left">
-                        {selectedRestaurant ? (restaurants.find(r => String(r.id) === String(selectedRestaurant))?.restaurant_name || "Select Restaurant") : "All Restaurants"}
-                      </span>
-                      <ChevronDown size={16} className={`transition-transform duration-300 ${showRestaurantMenu ? 'rotate-180' : ''}`} />
-                    </button>
- 
-                    <button
-                      onClick={() => setShowFilterModal(true)}
+                      onClick={() => { setShowPeriodMenu(!showPeriodMenu); setShowRestaurantMenu(false); setShowUserMenu(false); }}
                       className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 bg-[#D0B079]/10 backdrop-blur-md rounded-2xl border border-[#D0B079]/20 text-[#D0B079] font-semibold hover:bg-[#D0B079]/20 transition-all text-sm tracking-wider shadow-xl group"
                     >
                       <Filter size={18} className="group-hover:rotate-12 transition-transform" />
-                      <span className="flex-1 sm:flex-none whitespace-nowrap">{period === 'custom' ? `${dateRange.from} to ${dateRange.to}` : period.charAt(0).toUpperCase() + period.slice(1)}</span>
+                      <span className="flex-1 sm:flex-none whitespace-nowrap">
+                        {period === 'custom' ? `${dateRange.from} to ${dateRange.to}` : 
+                         period === '3days' ? 'Last 3 Days' :
+                         period.charAt(0).toUpperCase() + period.slice(1)}
+                      </span>
+                      <ChevronDown size={16} className={`transition-transform duration-300 ${showPeriodMenu ? 'rotate-180' : ''}`} />
                     </button>
 
-
                     <AnimatePresence>
-                      {showRestaurantMenu && (
+                      {showPeriodMenu && (
                         <motion.div 
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 bg-[#0b1a3d] border border-white/10 rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden"
+                          className="absolute top-full right-0 sm:right-auto sm:left-0 mt-3 w-72 bg-[#0b1a3d] border border-white/10 rounded-2xl shadow-2xl z-[100] py-2 overflow-hidden"
                         >
                           <div className="px-4 py-2 border-b border-white/5 mb-1">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Switch Restaurant View</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Select Date Range</p>
                           </div>
-                          <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                            <button
-                              onClick={() => {
-                                setSelectedRestaurant("");
-                                setShowRestaurantMenu(false);
-                              }}
-                              className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${selectedRestaurant === "" ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'}`}
-                            >
-                              All Restaurants
-                              {selectedRestaurant === "" && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
-                            </button>
-                            {restaurants.map((r) => (
-                              <button
-                                key={r.id}
-                                onClick={() => {
-                                  setSelectedRestaurant(String(r.id));
-                                  setShowRestaurantMenu(false);
-                                }}
-                                className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${String(selectedRestaurant) === String(r.id) ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'}`}
-                              >
-                                {r.restaurant_name}
-                                {String(selectedRestaurant) === String(r.id) && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
-                              </button>
+                          <div className="max-h-80 overflow-y-auto custom-scrollbar flex flex-col">
+                            {[
+                              { id: 'today', label: 'Today' },
+                              { id: 'yesterday', label: 'Yesterday' },
+                              { id: '3days', label: 'Last 3 Days' },
+                              { id: 'week', label: 'This Week' },
+                              { id: 'custom', label: 'Custom Range' }
+                            ].map((opt) => (
+                              <div key={opt.id} className="w-full">
+                                <button
+                                  onClick={() => {
+                                    handlePeriodChange(opt.id);
+                                    if (opt.id !== 'custom') setShowPeriodMenu(false);
+                                  }}
+                                  className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between ${period === opt.id ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'}`}
+                                >
+                                  {opt.label}
+                                  {period === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
+                                </button>
+                                
+                                {/* Inline Custom Date Picker */}
+                                {opt.id === 'custom' && period === 'custom' && (
+                                  <div className="px-5 pb-4 pt-2 bg-black/20 border-t border-white/5 space-y-3">
+                                    <div>
+                                      <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1 block">From</label>
+                                      <input
+                                        type="date"
+                                        value={dateRange.from}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:border-[#D0B079]/50 text-sm"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-1 block">To</label>
+                                      <input
+                                        type="date"
+                                        value={dateRange.to}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:border-[#D0B079]/50 text-sm"
+                                      />
+                                    </div>
+                                    <button 
+                                      onClick={() => setShowPeriodMenu(false)}
+                                      className="w-full py-2 bg-[#D0B079]/20 text-[#D0B079] rounded-xl text-xs font-bold hover:bg-[#D0B079]/30 transition-all mt-2"
+                                    >
+                                      Apply Custom Range
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             ))}
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
-                )}
+                </div>
               </div>
 
 
@@ -564,7 +762,7 @@ export default function Dashboard() {
               </div>
 
               <div className="p-8 overflow-y-auto custom-scrollbar space-y-10">
-                {/* Select Comparison */}
+                {/* Select Comparison (Not used anymore as we moved to inline dropdown, keeping this modal around just in case you still need time filters) */}
                 <section className="space-y-4">
                   <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 ml-1">Select Comparison</h4>
                   <div className="grid grid-cols-1 gap-3">

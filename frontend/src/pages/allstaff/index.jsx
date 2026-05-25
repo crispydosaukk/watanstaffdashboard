@@ -307,13 +307,25 @@ export default function AllStaffPage() {
           date: dateObj,
           dateKey: dateKey,
           total_minutes: 0,
-          sessions: []
+          sessions: [],
+          first_in: null,
+          last_out: null
         };
       }
 
       const g = groups[dateKey];
       g.total_minutes += (record.total_minutes || 0);
       g.sessions.push(record);
+
+      if (record.clock_in) {
+        const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
+        if (!g.first_in || cin < g.first_in) g.first_in = cin;
+      }
+      
+      if (record.clock_out) {
+        const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
+        if (!g.last_out || cout > g.last_out) g.last_out = cout;
+      }
     });
 
     return Object.values(groups).sort((a, b) => {
@@ -332,6 +344,10 @@ export default function AllStaffPage() {
   const handleUpdateAttendanceRecord = async (e) => {
     e.preventDefault();
     if (!editingAttendance) return;
+    if (!editingAttendance.edit_reason || editingAttendance.edit_reason.trim() === "") {
+      showPopup({ title: "Required", message: "Please provide a reason for editing the time.", type: "warning" });
+      return;
+    }
     setUpdatingAttendance(true);
     try {
       const cin = new Date(editingAttendance.clock_in);
@@ -341,7 +357,9 @@ export default function AllStaffPage() {
       await updateDoc(doc(db, "attendance", editingAttendance.id), {
         clock_in: cin,
         clock_out: cout,
-        total_minutes: Math.max(0, totalMinutes)
+        total_minutes: Math.max(0, totalMinutes),
+        edit_reason: editingAttendance.edit_reason.trim(),
+        edited_at: serverTimestamp()
       });
       
       showPopup({ title: "Success", message: "Attendance updated", type: "success" });
@@ -981,101 +999,130 @@ export default function AllStaffPage() {
                             </tr>
                             
                             {/* Session Rows */}
-                            {group.sessions.map((session, sIdx) => (
-                              <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group relative">
-                                <td className="px-8 py-5">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-1.5 h-8 bg-white/5 rounded-full" />
-                                    <span className="text-white/20 font-black text-[10px] tracking-widest uppercase">Session #{group.sessions.length - sIdx}</span>
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                  {editingAttendance?.id === session.id ? (
-                                    <div className="space-y-1">
-                                      <input
-                                        type="datetime-local"
-                                        value={editingAttendance.clock_in}
-                                        onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
-                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-3 py-2 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
-                                      />
+                            {group.sessions.map((session, sIdx) => {
+                              if (editingAttendance?.id === session.id) {
+                                return (
+                                  <tr key={session.id} className="bg-[#D0B079]/5 border-y border-[#D0B079]/20 relative">
+                                    <td colSpan="4" className="px-8 py-6">
+                                      <div className="flex flex-col gap-5">
+                                        <div className="flex items-center gap-2 text-[#D0B079] font-bold text-xs uppercase tracking-widest">
+                                          <Edit2 size={14} /> Update Session Times
+                                        </div>
+                                        <div className="flex flex-col md:flex-row gap-6">
+                                          <div className="flex-1 space-y-2">
+                                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Clock In</label>
+                                            <input
+                                              type="datetime-local"
+                                              value={editingAttendance.clock_in}
+                                              onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
+                                              className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-4 py-3 text-sm text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
+                                            />
+                                          </div>
+                                          <div className="flex-1 space-y-2">
+                                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Clock Out</label>
+                                            <input
+                                              type="datetime-local"
+                                              value={editingAttendance.clock_out}
+                                              onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
+                                              className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-4 py-3 text-sm text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Reason for Edit <span className="text-rose-500">*</span></label>
+                                          <input
+                                            type="text"
+                                            value={editingAttendance.edit_reason || ""}
+                                            onChange={(e) => setEditingAttendance(p => ({ ...p, edit_reason: e.target.value }))}
+                                            placeholder="e.g. Forgot to clock out, System error..."
+                                            className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#D0B079] transition-all"
+                                          />
+                                        </div>
+                                        <div className="flex justify-end gap-3 mt-2">
+                                          <button
+                                            onClick={() => setEditingAttendance(null)}
+                                            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 text-xs font-bold uppercase tracking-widest transition-all"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={handleUpdateAttendanceRecord}
+                                            disabled={updatingAttendance}
+                                            className="px-6 py-2.5 rounded-xl bg-[#D0B079] hover:bg-[#b8965f] text-slate-900 text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 disabled:opacity-50"
+                                          >
+                                            {updatingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Changes
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return (
+                                <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group relative">
+                                  <td className="px-8 py-5">
+                                    <div className="flex flex-col gap-2">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-1.5 h-8 bg-white/5 rounded-full" />
+                                        <span className="text-white/20 font-black text-[10px] tracking-widest uppercase">Session #{group.sessions.length - sIdx}</span>
+                                      </div>
+                                      {session.edit_reason && (
+                                        <div className="ml-4 flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 p-2 rounded-xl max-w-[200px]">
+                                          <Edit2 size={10} className="text-amber-500 shrink-0 mt-0.5" />
+                                          <div>
+                                            <p className="text-[8px] font-black uppercase tracking-widest text-amber-500/50 mb-0.5">Edit Reason</p>
+                                            <p className="text-[10px] font-medium text-amber-500/90 leading-tight">{session.edit_reason}</p>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
-                                  ) : (
+                                  </td>
+                                  <td className="px-8 py-5">
                                     <div className="flex items-center gap-3">
                                       <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
                                       <span className="text-white font-mono text-base font-medium">
                                         {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </span>
                                     </div>
-                                  )}
-                                </td>
-                                <td className="px-8 py-5">
-                                  {editingAttendance?.id === session.id ? (
-                                    <div className="space-y-1">
-                                      <input
-                                        type="datetime-local"
-                                        value={editingAttendance.clock_out}
-                                        onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
-                                        className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-3 py-2 text-xs text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
-                                      />
-                                    </div>
-                                  ) : (
+                                  </td>
+                                  <td className="px-8 py-5">
                                     <div className="flex items-center gap-3">
                                       <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
                                       <span className="text-white font-mono text-base font-medium">
                                         {session.clock_out ? new Date(session.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </span>
                                     </div>
-                                  )}
-                                </td>
-                                <td className="px-8 py-5 text-right">
-                                  <div className="flex items-center justify-end gap-6">
-                                    {editingAttendance?.id === session.id ? (
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          onClick={handleUpdateAttendanceRecord}
-                                          disabled={updatingAttendance}
-                                          className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/30 transition-all disabled:opacity-50"
-                                          title="Save changes"
-                                        >
-                                          {updatingAttendance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                        </button>
-                                        <button
-                                          onClick={() => setEditingAttendance(null)}
-                                          className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 transition-all"
-                                          title="Cancel"
-                                        >
-                                          <X size={16} />
-                                        </button>
+                                  </td>
+                                  <td className="px-8 py-5 text-right">
+                                    <div className="flex items-center justify-end gap-6">
+                                      <div className="flex flex-col items-end">
+                                        <span className={`text-sm font-black tracking-tight ${session.total_minutes === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
+                                          {formatWorkTime(session.total_minutes)}
+                                        </span>
+                                        {session.total_minutes === 0 && (
+                                          <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">Short Session</span>
+                                        )}
                                       </div>
-                                    ) : (
-                                      <>
-                                        <div className="flex flex-col items-end">
-                                          <span className={`text-sm font-black tracking-tight ${session.total_minutes === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
-                                            {formatWorkTime(session.total_minutes)}
-                                          </span>
-                                          {session.total_minutes === 0 && (
-                                            <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">Short Session</span>
-                                          )}
-                                        </div>
-                                        <button
-                                          onClick={() => {
-                                            setEditingAttendance({
-                                              id: session.id,
-                                              clock_in: toLocalISO(session.clock_in),
-                                              clock_out: toLocalISO(session.clock_out)
-                                            });
-                                          }}
-                                          className="p-2.5 bg-white/5 text-white/20 rounded-xl hover:bg-[#D0B079]/20 hover:text-[#D0B079] hover:border-[#D0B079]/30 border border-transparent transition-all opacity-0 group-hover:opacity-100"
-                                          title="Edit this session"
-                                        >
-                                          <Edit2 size={14} />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                      <button
+                                        onClick={() => {
+                                          setEditingAttendance({
+                                            id: session.id,
+                                            clock_in: toLocalISO(session.clock_in),
+                                            clock_out: toLocalISO(session.clock_out),
+                                            edit_reason: session.edit_reason || ""
+                                          });
+                                        }}
+                                        className="p-2.5 bg-white/5 text-white/20 rounded-xl hover:bg-[#D0B079]/20 hover:text-[#D0B079] hover:border-[#D0B079]/30 border border-transparent transition-all opacity-0 group-hover:opacity-100"
+                                        title="Edit this session"
+                                      >
+                                        <Edit2 size={14} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                             {/* Spacer between days */}
                             <tr className="h-4"><td colSpan="4"></td></tr>
                           </React.Fragment>
