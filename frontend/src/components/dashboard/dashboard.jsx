@@ -5,7 +5,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   Users, ArrowRight, CheckCircle, Clock, X,
-  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User
+  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2
 } from "lucide-react";
 
 
@@ -13,11 +13,29 @@ import Header from "../common/header.jsx";
 import Sidebar from "../common/sidebar.jsx";
 import Footer from "../common/footer.jsx";
 import { db } from "../../lib/firebase";
-import { collection, query, onSnapshot, where, getDocs, orderBy, limit, Timestamp } from "firebase/firestore";
+import { collection, query, onSnapshot, where, getDocs, orderBy, limit, Timestamp, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePopup } from "../../context/PopupContext";
 import { useAuth } from "../../context/AuthContext";
+import { sendPushNotification } from "../../utils/fcm";
 
+
+// --- Helpers ---
+const getAutoLogoutTime = (clockIn) => {
+  const d = new Date(clockIn);
+  const hour = d.getHours();
+  
+  const logoutTime = new Date(d);
+  if (hour >= 0 && hour < 18) {
+    // Clocked in between 00:00 and 17:59 -> Auto logout at next midnight
+    logoutTime.setHours(24, 0, 0, 0); 
+  } else {
+    // Clocked in between 18:00 and 23:59 -> Auto logout at next 18:00 (6 PM)
+    logoutTime.setDate(logoutTime.getDate() + 1);
+    logoutTime.setHours(18, 0, 0, 0);
+  }
+  return logoutTime;
+};
 
 // --- Components ---
 
@@ -118,6 +136,70 @@ export default function Dashboard() {
   const [selectedUser, setSelectedUser] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userSearch, setUserSearch] = useState("");
+  const [showPendingClockouts, setShowPendingClockouts] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
+
+  const handleRemindAll = async (e) => {
+    e.stopPropagation();
+    if (!stats.pending_clockouts || stats.pending_clockouts.length === 0) return;
+    
+    setSendingReminders(true);
+    
+    try {
+      const broadcastId = `bcast_${Date.now()}_reminder`;
+      
+      const promises = stats.pending_clockouts.map(async (record) => {
+        const staffDoc = allStaffList.find(s => s.id === record.staff_id);
+        const fcmToken = staffDoc?.fcmToken || staffDoc?.fcm_token;
+        
+        // Add to Firestore
+        const docRef = await addDoc(collection(db, "notifications"), {
+          title: "Clock-Out Reminder",
+          body: "You are currently clocked in. Please don't forget to clock out at the end of your shift!",
+          staff_id: record.staff_id,
+          staff_name: record.full_name,
+          restaurant_id: staffDoc?.restaurant_id || "",
+          type: "alert",
+          priority: "high",
+          status: "sent",
+          sent_at: serverTimestamp(),
+          broadcast_id: broadcastId,
+          target_group: "Active Shifts",
+          fcm_token: fcmToken || null,
+          platform: staffDoc?.platform || "unknown"
+        });
+        
+        if (fcmToken) {
+          sendPushNotification({
+            fcm_token: fcmToken,
+            title: "Clock-Out Reminder",
+            body: "You are currently clocked in. Please don't forget to clock out at the end of your shift!",
+            priority: "high",
+            type: "alert",
+            notificationId: docRef.id
+          });
+        }
+      });
+      
+      await Promise.all(promises);
+      
+      showPopup({
+        title: "Reminders Sent",
+        message: `Successfully sent clock-out reminders to ${stats.pending_clockouts.length} staff members.`,
+        type: "success"
+      });
+      
+    } catch (err) {
+      console.error(err);
+      showPopup({
+        title: "Error",
+        message: "Failed to send reminders.",
+        type: "error"
+      });
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -273,11 +355,65 @@ export default function Dashboard() {
       });
     }
 
+    // Fetch active sessions independently of the date range filter
+    const activeQuery = query(
+      collection(db, "attendance"),
+      where("clock_out", "==", null)
+    );
+    const activeSnap = await getDocs(activeQuery);
+    let activeAllRecords = activeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Calculate active now (clocked in but not clocked out)
-    const activeNowCount = filteredAttendance.filter(r => !r.clock_out).length;
+    // Auto-logout expired sessions
+    const now = new Date();
+    const expiredSessions = [];
+    
+    activeAllRecords = activeAllRecords.filter(r => {
+      if (!r.clock_in) return true; // safety check
+      const cinDate = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
+      const autoLogout = getAutoLogoutTime(cinDate);
+      if (now >= autoLogout) {
+        expiredSessions.push({ ...r, autoLogout, cinDate });
+        return false;
+      }
+      return true;
+    });
+    
+    if (expiredSessions.length > 0) {
+      Promise.all(expiredSessions.map(session => {
+        const diffMin = Math.max(1, Math.round((session.autoLogout.getTime() - session.cinDate.getTime()) / 60000));
+        const safeDiffMin = Math.min(diffMin, 1440);
+        return updateDoc(doc(db, "attendance", session.id), {
+          clock_out: session.autoLogout,
+          total_minutes: Math.max(0, safeDiffMin),
+          location_out: "System Auto-Logout"
+        }).catch(err => console.error("Dashboard auto logout error:", err));
+      }));
+    }
 
-    const totalMinutesToday = filteredAttendance.reduce((sum, r) => sum + (Number(r.total_minutes) || 0), 0);
+    const activeSessions = activeAllRecords.filter(r => filteredStaffIds.has(r.staff_id));
+    const activeNowCount = activeSessions.length;
+    
+    const pendingClockouts = activeSessions.map(r => {
+      const s = filteredStaff.find(staff => staff.id === r.staff_id);
+      return {
+        ...r,
+        full_name: s?.full_name || "Unknown Staff",
+        profile_image: s?.profile_image,
+        designation: s?.designation,
+        restaurant_name: s?.restaurant_name || "Unknown Restaurant"
+      };
+    });
+
+    // Recalculate total_minutes from actual timestamps instead of trusting stored values
+    const totalMinutesToday = filteredAttendance.reduce((sum, r) => {
+      if (r.clock_in && r.clock_out) {
+        const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
+        const cout = r.clock_out?.toDate ? r.clock_out.toDate() : new Date(r.clock_out);
+        const diff = Math.floor((cout.getTime() - cin.getTime()) / 60000);
+        return sum + Math.max(0, Math.min(diff, 1440)); // cap at 24h per session
+      }
+      return sum;
+    }, 0);
     const totalHoursToday = (totalMinutesToday / 60).toFixed(1);
 
     const recentActivity = filteredAttendance.slice(0, 10).map(r => {
@@ -321,6 +457,7 @@ export default function Dashboard() {
       total_staff: filteredStaff.length,
       present_today: presentCount,
       active_now: activeNowCount,
+      pending_clockouts: pendingClockouts,
       total_hours_today: totalHoursToday,
       recent_activity: recentActivity,
       weekly_data: weeklyData
@@ -579,6 +716,84 @@ export default function Dashboard() {
 
 
 
+            </div>
+
+            <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
+              <button 
+                onClick={() => setShowPendingClockouts(!showPendingClockouts)}
+                className={`w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
+                  stats.pending_clockouts?.length > 0 ? 'bg-rose-500/10 hover:bg-rose-500/20' : 'bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.pending_clockouts?.length > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                    {stats.pending_clockouts?.length > 0 ? <AlertTriangle size={20} /> : <CheckCircle size={20} />}
+                  </div>
+                  <div className="text-left">
+                    <h3 className={`text-base font-bold mb-0.5 ${stats.pending_clockouts?.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      Active Shifts Pending Clock-Out ({stats.pending_clockouts?.length || 0})
+                    </h3>
+                    <p className="text-xs text-white/60">
+                      {stats.pending_clockouts?.length > 0 
+                        ? 'Staff members currently clocked in. Expand to view.'
+                        : 'No active shifts at the moment.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {stats.pending_clockouts?.length > 0 && (
+                    <button
+                      onClick={handleRemindAll}
+                      disabled={sendingReminders}
+                      className="flex items-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-rose-500/20 disabled:opacity-50"
+                    >
+                      {sendingReminders ? <Loader2 size={14} className="animate-spin" /> : <BellRing size={14} />}
+                      Remind All
+                    </button>
+                  )}
+                  <ChevronDown size={20} className={`transition-transform duration-300 ${stats.pending_clockouts?.length > 0 ? 'text-rose-400' : 'text-emerald-400'} ${showPendingClockouts ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              <AnimatePresence>
+                {showPendingClockouts && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-5 sm:p-6 border-t border-white/5">
+                      {stats.pending_clockouts?.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {stats.pending_clockouts.map((staff, idx) => (
+                            <div key={idx} className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden bg-rose-500/20 flex items-center justify-center shrink-0 border border-rose-500/30">
+                                {staff.profile_image ? (
+                                  <img src={staff.profile_image} alt={staff.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-rose-400 font-black text-sm">{staff.full_name?.charAt(0)}</span>
+                                )}
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="text-sm font-bold text-white truncate">{staff.full_name}</p>
+                                <p className="text-[10px] text-white/50 uppercase tracking-widest truncate">{staff.restaurant_name}</p>
+                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <CheckCircle size={32} className="text-emerald-400/50 mx-auto mb-3" />
+                          <p className="text-emerald-400 font-bold">All clear!</p>
+                          <p className="text-white/50 text-sm mt-1">There are no staff members currently logged in.</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
 

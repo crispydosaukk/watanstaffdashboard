@@ -441,10 +441,43 @@ export default function StaffManagement() {
 
   const formatWorkTime = (minutes) => {
     if (!minutes || isNaN(minutes)) return "0h 0m";
-    const absMin = Math.abs(minutes);
+    const absMin = Math.abs(Math.round(minutes));
     const h = Math.floor(absMin / 60);
     const m = absMin % 60;
     return `${minutes < 0 ? "-" : ""}${h}h ${m}m`;
+  };
+
+  const formatTimeWithDateDiff = (cinStr, coutStr) => {
+    if (!coutStr) return "--:--";
+    const cout = coutStr instanceof Date ? coutStr : new Date(coutStr);
+    const timeStr = cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    
+    if (cinStr) {
+      const cin = cinStr instanceof Date ? cinStr : new Date(cinStr);
+      // Check if dates are different
+      if (cout.getDate() !== cin.getDate() || cout.getMonth() !== cin.getMonth() || cout.getFullYear() !== cin.getFullYear()) {
+        const coutDate = new Date(cout.getFullYear(), cout.getMonth(), cout.getDate());
+        const cinDate = new Date(cin.getFullYear(), cin.getMonth(), cin.getDate());
+        const diffDays = Math.round((coutDate.getTime() - cinDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return `${timeStr} (next day)`;
+        if (diffDays > 1) return `${timeStr} (+${diffDays} days)`;
+      }
+    }
+    return timeStr;
+  };
+
+  // Recalculate total_minutes from actual timestamps to avoid trusting potentially wrong stored values
+  const calcSessionMinutes = (record) => {
+    if (record.clock_in && record.clock_out) {
+      const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
+      const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
+      const diff = Math.floor((cout.getTime() - cin.getTime()) / 60000);
+      // Safety: clamp to 0-1440 (24h max per single session)
+      return Math.max(0, Math.min(diff, 1440));
+    }
+    // Active session (no clock_out) = 0 minutes
+    return 0;
   };
 
   const groupedRecords = useMemo(() => {
@@ -467,8 +500,9 @@ export default function StaffManagement() {
         };
       }
       const g = groups[dateKey];
-      g.total_minutes += (record.total_minutes || 0);
-      g.sessions.push(record);
+      const sessionMin = calcSessionMinutes(record);
+      g.total_minutes += sessionMin;
+      g.sessions.push({ ...record, _calc_minutes: sessionMin });
 
       if (record.clock_in) {
         const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
@@ -1000,7 +1034,7 @@ export default function StaffManagement() {
                     <div className="text-center">
                       <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-0.5">Total Hours</p>
                       <p className="text-lg font-black text-[#D0B079]">
-                        {formatWorkTime(attendanceData?.records?.reduce((sum, r) => sum + (r.total_minutes || 0), 0))}
+                        {formatWorkTime(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0))}
                       </p>
                     </div>
                     <div className="w-px h-8 bg-white/10" />
@@ -1082,6 +1116,9 @@ export default function StaffManagement() {
                               <td className="px-8 py-4 text-right">
                                 <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mr-3">Day Total:</span>
                                 <span className="text-sm font-black text-[#D0B079]">{formatWorkTime(group.total_minutes)}</span>
+                                {group.total_minutes !== group.sessions.reduce((s, r) => s + (r.total_minutes || 0), 0) && group.sessions.some(s => s.total_minutes > 0) && (
+                                  <span className="text-[8px] font-bold text-amber-400/60 ml-2" title="Recalculated from timestamps">(corrected)</span>
+                                )}
                               </td>
                             </tr>
                             
@@ -1177,18 +1214,18 @@ export default function StaffManagement() {
                                     <div className="flex items-center gap-3">
                                       <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
                                       <span className="text-white font-mono text-base font-medium">
-                                        {session.clock_out ? new Date(session.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
                                       </span>
                                     </div>
                                   </td>
                                   <td className="px-8 py-5 text-right">
                                     <div className="flex items-center justify-end gap-6">
                                       <div className="flex flex-col items-end">
-                                        <span className={`text-sm font-black tracking-tight ${session.total_minutes === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
-                                          {formatWorkTime(session.total_minutes)}
+                                        <span className={`text-sm font-black tracking-tight ${(session._calc_minutes || 0) === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
+                                          {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : session.total_minutes)}
                                         </span>
-                                        {session.total_minutes === 0 && (
-                                          <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">Short Session</span>
+                                        {(session._calc_minutes != null ? session._calc_minutes : session.total_minutes) === 0 && (
+                                          <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">{session.clock_out ? 'Short Session' : 'Active'}</span>
                                         )}
                                       </div>
                                       <button
@@ -1321,58 +1358,78 @@ export default function StaffManagement() {
                   </div>
 
                   {/* Table */}
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
-                        <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
-                      {groupedRecords.length > 0 ? (
-                        groupedRecords.map((group, i) => (
-                          <tr key={i}>
-                            <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
-                              {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
-                            </td>
-                            <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                              {group.first_in ? new Date(group.first_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                            </td>
-                            <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                              {group.last_out ? new Date(group.last_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                            </td>
-                            <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
-                              {formatWorkTime(group.total_minutes)}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
+                          <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
                         </tr>
-                      )}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                        <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
-                          Grand Total ({Array.isArray(attendanceData?.records) ? (attendanceData.records.reduce((sum, r) => sum + (r.total_minutes || 0), 0) / 60).toFixed(2) : 0} hrs)
-                        </td>
-                        <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
-                          {(() => {
-                            const totalMinutes = Array.isArray(attendanceData?.records) ? attendanceData.records.reduce((sum, r) => sum + (r.total_minutes || 0), 0) : 0;
-                            const rate = Number(attendanceData?.staff?.hourly_rate || 0);
-                            if (rate > 0) {
-                              const pay = (totalMinutes / 60) * rate;
-                              return `£${pay.toFixed(2)}`;
-                            }
-                            return formatWorkTime(totalMinutes);
-                          })()}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
+                        {groupedRecords.length > 0 ? (
+                          groupedRecords.map((group, i) => (
+                            <React.Fragment key={i}>
+                              {/* Day header row */}
+                              {group.sessions.length > 1 && (
+                                <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                  <td colSpan="3" className="px-4 py-3 font-black text-[10px] uppercase tracking-widest" style={{ color: '#64748b' }}>
+                                    {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} — {group.sessions.length} Sessions
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-black text-xs" style={{ color: '#0f172a' }}>
+                                    Day Total: {formatWorkTime(group.total_minutes)}
+                                  </td>
+                                </tr>
+                              )}
+                              {/* Session rows */}
+                              {group.sessions.map((session, sIdx) => (
+                                <tr key={session.id || sIdx}>
+                                  <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
+                                    {group.sessions.length > 1 ? (
+                                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Session #{group.sessions.length - sIdx}</span>
+                                    ) : (
+                                      new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                    {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                  </td>
+                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                    {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                  </td>
+                                  <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
+                                    {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                  </td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
+                          </tr>
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                          <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
+                            Grand Total ({(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0) / 60).toFixed(2)} hrs)
+                          </td>
+                          <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
+                            {(() => {
+                              const totalMinutes = groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
+                              const rate = Number(attendanceData?.staff?.hourly_rate || 0);
+                              if (rate > 0) {
+                                const pay = (totalMinutes / 60) * rate;
+                                return `£${pay.toFixed(2)}`;
+                              }
+                              return formatWorkTime(totalMinutes);
+                            })()}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
 
                   {/* Footer */}
                   <div className="mt-12 pt-8 border-t border-slate-100 text-center italic text-[10px]" style={{ borderTopColor: '#f1f5f9', color: '#94a3b8' }}>
