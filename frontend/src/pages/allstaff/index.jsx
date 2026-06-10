@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { getCalculatedTime, calcCalculatedMinutes } from "../../utils/timeRounding";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Edit2, Save, Loader2, User, Camera, Briefcase, Shield, Calendar, Eye, EyeOff, Clock, XCircle,
-  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download, Bell, Store, PoundSterling
+  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download, Bell, Store, PoundSterling, Trash2
 } from "lucide-react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
@@ -92,7 +93,7 @@ const InputField = ({ icon: Icon, label, value, onChange, placeholder, type = "t
 export default function AllStaffPage() {
   const { showPopup } = usePopup();
   const { userData } = useAuth();
-  
+
   // 🔥 ROBUST SUPER ADMIN CHECK
   const isSuper = useMemo(() => {
     if (!userData) return false;
@@ -146,7 +147,7 @@ export default function AllStaffPage() {
   const [attendanceFilters, setAttendanceFilters] = useState({ from: "", to: "" });
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
-  
+
   // Notification state
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationTarget, setNotificationTarget] = useState(null);
@@ -268,7 +269,7 @@ export default function AllStaffPage() {
     try {
       // Index-free query (only one where)
       let q = query(collection(db, "attendance"), where("staff_id", "==", id));
-      
+
       const snapshot = await getDocs(q);
       let records = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -290,8 +291,8 @@ export default function AllStaffPage() {
       });
 
       const staffMember = staff.find(s => s.id === id);
-      setAttendanceData({ 
-        staff: staffMember, 
+      setAttendanceData({
+        staff: staffMember,
         records: records,
         from: params.from || "",
         to: params.to || ""
@@ -299,10 +300,10 @@ export default function AllStaffPage() {
 
     } catch (err) {
       console.error("Attendance Fetch Error:", err);
-      showPopup({ 
-        title: "Error", 
-        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`, 
-        type: "error" 
+      showPopup({
+        title: "Error",
+        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`,
+        type: "error"
       });
     } finally {
       setLoadingAttendance(false);
@@ -310,14 +311,10 @@ export default function AllStaffPage() {
   };
 
 
-  // Recalculate total_minutes from actual timestamps to avoid trusting potentially wrong stored values
+  // Recalculate minutes from actual timestamps using calculated (rounded) times
   const calcSessionMinutes = (record) => {
     if (record.clock_in && record.clock_out) {
-      const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
-      const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
-      const diff = Math.floor((cout.getTime() - cin.getTime()) / 60000);
-      // Safety: clamp to 0-1440 (24h max per single session)
-      return Math.max(0, Math.min(diff, 1440));
+      return calcCalculatedMinutes(record.clock_in, record.clock_out);
     }
     // Active session (no clock_out) = 0 minutes
     return 0;
@@ -354,7 +351,7 @@ export default function AllStaffPage() {
         const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
         if (!g.first_in || cin < g.first_in) g.first_in = cin;
       }
-      
+
       if (record.clock_out) {
         const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
         if (!g.last_out || cout > g.last_out) g.last_out = cout;
@@ -394,7 +391,7 @@ export default function AllStaffPage() {
         edit_reason: editingAttendance.edit_reason.trim(),
         edited_at: serverTimestamp()
       });
-      
+
       showPopup({ title: "Success", message: "Attendance updated", type: "success" });
       setEditingAttendance(null);
       handleViewAttendance(attendanceData.staff.id);
@@ -417,21 +414,7 @@ export default function AllStaffPage() {
   const formatTimeWithDateDiff = (cinStr, coutStr) => {
     if (!coutStr) return "--:--";
     const cout = coutStr instanceof Date ? coutStr : new Date(coutStr);
-    const timeStr = cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-    
-    if (cinStr) {
-      const cin = cinStr instanceof Date ? cinStr : new Date(cinStr);
-      // Check if dates are different
-      if (cout.getDate() !== cin.getDate() || cout.getMonth() !== cin.getMonth() || cout.getFullYear() !== cin.getFullYear()) {
-        const coutDate = new Date(cout.getFullYear(), cout.getMonth(), cout.getDate());
-        const cinDate = new Date(cin.getFullYear(), cin.getMonth(), cin.getDate());
-        const diffDays = Math.round((coutDate.getTime() - cinDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) return `${timeStr} (next day)`;
-        if (diffDays > 1) return `${timeStr} (+${diffDays} days)`;
-      }
-    }
-    return timeStr;
+    return cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
 
@@ -439,7 +422,7 @@ export default function AllStaffPage() {
   const handleAllStaffReport = async () => {
     try {
       setLoading(true);
-      
+
       // 1. Fetch attendance records based on current restaurant filter
       let q;
       if (filterRestaurant !== "all") {
@@ -447,7 +430,7 @@ export default function AllStaffPage() {
       } else {
         q = query(collection(db, "attendance"));
       }
-      
+
       const snapshot = await getDocs(q);
       let allRecords = snapshot.docs.map(doc => ({
         ...doc.data(),
@@ -474,13 +457,13 @@ export default function AllStaffPage() {
         allRecords = allRecords.filter(r => new Date(r.clock_in) <= toDate);
       }
 
-      setAttendanceData({ 
-        staff: { 
+      setAttendanceData({
+        staff: {
           id: "all",
           full_name: filterRestaurant !== "all" ? `${restaurantsMap[filterRestaurant]} Summary` : "All Restaurants Summary",
-          restaurant_name: "Watan Group Global" 
-        }, 
-        records: allRecords 
+          restaurant_name: "Watan Group Global"
+        },
+        records: allRecords
       });
       setShowReportModal(true);
     } catch (err) {
@@ -497,6 +480,18 @@ export default function AllStaffPage() {
       showPopup({ title: "Updated", message: `Account ${currentStatus ? "deactivated" : "activated"}`, type: "success" });
     } catch {
       showPopup({ title: "Error", message: "Failed to update status", type: "error" });
+    }
+  };
+
+  const handleDeleteStaff = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+      try {
+        await deleteDoc(doc(db, "staff", id));
+        showPopup({ title: "Deleted", message: `Account for ${name} has been deleted.`, type: "success" });
+      } catch (err) {
+        console.error("Delete Error:", err);
+        showPopup({ title: "Error", message: "Failed to delete account", type: "error" });
+      }
     }
   };
 
@@ -585,10 +580,10 @@ export default function AllStaffPage() {
       setShowReportModal(true);
     } catch (err) {
       console.error("Report Fetch Error:", err);
-      showPopup({ 
-        title: "Error", 
-        message: `Failed to load report: ${err.message || "Unknown error"}`, 
-        type: "error" 
+      showPopup({
+        title: "Error",
+        message: `Failed to load report: ${err.message || "Unknown error"}`,
+        type: "error"
       });
     } finally {
       setLoading(false);
@@ -659,7 +654,7 @@ export default function AllStaffPage() {
       }
 
       await updateDoc(doc(db, "staff", editingId), staffData);
-      
+
       showPopup({ title: "Success", message: "Staff profile updated successfully", type: "success" });
       setShowModal(false);
     } catch (err) {
@@ -687,7 +682,7 @@ export default function AllStaffPage() {
       const rId = s.restaurant_id || s.created_by;
       const rName = (rId ? restaurantsMap[rId] : null) || s.restaurant_name || "";
       const matchSearch = !q || s.full_name?.toLowerCase().includes(q) || s.email?.toLowerCase().includes(q) ||
-        s.designation?.toLowerCase().includes(q) || s.employee_id?.toLowerCase().includes(q) || rName.toLowerCase().includes(q);
+        s.designation?.toLowerCase().includes(q) || s.employee_id?.toLowerCase().includes(q);
       const matchRestaurant = filterRestaurant === "all" || String(s.restaurant_id) === String(filterRestaurant) || String(s.created_by) === String(filterRestaurant);
       const matchStatus = filterStatus === "all" || (filterStatus === "active" && s.is_active) || (filterStatus === "inactive" && !s.is_active);
       const matchDesignation = filterDesignation === "all" || s.designation === filterDesignation;
@@ -835,13 +830,12 @@ export default function AllStaffPage() {
                               <Avatar src={s.profile_image} name={s.full_name} size="md" />
                               <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#071428] ${s.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                             </div>
-                            
+
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                                 <p className="text-white font-bold text-lg truncate tracking-tight">{s.full_name}</p>
-                                <span className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${
-                                  s.is_active ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
-                                }`}>
+                                <span className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${s.is_active ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
+                                  }`}>
                                   {s.is_active ? "Active" : "Inactive"}
                                 </span>
                               </div>
@@ -858,7 +852,7 @@ export default function AllStaffPage() {
                               </div>
                             </div>
                           </div>
- 
+
                           <div className="flex flex-wrap items-center justify-between sm:justify-end gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-white/5">
                             <div className="flex xl:flex flex-col gap-1.5 min-w-0 mr-4">
                               <div className="flex items-center gap-2 text-white/40 text-[11px] font-medium">
@@ -868,7 +862,7 @@ export default function AllStaffPage() {
                                 <Phone size={12} className="shrink-0 text-[#D0B079]/40" /><span>{s.phone_number || "—"}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex flex-wrap items-center gap-3">
                               <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 no-print">
                                 <input
@@ -916,6 +910,13 @@ export default function AllStaffPage() {
                                   title="Edit profile"
                                 >
                                   <Edit2 size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteStaff(s.id, s.full_name)}
+                                  className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/30 hover:text-rose-500 rounded-xl border border-white/5 transition-all"
+                                  title="Delete account"
+                                >
+                                  <Trash2 size={18} />
                                 </button>
                               </div>
                             </div>
@@ -1018,8 +1019,8 @@ export default function AllStaffPage() {
                     <thead>
                       <tr className="bg-white/5">
                         <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Timeline</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-In Event</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-Out Event</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-In</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-Out</th>
                         <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase text-right">Duration</th>
                       </tr>
                     </thead>
@@ -1055,13 +1056,13 @@ export default function AllStaffPage() {
                                 )}
                               </td>
                             </tr>
-                            
+
                             {/* Session Rows */}
                             {group.sessions.map((session, sIdx) => {
                               if (editingAttendance?.id === session.id) {
                                 return (
                                   <tr key={session.id} className="bg-[#D0B079]/5 border-y border-[#D0B079]/20 relative">
-                                    <td colSpan="4" className="px-8 py-6">
+                                    <td colSpan="3" className="px-8 py-6">
                                       <div className="flex flex-col gap-5">
                                         <div className="flex items-center gap-2 text-[#D0B079] font-bold text-xs uppercase tracking-widest">
                                           <Edit2 size={14} /> Update Session Times
@@ -1145,11 +1146,13 @@ export default function AllStaffPage() {
                                     </div>
                                   </td>
                                   <td className="px-8 py-5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
-                                      <span className="text-white font-mono text-base font-medium">
-                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
-                                      </span>
+                                    <div className="flex flex-col gap-1">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
+                                        <span className="text-white font-mono text-base font-medium">
+                                          {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        </span>
+                                      </div>
                                     </div>
                                   </td>
                                   <td className="px-8 py-5 text-right">
@@ -1251,9 +1254,8 @@ export default function AllStaffPage() {
                       <div className="grid grid-cols-2 gap-3">
                         {["Male", "Female"].map(g => (
                           <button key={g} type="button" onClick={() => setFormData(p => ({ ...p, gender: g }))}
-                            className={`py-3 rounded-2xl font-semibold text-xs uppercase tracking-widest transition-all border ${
-                              formData.gender === g ? "bg-[#D0B079] text-slate-900 border-[#D0B079]" : "bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60"
-                            }`}>{g}</button>
+                            className={`py-3 rounded-2xl font-semibold text-xs uppercase tracking-widest transition-all border ${formData.gender === g ? "bg-[#D0B079] text-slate-900 border-[#D0B079]" : "bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60"
+                              }`}>{g}</button>
                         ))}
                       </div>
                     </div>
@@ -1307,10 +1309,10 @@ export default function AllStaffPage() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl no-print" />
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-              
+
               <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex items-center justify-between no-print">
                 <div>
                   <h2 className="text-2xl font-semibold">Report preview</h2>
@@ -1324,8 +1326,8 @@ export default function AllStaffPage() {
                       {restaurants.length} Restaurants
                     </p>
                   </div>
-                  <button 
-                    onClick={handlePrint} 
+                  <button
+                    onClick={handlePrint}
                     className="px-6 py-3 bg-[#D0B079] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-[#b8965f] transition-all"
                   >
                     <Printer size={14} /> Print / Save as PDF
@@ -1358,7 +1360,7 @@ export default function AllStaffPage() {
                       <p className="text-sm font-semibold" style={{ color: '#64748b' }}>
                         ID: {attendanceData?.staff?.employee_id || "N/A"} • {attendanceData?.staff?.designation || "Staff"}
                       </p>
-                      
+
                       <div className="mt-4 flex items-center gap-3 no-print">
                         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                           <input
@@ -1375,7 +1377,7 @@ export default function AllStaffPage() {
                             className="bg-transparent border-none text-[10px] font-bold text-slate-400 focus:ring-0 uppercase px-2 py-1 cursor-pointer"
                           />
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             if (attendanceData?.staff?.id === "all") handleAllStaffReport();
                             else handleOpenReport(attendanceData?.staff?.id);
@@ -1385,7 +1387,7 @@ export default function AllStaffPage() {
                           Refresh Preview
                         </button>
                       </div>
-                      
+
                       <p className="text-sm font-bold mt-4 text-[#D0B079]">
                         Report Period: {attendanceFilters.from || "Start"} — {attendanceFilters.to || "End"}
                       </p>
@@ -1434,7 +1436,7 @@ export default function AllStaffPage() {
                                   )}
                                 </td>
                                 <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                  {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                  {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                 </td>
                                 <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
                                   {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
@@ -1482,18 +1484,18 @@ export default function AllStaffPage() {
           </div>
         )}
       </AnimatePresence>
-      
+
       {/* Send Notification Modal */}
       <AnimatePresence>
         {showNotificationModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowNotificationModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 40 }} transition={{ type: "spring", damping: 25 }}
               className="relative w-full max-w-lg bg-[#0b1a3d] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden">
-              
+
               <div className="bg-white/5 px-8 py-6 border-b border-white/10 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3 text-[#D0B079] font-bold tracking-wider mb-1">
@@ -1512,9 +1514,9 @@ export default function AllStaffPage() {
               <form onSubmit={handleSendNotification} className="p-8 space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-white/40 tracking-widest uppercase ml-1">Notification Title</label>
-                  <input 
-                    type="text" 
-                    value={notificationData.title} 
+                  <input
+                    type="text"
+                    value={notificationData.title}
                     onChange={(e) => setNotificationData(p => ({ ...p, title: e.target.value }))}
                     placeholder="e.g., New Task Assigned"
                     className="w-full px-5 py-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-medium focus:outline-none focus:border-[#D0B079]/40 transition-all"
@@ -1524,8 +1526,8 @@ export default function AllStaffPage() {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-white/40 tracking-widest uppercase ml-1">Message Content</label>
-                  <textarea 
-                    value={notificationData.body} 
+                  <textarea
+                    value={notificationData.body}
                     onChange={(e) => setNotificationData(p => ({ ...p, body: e.target.value }))}
                     placeholder="Type your message here..."
                     rows={4}
@@ -1535,14 +1537,14 @@ export default function AllStaffPage() {
                 </div>
 
                 <div className="flex gap-3 pt-2">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowNotificationModal(false)}
                     className="flex-1 px-6 py-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 transition-all"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     disabled={sendingNotification}
                     className="flex-[2] px-6 py-4 bg-[#D0B079] text-slate-900 font-bold rounded-2xl hover:bg-[#b8965f] transition-all flex items-center justify-center gap-2 disabled:opacity-50"

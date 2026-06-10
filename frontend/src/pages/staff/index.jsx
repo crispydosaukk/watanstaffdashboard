@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { getCalculatedTime, calcCalculatedMinutes } from "../../utils/timeRounding";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
@@ -235,23 +236,23 @@ export default function StaffManagement() {
         try {
           const userCredential = await createUserWithEmailAndPassword(secondaryAuth, updates.email, updates.password);
           const newStaffUid = userCredential.user.uid;
-          
+
           await signOut(secondaryAuth);
 
           updates.created_at = new Date();
           updates.is_active = true;
           updates.created_by = user.uid || "";
-          
+
           if (!updates.employee_id) {
             const randomNum = Math.floor(1000 + Math.random() * 9000);
             updates.employee_id = `WS-${randomNum}`;
           }
-          
+
           await setDoc(doc(db, "staff", newStaffUid), updates);
         } catch (authErr) {
           console.error("Auth Creation Error:", authErr);
           if (authErr.code === 'auth/email-already-in-use') {
-             throw new Error("This email is already registered in our system.");
+            throw new Error("This email is already registered in our system.");
           }
           throw authErr;
         }
@@ -282,6 +283,18 @@ export default function StaffManagement() {
     } catch (err) {
       console.error(err);
       showPopup({ title: "Error", message: "Failed to update status", type: "error" });
+    }
+  };
+
+  const handleDeleteStaff = async (id, name) => {
+    if (window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+      try {
+        await deleteDoc(doc(db, "staff", id));
+        showPopup({ title: "Deleted", message: `Account for ${name} has been deleted.`, type: "success" });
+      } catch (err) {
+        console.error("Delete Error:", err);
+        showPopup({ title: "Error", message: "Failed to delete account", type: "error" });
+      }
     }
   };
 
@@ -327,10 +340,10 @@ export default function StaffManagement() {
       });
     } catch (err) {
       console.error(err);
-      showPopup({ 
-        title: "Error", 
-        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`, 
-        type: "error" 
+      showPopup({
+        title: "Error",
+        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`,
+        type: "error"
       });
     } finally {
       setLoadingAttendance(false);
@@ -374,10 +387,10 @@ export default function StaffManagement() {
       setShowReportModal(true);
     } catch (err) {
       console.error(err);
-      showPopup({ 
-        title: "Error", 
-        message: `Failed to load report: ${err.message || "Unknown error"}`, 
-        type: "error" 
+      showPopup({
+        title: "Error",
+        message: `Failed to load report: ${err.message || "Unknown error"}`,
+        type: "error"
       });
     } finally {
       setLoading(false);
@@ -388,7 +401,7 @@ export default function StaffManagement() {
     try {
       setLoading(true);
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      
+
       // 1. Fetch all staff for this restaurant
       const staffQuery = query(collection(db, "staff"), where("created_by", "==", user.uid));
       const staffSnap = await getDocs(staffQuery);
@@ -422,9 +435,9 @@ export default function StaffManagement() {
         allRecords = allRecords.filter(r => new Date(r.clock_in) <= toDate);
       }
 
-      setAttendanceData({ 
-        staff: { id: "all", full_name: "All Staff Summary", restaurant_name: staffList[0]?.restaurant_name || "Restaurant" }, 
-        records: allRecords 
+      setAttendanceData({
+        staff: { id: "all", full_name: "All Staff Summary", restaurant_name: staffList[0]?.restaurant_name || "Restaurant" },
+        records: allRecords
       });
       setShowReportModal(true);
     } catch (err) {
@@ -450,33 +463,14 @@ export default function StaffManagement() {
   const formatTimeWithDateDiff = (cinStr, coutStr) => {
     if (!coutStr) return "--:--";
     const cout = coutStr instanceof Date ? coutStr : new Date(coutStr);
-    const timeStr = cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-    
-    if (cinStr) {
-      const cin = cinStr instanceof Date ? cinStr : new Date(cinStr);
-      // Check if dates are different
-      if (cout.getDate() !== cin.getDate() || cout.getMonth() !== cin.getMonth() || cout.getFullYear() !== cin.getFullYear()) {
-        const coutDate = new Date(cout.getFullYear(), cout.getMonth(), cout.getDate());
-        const cinDate = new Date(cin.getFullYear(), cin.getMonth(), cin.getDate());
-        const diffDays = Math.round((coutDate.getTime() - cinDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) return `${timeStr} (next day)`;
-        if (diffDays > 1) return `${timeStr} (+${diffDays} days)`;
-      }
-    }
-    return timeStr;
+    return cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  // Recalculate total_minutes from actual timestamps to avoid trusting potentially wrong stored values
+  // Recalculate minutes from actual timestamps using calculated (rounded) times
   const calcSessionMinutes = (record) => {
     if (record.clock_in && record.clock_out) {
-      const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
-      const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
-      const diff = Math.floor((cout.getTime() - cin.getTime()) / 60000);
-      // Safety: clamp to 0-1440 (24h max per single session)
-      return Math.max(0, Math.min(diff, 1440));
+      return calcCalculatedMinutes(record.clock_in, record.clock_out);
     }
-    // Active session (no clock_out) = 0 minutes
     return 0;
   };
 
@@ -508,7 +502,7 @@ export default function StaffManagement() {
         const cin = record.clock_in instanceof Date ? record.clock_in : new Date(record.clock_in);
         if (!g.first_in || cin < g.first_in) g.first_in = cin;
       }
-      
+
       if (record.clock_out) {
         const cout = record.clock_out instanceof Date ? record.clock_out : new Date(record.clock_out);
         if (!g.last_out || cout > g.last_out) g.last_out = cout;
@@ -540,7 +534,7 @@ export default function StaffManagement() {
       const cin = new Date(editingAttendance.clock_in);
       const cout = new Date(editingAttendance.clock_out);
       const totalMinutes = Math.floor((cout - cin) / 60000);
-      
+
       await updateDoc(doc(db, "attendance", editingAttendance.id), {
         clock_in: cin,
         clock_out: cout,
@@ -650,7 +644,7 @@ export default function StaffManagement() {
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <select 
+                <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full sm:w-auto px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white/70 font-semibold focus:outline-none focus:border-[#D0B079]/50 transition-all text-xs cursor-pointer [&>option]:bg-[#071428]"
@@ -659,7 +653,7 @@ export default function StaffManagement() {
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
-                <select 
+                <select
                   value={filterDesignation}
                   onChange={(e) => setFilterDesignation(e.target.value)}
                   className="w-full sm:w-auto px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white/70 font-semibold focus:outline-none focus:border-[#D0B079]/50 transition-all text-xs cursor-pointer [&>option]:bg-[#071428]"
@@ -704,7 +698,7 @@ export default function StaffManagement() {
                           )}
                           <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-[#071428] ${item.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                         </div>
- 
+
                         <div className="min-w-0 flex-1">
                           <h3 className="text-xl font-bold text-white truncate group-hover:text-[#D0B079] transition-colors tracking-tight">{item.full_name}</h3>
                           <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -728,7 +722,7 @@ export default function StaffManagement() {
                             )}
                           </div>
                         </div>
- 
+
                         <div className="hidden 2xl:flex flex-col gap-1.5 flex-1 min-w-0 px-6 border-l border-white/5">
                           <div className="flex items-center gap-2 text-white/40 text-[11px] font-medium">
                             <Mail size={12} className="shrink-0 text-[#D0B079]/40" />
@@ -740,7 +734,7 @@ export default function StaffManagement() {
                           </div>
                         </div>
                       </div>
- 
+
                       <div className="flex items-center justify-between xl:justify-end gap-4 pt-4 xl:pt-0 border-t xl:border-t-0 border-white/5">
                         <button
                           onClick={() => handleToggleStatus(item.id, item.is_active)}
@@ -749,9 +743,9 @@ export default function StaffManagement() {
                         >
                           <span className={`inline-block h-7 w-7 transform rounded-xl transition-transform duration-300 shadow-lg ${item.is_active ? 'translate-x-8 bg-emerald-500' : 'translate-x-1 bg-white/20'}`} />
                         </button>
- 
+
                         <div className="h-10 w-px bg-white/5 mx-1 hidden xl:block" />
- 
+
                         <div className="flex flex-wrap items-center gap-3">
                           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 no-print">
                             <input
@@ -789,6 +783,13 @@ export default function StaffManagement() {
                               title="Edit"
                             >
                               <Edit2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStaff(item.id, item.full_name)}
+                              className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/40 hover:text-rose-500 rounded-xl border border-white/10 transition-all active:scale-90"
+                              title="Delete account"
+                            >
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </div>
@@ -878,8 +879,8 @@ export default function StaffManagement() {
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, gender: g }))}
                               className={`py-4 rounded-2xl font-semibold text-xs uppercase tracking-widest transition-all border ${formData.gender === g
-                                  ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-xl shadow-[#D0B079]/20'
-                                  : 'bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
+                                ? 'bg-[#D0B079] text-slate-900 border-[#D0B079] shadow-xl shadow-[#D0B079]/20'
+                                : 'bg-white/[0.03] border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
                                 }`}
                             >
                               {g}
@@ -1084,8 +1085,8 @@ export default function StaffManagement() {
                     <thead>
                       <tr className="bg-white/5">
                         <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Timeline</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-In Event</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Check-Out Event</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-In</th>
+                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-Out</th>
                         <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase text-right">Duration</th>
                       </tr>
                     </thead>
@@ -1121,13 +1122,13 @@ export default function StaffManagement() {
                                 )}
                               </td>
                             </tr>
-                            
+
                             {/* Session Rows */}
                             {group.sessions.map((session, sIdx) => {
                               if (editingAttendance?.id === session.id) {
                                 return (
                                   <tr key={session.id} className="bg-[#D0B079]/5 border-y border-[#D0B079]/20 relative">
-                                    <td colSpan="4" className="px-8 py-6">
+                                    <td colSpan="3" className="px-8 py-6">
                                       <div className="flex flex-col gap-5">
                                         <div className="flex items-center gap-2 text-[#D0B079] font-bold text-xs uppercase tracking-widest">
                                           <Edit2 size={14} /> Update Session Times
@@ -1211,11 +1212,13 @@ export default function StaffManagement() {
                                     </div>
                                   </td>
                                   <td className="px-8 py-5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
-                                      <span className="text-white font-mono text-base font-medium">
-                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
-                                      </span>
+                                    <div className="flex flex-col gap-1">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
+                                        <span className="text-white font-mono text-base font-medium">
+                                          {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        </span>
+                                      </div>
                                     </div>
                                   </td>
                                   <td className="px-8 py-5 text-right">
@@ -1317,7 +1320,7 @@ export default function StaffManagement() {
                       <p className="text-sm font-semibold" style={{ color: '#64748b' }}>
                         ID: {attendanceData?.staff?.employee_id || "N/A"} • {attendanceData?.staff?.designation || "Staff"}
                       </p>
-                      
+
                       <div className="mt-4 flex items-center gap-3 no-print">
                         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                           <input
@@ -1334,7 +1337,7 @@ export default function StaffManagement() {
                             className="bg-transparent border-none text-[10px] font-bold text-slate-400 focus:ring-0 uppercase px-2 py-1 cursor-pointer"
                           />
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             if (attendanceData?.staff?.id === "all") handleAllStaffReport();
                             else handleOpenReport(attendanceData?.staff?.id);
@@ -1344,7 +1347,7 @@ export default function StaffManagement() {
                           Refresh Preview
                         </button>
                       </div>
-                      
+
                       <p className="text-sm font-bold mt-4 text-[#D0B079]">
                         Report Period: {attendanceFilters.from || "Start"} — {attendanceFilters.to || "End"}
                       </p>
@@ -1358,78 +1361,78 @@ export default function StaffManagement() {
                   </div>
 
                   {/* Table */}
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
-                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
-                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
-                          <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
+                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
+                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
+                        <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
+                      {groupedRecords.length > 0 ? (
+                        groupedRecords.map((group, i) => (
+                          <React.Fragment key={i}>
+                            {/* Day header row */}
+                            {group.sessions.length > 1 && (
+                              <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                <td colSpan="3" className="px-4 py-3 font-black text-[10px] uppercase tracking-widest" style={{ color: '#64748b' }}>
+                                  {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} — {group.sessions.length} Sessions
+                                </td>
+                                <td className="px-4 py-3 text-right font-black text-xs" style={{ color: '#0f172a' }}>
+                                  Day Total: {formatWorkTime(group.total_minutes)}
+                                </td>
+                              </tr>
+                            )}
+                            {/* Session rows */}
+                            {group.sessions.map((session, sIdx) => (
+                              <tr key={session.id || sIdx}>
+                                <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
+                                  {group.sessions.length > 1 ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Session #{group.sessions.length - sIdx}</span>
+                                  ) : (
+                                    new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+                                  )}
+                                </td>
+                                <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                  {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                </td>
+                                <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                  {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                </td>
+                                <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
+                                  {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
-                        {groupedRecords.length > 0 ? (
-                          groupedRecords.map((group, i) => (
-                            <React.Fragment key={i}>
-                              {/* Day header row */}
-                              {group.sessions.length > 1 && (
-                                <tr style={{ backgroundColor: '#f1f5f9' }}>
-                                  <td colSpan="3" className="px-4 py-3 font-black text-[10px] uppercase tracking-widest" style={{ color: '#64748b' }}>
-                                    {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} — {group.sessions.length} Sessions
-                                  </td>
-                                  <td className="px-4 py-3 text-right font-black text-xs" style={{ color: '#0f172a' }}>
-                                    Day Total: {formatWorkTime(group.total_minutes)}
-                                  </td>
-                                </tr>
-                              )}
-                              {/* Session rows */}
-                              {group.sessions.map((session, sIdx) => (
-                                <tr key={session.id || sIdx}>
-                                  <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
-                                    {group.sessions.length > 1 ? (
-                                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Session #{group.sessions.length - sIdx}</span>
-                                    ) : (
-                                      new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                    {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                                  </td>
-                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                    {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
-                                  </td>
-                                  <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
-                                    {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
-                                  </td>
-                                </tr>
-                              ))}
-                            </React.Fragment>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                          <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
-                            Grand Total ({(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0) / 60).toFixed(2)} hrs)
-                          </td>
-                          <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
-                            {(() => {
-                              const totalMinutes = groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
-                              const rate = Number(attendanceData?.staff?.hourly_rate || 0);
-                              if (rate > 0) {
-                                const pay = (totalMinutes / 60) * rate;
-                                return `£${pay.toFixed(2)}`;
-                              }
-                              return formatWorkTime(totalMinutes);
-                            })()}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                        <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
+                          Grand Total ({(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0) / 60).toFixed(2)} hrs)
+                        </td>
+                        <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
+                          {(() => {
+                            const totalMinutes = groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
+                            const rate = Number(attendanceData?.staff?.hourly_rate || 0);
+                            if (rate > 0) {
+                              const pay = (totalMinutes / 60) * rate;
+                              return `£${pay.toFixed(2)}`;
+                            }
+                            return formatWorkTime(totalMinutes);
+                          })()}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
 
                   {/* Footer */}
                   <div className="mt-12 pt-8 border-t border-slate-100 text-center italic text-[10px]" style={{ borderTopColor: '#f1f5f9', color: '#94a3b8' }}>

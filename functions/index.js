@@ -69,9 +69,9 @@ exports.deleteAuthUser = functions.https.onCall(async (data, context) => {
  * Restored: Sends a push notification via FCM.
  */
 exports.sendpushnotification = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Only authenticated users can call this function.");
-  }
+  // if (!context.auth) {
+  //   throw new functions.https.HttpsError("unauthenticated", "Only authenticated users can call this function.");
+  // }
 
   const { fcm_token, title, body, priority, type, notificationId } = data;
 
@@ -86,20 +86,25 @@ exports.sendpushnotification = functions.https.onCall(async (data, context) => {
       body: body || "",
     },
     data: {
-      notificationId: notificationId || "",
-      type: type || 'announcement',
+      notificationId: String(notificationId || ""),
+      type: String(type || 'announcement'),
+      priority: String(priority || "normal"),
     },
     android: {
-      priority: (priority === 'urgent' || priority === 'high') ? 'high' : 'normal',
+      priority: "high",
       notification: {
-        sound: 'default',
+        channelId: "high_importance_channel",
+        sound: "default",
+        defaultSound: true,
+        priority: "max",
+        visibility: "public"
       }
     },
     apns: {
       payload: {
         aps: {
-          sound: 'default',
-          badge: 1,
+          sound: "default",
+          badge: 1
         }
       }
     }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getCalculatedTime, formatTimeShort, calcCalculatedMinutes } from "../../utils/timeRounding";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend
 } from "recharts";
@@ -407,10 +408,7 @@ export default function Dashboard() {
     // Recalculate total_minutes from actual timestamps instead of trusting stored values
     const totalMinutesToday = filteredAttendance.reduce((sum, r) => {
       if (r.clock_in && r.clock_out) {
-        const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
-        const cout = r.clock_out?.toDate ? r.clock_out.toDate() : new Date(r.clock_out);
-        const diff = Math.floor((cout.getTime() - cin.getTime()) / 60000);
-        return sum + Math.max(0, Math.min(diff, 1440)); // cap at 24h per session
+        return sum + calcCalculatedMinutes(r.clock_in, r.clock_out);
       }
       return sum;
     }, 0);
@@ -863,41 +861,57 @@ export default function Dashboard() {
                    <table className="w-full text-left">
                      <thead className="bg-white/5 border-b border-white/10">
                        <tr>
-                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff member</th>
-                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Action</th>
-                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Time</th>
-                         <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Status</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff member</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Actual Time</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Calc. Clock In</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Calc. Clock Out</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Status</th>
                        </tr>
                      </thead>
                      <tbody className="divide-y divide-white/5">
                         {loading ? (
-                          <tr><td colSpan="4" className="px-6 py-12 text-center text-white/20 font-bold uppercase tracking-widest text-xs">Loading activity...</td></tr>
+                          <tr><td colSpan="5" className="px-6 py-12 text-center text-white/20 font-bold uppercase tracking-widest text-xs">Loading activity...</td></tr>
                         ) : stats.recent_activity?.length > 0 ? (
-                          stats.recent_activity.map((act, i) => (
+                          stats.recent_activity.map((act, i) => {
+                            const actualIn = act.clock_in?.toDate ? act.clock_in.toDate() : new Date(act.clock_in);
+                            const actualOut = act.clock_out ? (act.clock_out?.toDate ? act.clock_out.toDate() : new Date(act.clock_out)) : null;
+                            const calcIn = getCalculatedTime(actualIn);
+                            const calcOut = actualOut ? getCalculatedTime(actualOut) : null;
+                            return (
                             <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
-                              <td className="px-6 py-4">
+                              <td className="px-4 py-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#D0B079] font-bold text-xs overflow-hidden">
+                                  <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#D0B079] font-bold text-xs overflow-hidden shrink-0">
                                      {act.profile_image ? <img src={act.profile_image} className="w-full h-full object-cover" /> : act.full_name?.[0]}
                                   </div>
-                                  <div>
-                                    <p className="text-white font-bold text-sm">{act.full_name}</p>
+                                  <div className="min-w-0">
+                                    <p className="text-white font-bold text-sm truncate">{act.full_name}</p>
                                     <p className="text-[10px] text-white/30 font-medium uppercase tracking-wider">{act.designation || 'Staff'}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4">
-                                <span className="text-white/80 text-xs font-semibold">
-                                  {act.clock_out ? "Clocked Out" : "Clocked In"}
-                                </span>
+                              <td className="px-4 py-4">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
+                                    <span className="text-white/70 font-mono text-xs">{formatTimeShort(actualIn)}</span>
+                                  </div>
+                                  {actualOut && (
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500/60" />
+                                      <span className="text-white/70 font-mono text-xs">{formatTimeShort(actualOut)}</span>
+                                    </div>
+                                  )}
+                                  <p className="text-[9px] text-white/25 font-medium mt-0.5">{actualIn.toLocaleDateString()}</p>
+                                </div>
                               </td>
-                              <td className="px-6 py-4">
-                                <p className="text-white font-bold text-sm">
-                                  {act.clock_out ? new Date(act.clock_out?.toDate ? act.clock_out.toDate() : act.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(act.clock_in?.toDate ? act.clock_in.toDate() : act.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                <p className="text-[10px] text-white/30 font-medium">{new Date(act.clock_in?.toDate ? act.clock_in.toDate() : act.clock_in).toLocaleDateString()}</p>
+                              <td className="px-4 py-4">
+                                <span className="text-emerald-400 font-mono text-sm font-bold">{formatTimeShort(calcIn)}</span>
                               </td>
-                              <td className="px-6 py-4 text-right">
+                              <td className="px-4 py-4">
+                                <span className="text-rose-400 font-mono text-sm font-bold">{calcOut ? formatTimeShort(calcOut) : '--:--'}</span>
+                              </td>
+                              <td className="px-4 py-4 text-right">
                                 <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
                                   !act.clock_out ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
                                 }`}>
@@ -905,9 +919,9 @@ export default function Dashboard() {
                                 </span>
                               </td>
                             </tr>
-                          ))
+                          );})
                         ) : (
-                          <tr><td colSpan="4" className="px-6 py-20 text-center text-white/20 font-bold uppercase tracking-widest text-xs">No activity found today</td></tr>
+                          <tr><td colSpan="5" className="px-6 py-20 text-center text-white/20 font-bold uppercase tracking-widest text-xs">No activity found today</td></tr>
                         )}
                      </tbody>
                    </table>
