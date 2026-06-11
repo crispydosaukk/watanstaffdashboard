@@ -1457,7 +1457,7 @@ export default function AllStaffPage() {
                     <tfoot>
                       <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
                         <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
-                          Grand Total ({(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0) / 60).toFixed(2)} hrs)
+                          Grand Total ({formatWorkTime(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0))})
                         </td>
                         <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
                           {(() => {
