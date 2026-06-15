@@ -899,7 +899,7 @@ export default function Dashboard() {
         </div>`;
 
       await sendEmailReportFunc({
-        to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
+        to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com",
         subject: `Period Snapshot Report - ${pLabel1}`,
         htmlBody: emailHtmlBody,
         attachmentUrl: pdfBase64,
