@@ -6,7 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   Users, ArrowRight, CheckCircle, Clock, X,
-  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2
+  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2, Store, Send
 } from "lucide-react";
 
 
@@ -103,6 +103,7 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
 
 export default function Dashboard() {
   const { userData } = useAuth();
+  const { showPopup } = usePopup();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -131,6 +132,20 @@ export default function Dashboard() {
   const [period, setPeriod] = useState("today");
   const [showPeriodMenu, setShowPeriodMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  // Snapshot States
+  const [snapshotPeriod, setSnapshotPeriod] = useState("today_vs");
+  const [snapshotCustomDates, setSnapshotCustomDates] = useState({
+    from: new Date().toISOString().split('T')[0],
+    to: new Date().toISOString().split('T')[0]
+  });
+  const [snapshotRestaurant, setSnapshotRestaurant] = useState("all");
+  const [showSnapshotMenu, setShowSnapshotMenu] = useState(false);
+  const [showSnapshotRestMenu, setShowSnapshotRestMenu] = useState(false);
+  const [snapshotCompareMode, setSnapshotCompareMode] = useState(false);
+  const [snapshotCompareRestIds, setSnapshotCompareRestIds] = useState([]);
+  const [snapshotPage, setSnapshotPage] = useState(1);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Super Admin: User/Staff filter
   const [allStaffList, setAllStaffList] = useState([]);
@@ -251,7 +266,7 @@ export default function Dashboard() {
       calculateStaffStats(staffList);
     });
     return () => unsubStaff();
-  }, [selectedRestaurant, selectedUser, dateRange, timeRange, isSuper, userData, restaurants]);
+  }, [selectedRestaurant, selectedUser, dateRange, timeRange, isSuper, userData, restaurants, snapshotPeriod, snapshotCustomDates, snapshotRestaurant, snapshotCompareMode]);
 
 
 
@@ -461,7 +476,366 @@ export default function Dashboard() {
       weekly_data: weeklyData
     }));
 
+    try {
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const todayEnd = new Date(todayStart); todayEnd.setDate(todayEnd.getDate() + 1);
+      const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      const yesterdayEnd = new Date(todayStart);
+
+      const thisWeekStart = new Date(todayStart);
+      thisWeekStart.setDate(todayStart.getDate() - todayStart.getDay());
+      
+      const lastWeekStart = new Date(thisWeekStart);
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+      const lastWeekEnd = new Date(thisWeekStart);
+
+      const thisMonthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+      const startOfLastMonth = new Date(todayStart.getFullYear(), todayStart.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(todayStart.getFullYear(), todayStart.getMonth(), 0);
+
+      // Determine date range for snapshot filtering
+      let fetchFrom = null;
+      let fetchTo = null;
+
+      if (['today_vs', 'today', 'yesterday'].includes(snapshotPeriod)) {
+        fetchFrom = new Date(yesterdayStart);
+        fetchTo = new Date(todayEnd);
+      } else if (['week_vs', 'this_week'].includes(snapshotPeriod)) {
+        fetchFrom = new Date(lastWeekStart);
+        fetchTo = new Date(todayEnd);
+      } else if (['month_vs', 'this_month'].includes(snapshotPeriod)) {
+        fetchFrom = new Date(startOfLastMonth);
+        fetchTo = new Date(todayEnd);
+      } else if (snapshotPeriod === 'custom') {
+        fetchFrom = new Date(snapshotCustomDates.from);
+        fetchFrom.setHours(0,0,0,0);
+        fetchTo = new Date(snapshotCustomDates.to);
+        fetchTo.setDate(fetchTo.getDate() + 1);
+        fetchTo.setHours(0,0,0,0);
+      }
+
+      let costRecordsQuery = collection(db, "attendance");
+      if (fetchFrom && fetchTo) {
+        costRecordsQuery = query(
+          collection(db, "attendance"),
+          where("clock_in", ">=", fetchFrom),
+          where("clock_in", "<", fetchTo)
+        );
+      }
+
+      const costSnap = await getDocs(costRecordsQuery);
+      const costRecords = costSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const staffMap = {};
+      staffList.forEach(s => staffMap[s.id] = s);
+
+      const filteredCostRecords = costRecords.filter(r => {
+        const s = staffMap[r.staff_id];
+        if (!s) return false;
+        if (!isSuper && restaurantId && String(s.restaurant_id) !== String(restaurantId) && String(s.created_by) !== String(restaurantId)) return false;
+        return true;
+      });
+
+      const currAgg = {};
+      const prevAgg = {};
+      const singleAgg = {};
+      const compareRestAgg = {};
+
+      filteredCostRecords.forEach(r => {
+        if (!r.clock_in || !r.clock_out) return;
+        const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
+        
+        const s = staffMap[r.staff_id];
+        const rest = isSuper && restaurants ? restaurants.find(res => String(res.id) === String(s?.restaurant_id || s?.created_by)) : null;
+        const rId = rest?.id || s?.restaurant_id || 'unknown';
+
+        if (!snapshotCompareMode && snapshotRestaurant !== "all" && String(rId) !== String(snapshotRestaurant)) return;
+
+        let isCurr = false;
+        let isPrev = false;
+        let isSingle = false;
+
+        if (snapshotPeriod === 'today_vs') {
+          if (cin >= todayStart && cin < todayEnd) isCurr = true;
+          else if (cin >= yesterdayStart && cin < yesterdayEnd) isPrev = true;
+        } else if (snapshotPeriod === 'week_vs') {
+          if (cin >= thisWeekStart) isCurr = true;
+          else if (cin >= lastWeekStart && cin < lastWeekEnd) isPrev = true;
+        } else if (snapshotPeriod === 'month_vs') {
+          if (cin >= thisMonthStart) isCurr = true;
+          else if (cin >= startOfLastMonth && cin < lastMonthEnd) isPrev = true;
+        } else if (snapshotPeriod === 'today') {
+          if (cin >= todayStart && cin < todayEnd) isSingle = true;
+        } else if (snapshotPeriod === 'yesterday') {
+          if (cin >= yesterdayStart && cin < yesterdayEnd) isSingle = true;
+        } else if (snapshotPeriod === 'this_week') {
+          if (cin >= thisWeekStart) isSingle = true;
+        } else if (snapshotPeriod === 'this_month') {
+          if (cin >= thisMonthStart) isSingle = true;
+        } else if (snapshotPeriod === 'custom') {
+          const cFrom = new Date(snapshotCustomDates.from);
+          const cTo = new Date(snapshotCustomDates.to);
+          cTo.setDate(cTo.getDate() + 1); // Include end day fully
+          if (cin >= cFrom && cin < cTo) isSingle = true;
+        }
+
+        if (!snapshotCompareMode && (isCurr || isPrev || isSingle)) {
+          const mins = calcCalculatedMinutes(r.clock_in, r.clock_out);
+          if (mins > 0) {
+            const aggTarget = isSingle ? singleAgg : (isCurr ? currAgg : prevAgg);
+            if (!aggTarget[r.staff_id]) aggTarget[r.staff_id] = { mins: 0, cost: 0 };
+            aggTarget[r.staff_id].mins += mins;
+            aggTarget[r.staff_id].cost += (mins / 60) * (staffMap[r.staff_id]?.hourly_rate || 0);
+          }
+        }
+
+        const isCompareTime = ['today', 'yesterday', 'this_week', 'this_month', 'custom'].includes(snapshotPeriod) ? isSingle : isCurr;
+        
+        if (snapshotCompareMode && isCompareTime) {
+          const mins = calcCalculatedMinutes(r.clock_in, r.clock_out);
+          if (mins > 0) {
+            if (!compareRestAgg[rId]) compareRestAgg[rId] = {};
+            if (!compareRestAgg[rId][r.staff_id]) compareRestAgg[rId][r.staff_id] = { mins: 0, cost: 0 };
+            compareRestAgg[rId][r.staff_id].mins += mins;
+            compareRestAgg[rId][r.staff_id].cost += (mins / 60) * (staffMap[r.staff_id]?.hourly_rate || 0);
+          }
+        }
+      });
+
+      const getSnapshotPeriodStats = (aggData) => {
+        let topEmp = null;
+        let totalMins = 0;
+        let presentCount = Object.keys(aggData).length;
+        let totalCost = 0;
+
+        Object.keys(aggData).forEach(id => {
+          const agg = aggData[id];
+          totalMins += agg.mins;
+          totalCost += agg.cost;
+          const s = staffList.find(staff => staff.id === id);
+          
+          const empData = {
+            id,
+            name: s?.full_name || "Unknown",
+            designation: s?.designation || "Staff",
+            image: s?.profile_image || null,
+            hours: (agg.mins / 60).toFixed(1),
+            cost: agg.cost.toFixed(2)
+          };
+          if (!topEmp || Number(empData.cost) > Number(topEmp.cost)) {
+            topEmp = empData;
+          }
+        });
+
+        return {
+          total_hours: (totalMins / 60).toFixed(1),
+          total_cost: totalCost.toFixed(2),
+          present_count: presentCount,
+          top_employee: topEmp
+        };
+      };
+
+      const compareRestaurantsStats = [];
+      Object.keys(compareRestAgg).forEach(rId => {
+        const rest = restaurants.find(res => String(res.id) === String(rId));
+        compareRestaurantsStats.push({
+          restaurant_id: String(rId),
+          restaurant_name: rest?.restaurant_name || "Unknown Restaurant",
+          stats: getSnapshotPeriodStats(compareRestAgg[rId])
+        });
+      });
+
+      const snapshotData = {
+        curr: getSnapshotPeriodStats(currAgg),
+        prev: getSnapshotPeriodStats(prevAgg),
+        single: getSnapshotPeriodStats(singleAgg),
+        compare: compareRestaurantsStats
+      };
+
+      setStats(prev => ({
+        ...prev,
+        snapshot: snapshotData
+      }));
+    } catch (error) {
+      console.error("Error in calculateStaffStats:", error);
+    }
+
     setLoading(false);
+  };
+
+  const handleEmailSnapshot = async () => {
+    setSendingEmail(true);
+    try {
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+
+      const reportDate = new Date().toLocaleDateString('en-GB');
+      const reportTime = new Date().toLocaleString('en-GB');
+      let pLabel1 = "";
+      let pLabel2 = "";
+      let isComparative = false;
+
+      if (snapshotCompareMode) {
+        pLabel1 = `Restaurant Comparison - ` + (snapshotPeriod === 'custom' ? `Custom Range: ${snapshotCustomDates.from} to ${snapshotCustomDates.to}` : {
+          today_vs: "Today", week_vs: "This Week", month_vs: "This Month",
+          today: "Today", yesterday: "Yesterday", this_week: "This Week", this_month: "This Month"
+        }[snapshotPeriod]);
+      } else if (['today_vs', 'week_vs', 'month_vs'].includes(snapshotPeriod)) {
+        isComparative = true;
+        pLabel1 = snapshotPeriod === 'today_vs' ? 'Today' : snapshotPeriod === 'week_vs' ? 'This Week' : 'This Month';
+        pLabel2 = snapshotPeriod === 'today_vs' ? 'Yesterday' : snapshotPeriod === 'week_vs' ? 'Last Week' : 'Last Month';
+      } else if (snapshotPeriod === 'custom') {
+        pLabel1 = `Custom Range: ${snapshotCustomDates.from} to ${snapshotCustomDates.to}`;
+      } else {
+        pLabel1 = {
+          today: "Today's Totals",
+          yesterday: "Yesterday's Totals",
+          this_week: "This Week's Totals",
+          this_month: "This Month's Totals"
+        }[snapshotPeriod];
+      }
+
+      let reportHtml = "";
+
+      if (snapshotCompareMode) {
+        const compareRows = snapshotCompareRestIds.map(rId => {
+          const restData = stats.snapshot?.compare?.find(c => String(c.restaurant_id) === String(rId));
+          const restName = restaurants.find(r => String(r.id) === String(rId))?.restaurant_name || "Unknown Restaurant";
+          const pCount = restData?.stats?.present_count || 0;
+          const tHours = restData?.stats?.total_hours || "0.0";
+          const tCost = restData?.stats?.total_cost || "0.00";
+          const topEmp = restData?.stats?.top_employee || null;
+
+          return `
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:10px;font-size:13px;font-weight:bold;">${restName}</td>
+            <td style="padding:10px;font-size:13px;text-align:center;">${pCount}</td>
+            <td style="padding:10px;font-size:13px;text-align:right;">${tHours}h</td>
+            <td style="padding:10px;font-size:13px;text-align:right;color:#b45309;font-weight:bold;">£${tCost}</td>
+            <td style="padding:10px;font-size:13px;">${topEmp ? `${topEmp.name} (£${topEmp.cost})` : 'N/A'}</td>
+          </tr>
+        `}).join('') || `<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;font-style:italic;">No restaurants selected for comparison.</td></tr>`;
+
+        reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
+          <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Restaurant Comparison Report</p>
+          <h2 style="color:#1e40af;margin:0 0 15px 0;font-size:18px;text-transform:uppercase;">${pLabel1}</h2>
+          
+          <table style="width:100%;border-collapse:collapse;margin-bottom:30px;text-align:left;">
+            <thead>
+              <tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb;">
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;">Restaurant</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;text-align:center;">Members</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;text-align:right;">Total Hours</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;text-align:right;">Total Pay</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;">Top Earner</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${compareRows}
+            </tbody>
+          </table>
+          <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
+        </div>`;
+      } else if (isComparative) {
+        reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
+          <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Period Snapshot Report${snapshotRestaurant !== 'all' ? ' - Filtered' : ''}</p>
+                   <table style="width:100%;border-collapse:collapse;margin-bottom:30px;">
+            <tr>
+              <td style="width:50%;vertical-align:top;padding-right:15px;">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:20px;border-radius:8px;">
+                  <h3 style="color:#3b82f6;margin:0 0 15px 0;font-size:16px;text-transform:uppercase;">${pLabel1}</h3>
+                  <div style="margin-bottom:15px;">
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Members</p>
+                    <p style="font-size:24px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.curr?.present_count || 0}</p>
+                  </div>
+                  <div style="margin-bottom:15px;">
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Hours</p>
+                    <p style="font-size:18px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.curr?.total_hours || 0}h</p>
+                  </div>
+                  <div>
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Pay</p>
+                    <p style="font-size:18px;font-weight:bold;margin:0;color:#3b82f6;">£${stats.snapshot?.curr?.total_cost || "0.00"}</p>
+                  </div>
+                </div>
+              </td>
+              <td style="width:50%;vertical-align:top;padding-left:15px;">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:20px;border-radius:8px;">
+                  <h3 style="color:#64748b;margin:0 0 15px 0;font-size:16px;text-transform:uppercase;">${pLabel2}</h3>
+                  <div style="margin-bottom:15px;">
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Members</p>
+                    <p style="font-size:24px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.prev?.present_count || 0}</p>
+                  </div>
+                  <div style="margin-bottom:15px;">
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Hours</p>
+                    <p style="font-size:18px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.prev?.total_hours || 0}h</p>
+                  </div>
+                  <div>
+                    <p style="font-size:11px;color:#64748b;text-transform:uppercase;margin:0 0 4px 0;">Total Pay</p>
+                    <p style="font-size:18px;font-weight:bold;margin:0;color:#64748b;">£${stats.snapshot?.prev?.total_cost || "0.00"}</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
+        </div>`;
+      } else {
+        reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
+          <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Period Snapshot Report${snapshotRestaurant !== 'all' ? ' - Filtered' : ''}</p>
+          
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:30px;border-radius:8px;max-width:400px;margin:0 auto 30px auto;">
+            <h3 style="color:#d97706;margin:0 0 20px 0;font-size:18px;text-transform:uppercase;text-align:center;">${pLabel1}</h3>
+            <div style="margin-bottom:20px;text-align:center;">
+              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Members</p>
+              <p style="font-size:32px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.present_count || 0}</p>
+            </div>
+            <div style="margin-bottom:20px;text-align:center;">
+              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Hours</p>
+              <p style="font-size:24px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.total_hours || 0}h</p>
+            </div>
+            <div style="text-align:center;">
+              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Pay</p>
+              <p style="font-size:24px;font-weight:bold;margin:0;color:#d97706;">£${stats.snapshot?.single?.total_cost || "0.00"}</p>
+            </div>
+          </div>
+          <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
+        </div>`;
+      }
+
+      const opt = {
+        margin: 10,
+        filename: `snapshot_report_${reportDate.replace(/\//g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      const pdfBase64 = await html2pdf().from(reportHtml).set(opt).outputPdf('datauristring');
+
+      const response = await fetch('https://us-central1-watanstaff-prod.cloudfunctions.net/sendEmailReport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: userData?.email || "admin@example.com",
+          subject: `Period Snapshot Report - ${pLabel1}`,
+          text: `Attached is the ${pLabel1} snapshot report.`,
+          pdfData: pdfBase64.split(',')[1],
+          fileName: opt.filename
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to send email");
+      
+      showPopup({ title: "Email Sent", message: "Snapshot report sent to your email successfully.", type: "success" });
+    } catch (err) {
+      console.error("Error generating/sending snapshot PDF:", err);
+      showPopup({ title: "Email Failed", message: "Failed to send the report.", type: "error" });
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
 
@@ -966,6 +1340,459 @@ export default function Dashboard() {
                  </div>
               </ChartCard>
             </div>
+
+            {/* --- Snapshot Module --- */}
+            <div className="mt-16 pt-8 border-t border-white/10 mb-8 space-y-6 clear-both">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-[#D0B079]/20 rounded-xl">
+                    <LayoutDashboard className="text-[#D0B079]" size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-wide">Period Snapshot</h2>
+                    <p className="text-sm text-white/50 mt-1">Compare performance between periods</p>
+                  </div>
+                </div>
+
+                <div className="relative flex items-center gap-3">
+                  <button
+                    onClick={handleEmailSnapshot}
+                    disabled={sendingEmail}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#D0B079]/10 hover:bg-[#D0B079]/20 border border-[#D0B079]/20 rounded-xl text-[#D0B079] text-sm font-bold transition-all disabled:opacity-50"
+                  >
+                    {sendingEmail ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {sendingEmail ? 'Sending...' : 'Email Report'}
+                  </button>
+
+                  <button
+                    onClick={() => setShowSnapshotMenu(!showSnapshotMenu)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm font-bold transition-all"
+                  >
+                    <Filter size={16} />
+                    {{
+                      today_vs: 'Today vs Yesterday', week_vs: 'This Week vs Last Week', month_vs: 'This Month vs Last Month',
+                      today: "Today's Totals", yesterday: "Yesterday's Totals", this_week: "This Week's Totals", this_month: "This Month's Totals",
+                      custom: "Custom Range"
+                    }[snapshotPeriod] || 'Period'}
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${showSnapshotMenu ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showSnapshotMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-0 mt-2 w-64 bg-[#0b1a3d] border border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden"
+                      >
+                        <div className="p-2 border-b border-white/5">
+                          <p className="px-3 py-1.5 text-[10px] font-black text-white/40 uppercase tracking-widest">Comparisons</p>
+                          {[
+                            { id: 'today_vs', label: 'Today vs Yesterday' },
+                            { id: 'week_vs', label: 'This Week vs Last Week' },
+                            { id: 'month_vs', label: 'This Month vs Last Month' }
+                          ].map(opt => (
+                            <button key={opt.id} onClick={() => { setSnapshotPeriod(opt.id); setShowSnapshotMenu(false); setSnapshotPage(1); }}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${snapshotPeriod === opt.id ? 'bg-[#D0B079]/10 text-[#D0B079]' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                              <Calendar size={14} /> {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="p-2">
+                          <p className="px-3 py-1.5 text-[10px] font-black text-white/40 uppercase tracking-widest">Single Totals</p>
+                          {[
+                            { id: 'today', label: "Today's Totals" },
+                            { id: 'yesterday', label: "Yesterday's Totals" },
+                            { id: 'this_week', label: "This Week's Totals" },
+                            { id: 'this_month', label: "This Month's Totals" },
+                            { id: 'custom', label: "Custom Range" }
+                          ].map(opt => (
+                            <button key={opt.id} onClick={() => { setSnapshotPeriod(opt.id); setShowSnapshotMenu(false); setSnapshotPage(1); }}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${snapshotPeriod === opt.id ? 'bg-[#D0B079]/10 text-[#D0B079]' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                              <Calendar size={14} /> {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {snapshotPeriod === 'custom' && (
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-2">
+                      <input 
+                        type="date" 
+                        value={snapshotCustomDates.from}
+                        onChange={(e) => setSnapshotCustomDates(prev => ({ ...prev, from: e.target.value }))}
+                        className="bg-transparent text-white text-sm py-2 px-2 outline-none cursor-pointer [color-scheme:dark]"
+                      />
+                      <span className="text-white/30 text-sm">to</span>
+                      <input 
+                        type="date" 
+                        value={snapshotCustomDates.to}
+                        onChange={(e) => setSnapshotCustomDates(prev => ({ ...prev, to: e.target.value }))}
+                        className="bg-transparent text-white text-sm py-2 px-2 outline-none cursor-pointer [color-scheme:dark]"
+                      />
+                    </div>
+                  )}
+
+                  {isSuper && (
+                    <div className="relative flex items-center gap-2">
+                      <button
+                        onClick={() => setSnapshotCompareMode(!snapshotCompareMode)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${snapshotCompareMode ? 'bg-[#D0B079]/20 border-[#D0B079]/40 text-[#D0B079]' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
+                      >
+                        <Store size={16} />
+                        Compare
+                      </button>
+                      <button
+                        onClick={() => setShowSnapshotRestMenu(!showSnapshotRestMenu)}
+                        className={`flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm font-bold transition-all ${snapshotCompareMode ? 'border-[#D0B079]/20' : ''}`}
+                      >
+                        <span className="max-w-[120px] truncate">{snapshotCompareMode ? `${snapshotCompareRestIds.length} Selected` : (snapshotRestaurant === 'all' ? 'All Restaurants' : (restaurants.find(r => String(r.id) === snapshotRestaurant)?.restaurant_name || 'Selected'))}</span>
+                        <ChevronDown size={16} className={`transition-transform duration-300 ${showSnapshotRestMenu ? 'rotate-180' : ''}`} />
+                      </button>
+                      <AnimatePresence>
+                        {showSnapshotRestMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute top-[calc(100%+0.5rem)] right-0 w-64 bg-[#0b1a3d] border border-white/10 rounded-xl shadow-2xl z-[100] max-h-72 overflow-y-auto custom-scrollbar origin-top"
+                          >
+                            {snapshotCompareMode ? (
+                              <div className="p-2 space-y-1">
+                                {restaurants.map(r => {
+                                  const isChecked = snapshotCompareRestIds.includes(String(r.id));
+                                  return (
+                                    <label key={r.id} className={`flex items-center px-3 py-2.5 gap-3 text-sm rounded-xl cursor-pointer transition-all ${isChecked ? 'bg-[#D0B079]/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}>
+                                      <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border transition-all ${isChecked ? 'bg-[#D0B079] border-[#D0B079] shadow-[0_0_10px_rgba(208,176,121,0.3)]' : 'border-white/20 bg-black/20'}`}>
+                                        {isChecked && <Check size={14} strokeWidth={4} className="text-[#0b1a3d]" />}
+                                      </div>
+                                      <input 
+                                        type="checkbox" 
+                                        className="hidden"
+                                        checked={isChecked}
+                                        onChange={(e) => {
+                                          if (e.target.checked) setSnapshotCompareRestIds(prev => [...prev, String(r.id)]);
+                                          else setSnapshotCompareRestIds(prev => prev.filter(id => id !== String(r.id)));
+                                        }}
+                                      />
+                                      <span className="truncate flex-1 font-bold">{r.restaurant_name}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => { setSnapshotRestaurant('all'); setShowSnapshotRestMenu(false); setSnapshotPage(1); }}
+                                  className={`w-full text-left px-4 py-3 text-sm font-bold transition-all ${snapshotRestaurant === 'all' ? 'bg-[#D0B079]/10 text-[#D0B079]' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                                >
+                                  All Restaurants
+                                </button>
+                                {restaurants.map(r => (
+                                  <button
+                                    key={r.id}
+                                    onClick={() => { setSnapshotRestaurant(String(r.id)); setShowSnapshotRestMenu(false); setSnapshotPage(1); }}
+                                    className={`w-full text-left px-4 py-3 text-sm font-bold transition-all ${snapshotRestaurant === String(r.id) ? 'bg-[#D0B079]/10 text-[#D0B079]' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                                  >
+                                    {r.restaurant_name}
+                                  </button>
+                                ))}
+                              </>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {snapshotCompareMode ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {snapshotCompareRestIds.map((rId, idx) => {
+                    const restData = stats.snapshot?.compare?.find(c => String(c.restaurant_id) === String(rId));
+                    const restName = restaurants.find(r => String(r.id) === String(rId))?.restaurant_name || "Unknown Restaurant";
+                    const pCount = restData?.stats?.present_count || 0;
+                    const topEmp = restData?.stats?.top_employee || null;
+                    const tHours = restData?.stats?.total_hours || "0.0";
+                    const tCost = restData?.stats?.total_cost || "0.00";
+
+                    return (
+                    <div key={idx} className="bg-[#0b1a3d] border border-[#D0B079]/20 rounded-3xl p-6 relative overflow-hidden shadow-2xl group hover:border-[#D0B079]/40 transition-all">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#D0B079]/5 to-transparent opacity-50" />
+                      <div className="relative z-10">
+                        <h3 className="text-xl font-black text-[#D0B079] mb-6 uppercase tracking-widest truncate">
+                          {restName}
+                        </h3>
+
+                        <div className="space-y-4">
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex justify-between items-center">
+                            <div>
+                              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
+                              <p className="text-2xl font-black text-white">{pCount}</p>
+                            </div>
+                            <div className="p-2.5 bg-[#D0B079]/20 text-[#D0B079] rounded-xl"><Users size={20} /></div>
+                          </div>
+
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3 font-bold">Highest Earner</p>
+                            {topEmp ? (
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-[#D0B079]/20 border border-[#D0B079]/30 flex items-center justify-center text-[#D0B079] font-bold overflow-hidden shrink-0">
+                                  {topEmp.image ? <img src={topEmp.image} className="w-full h-full object-cover" /> : <User size={16} />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-white text-sm truncate">{topEmp.name}</p>
+                                  <p className="text-[9px] text-white/40 uppercase tracking-wider truncate">{topEmp.designation}</p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-base font-black text-[#D0B079]">£{topEmp.cost}</p>
+                                  <p className="text-[9px] text-white/40 font-bold">{topEmp.hours}h</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-white/30 italic">No earners in this period</p>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
+                              <p className="text-lg font-bold text-white">{tHours}h</p>
+                            </div>
+                            <div className="bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-2xl p-4 shadow-[0_0_15px_rgba(208,176,121,0.1)]">
+                              <p className="text-[9px] text-[#D0B079]/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
+                              <p className="text-lg font-black text-[#D0B079]">£{tCost}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })}
+                  {snapshotCompareRestIds.length === 0 && (
+                    <div className="col-span-full py-12 text-center text-white/40 border border-white/5 rounded-3xl bg-white/[0.02]">
+                      <p className="italic text-lg mb-2">No restaurants selected.</p>
+                      <p className="text-sm">Click the restaurant dropdown above to check which restaurants to compare.</p>
+                    </div>
+                  )}
+                </div>
+              ) : ['today_vs', 'week_vs', 'month_vs'].includes(snapshotPeriod) ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* CURRENT PERIOD BLOCK */}
+                  <div className="bg-[#0b1a3d] border border-blue-500/20 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl group hover:border-blue-500/40 transition-all">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-50" />
+                    <div className="relative z-10">
+                      <h3 className="text-xl sm:text-2xl font-black text-blue-400 mb-6 flex items-center gap-3 uppercase tracking-widest">
+                        <Calendar size={24} /> {snapshotPeriod === 'today_vs' ? 'Today' : snapshotPeriod === 'week_vs' ? 'This Week' : 'This Month'}
+                      </h3>
+
+                      <div className="space-y-4">
+                        {/* Total Members */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex justify-between items-center">
+                          <div>
+                            <p className="text-xs text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
+                            <p className="text-3xl font-black text-white">{stats.snapshot?.curr?.present_count || 0}</p>
+                          </div>
+                          <div className="p-3.5 bg-blue-500/20 text-blue-400 rounded-xl"><Users size={24} /></div>
+                        </div>
+
+                        {/* Highest Earner */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                          <p className="text-xs text-white/40 uppercase tracking-wider mb-4 font-bold">Highest Earner</p>
+                          {stats.snapshot?.curr?.top_employee ? (
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-blue-400 font-bold overflow-hidden shrink-0 text-lg">
+                                {stats.snapshot.curr.top_employee.image ? <img src={stats.snapshot.curr.top_employee.image} className="w-full h-full object-cover" /> : stats.snapshot.curr.top_employee.name[0]}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-white text-base truncate">{stats.snapshot.curr.top_employee.name}</p>
+                                <p className="text-[10px] text-white/40 uppercase tracking-wider truncate">{stats.snapshot.curr.top_employee.designation} • {stats.snapshot.curr.top_employee.restaurant_name}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-lg font-black text-blue-400">£{stats.snapshot.curr.top_employee.cost}</p>
+                                <p className="text-[10px] text-white/40 font-bold">{stats.snapshot.curr.top_employee.hours}h</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-white/30 italic">No earners</p>
+                          )}
+                        </div>
+
+                        {/* Hours & Pay */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
+                            <p className="text-2xl font-bold text-white">{stats.snapshot?.curr?.total_hours || 0}h</p>
+                          </div>
+                          <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                            <p className="text-[10px] text-blue-400/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
+                            <p className="text-2xl font-black text-blue-400">£{stats.snapshot?.curr?.total_cost || "0.00"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PREVIOUS PERIOD BLOCK */}
+                  <div className="bg-[#0b1a3d] border border-[#D0B079]/20 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl group hover:border-[#D0B079]/40 transition-all">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#D0B079]/10 to-transparent opacity-50" />
+                    <div className="relative z-10">
+                      <h3 className="text-xl sm:text-2xl font-black text-[#D0B079] mb-6 flex items-center gap-3 uppercase tracking-widest">
+                        <Calendar size={24} /> {snapshotPeriod === 'today_vs' ? 'Yesterday' : snapshotPeriod === 'week_vs' ? 'Last Week' : 'Last Month'}
+                      </h3>
+
+                      <div className="space-y-4">
+                        {/* Total Members */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex justify-between items-center">
+                          <div>
+                            <p className="text-xs text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
+                            <p className="text-3xl font-black text-white">{stats.snapshot?.prev?.present_count || 0}</p>
+                          </div>
+                          <div className="p-3.5 bg-[#D0B079]/20 text-[#D0B079] rounded-xl"><Users size={24} /></div>
+                        </div>
+
+                        {/* Highest Earner */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                          <p className="text-xs text-white/40 uppercase tracking-wider mb-4 font-bold">Highest Earner</p>
+                          {stats.snapshot?.prev?.top_employee ? (
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-[#D0B079] font-bold overflow-hidden shrink-0 text-lg">
+                                {stats.snapshot.prev.top_employee.image ? <img src={stats.snapshot.prev.top_employee.image} className="w-full h-full object-cover" /> : stats.snapshot.prev.top_employee.name[0]}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-white text-base truncate">{stats.snapshot.prev.top_employee.name}</p>
+                                <p className="text-[10px] text-white/40 uppercase tracking-wider truncate">{stats.snapshot.prev.top_employee.designation} • {stats.snapshot.prev.top_employee.restaurant_name}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-lg font-black text-[#D0B079]">£{stats.snapshot.prev.top_employee.cost}</p>
+                                <p className="text-[10px] text-white/40 font-bold">{stats.snapshot.prev.top_employee.hours}h</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-white/30 italic">No earners</p>
+                          )}
+                        </div>
+
+                        {/* Hours & Pay */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
+                            <p className="text-2xl font-bold text-white">{stats.snapshot?.prev?.total_hours || 0}h</p>
+                          </div>
+                          <div className="bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-2xl p-5 shadow-[0_0_15px_rgba(208,176,121,0.1)]">
+                            <p className="text-[10px] text-[#D0B079]/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
+                            <p className="text-2xl font-black text-[#D0B079]">£{stats.snapshot?.prev?.total_cost || "0.00"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[#0b1a3d] border border-white/10 rounded-3xl p-6 relative overflow-hidden shadow-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3 uppercase tracking-widest">
+                      <Calendar size={24} className="text-[#D0B079]" />
+                      {snapshotPeriod === 'custom' ? `Custom: ${snapshotCustomDates.from} to ${snapshotCustomDates.to}` : {
+                        today: "Today's Totals",
+                        yesterday: "Yesterday's Totals",
+                        this_week: "This Week's Totals",
+                        this_month: "This Month's Totals"
+                      }[snapshotPeriod]}
+                    </h3>
+
+                    <div className="flex flex-col sm:flex-row gap-6 mb-8">
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex-1 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
+                          <p className="text-3xl font-black text-white">{stats.snapshot?.single?.present_count || 0}</p>
+                        </div>
+                        <div className="p-3.5 bg-blue-500/20 text-blue-400 rounded-xl"><Users size={24} /></div>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex-1">
+                        <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
+                        <p className="text-3xl font-black text-white">{stats.snapshot?.single?.total_hours || 0}h</p>
+                      </div>
+                      <div className="bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-2xl p-5 flex-1 shadow-[0_0_15px_rgba(208,176,121,0.1)]">
+                        <p className="text-[10px] text-[#D0B079]/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
+                        <p className="text-3xl font-black text-[#D0B079]">£{stats.snapshot?.single?.total_cost || "0.00"}</p>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/40">
+                            <th className="p-4 font-bold">Staff Member</th>
+                            <th className="p-4 font-bold">Designation</th>
+                            <th className="p-4 font-bold">Restaurant</th>
+                            <th className="p-4 font-bold text-right">Hours</th>
+                            <th className="p-4 font-bold text-right text-[#D0B079]">Total Pay</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {stats.snapshot?.single?.staff_list?.slice((snapshotPage - 1) * 10, snapshotPage * 10).map((s, i) => {
+                            const isTopEarner = snapshotPage === 1 && i === 0 && s.cost > 0;
+                            return (
+                              <tr key={i} className={`transition-colors ${isTopEarner ? 'bg-[#D0B079]/5 hover:bg-[#D0B079]/10' : 'hover:bg-white/5'}`}>
+                                <td className="p-4 flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0 ${isTopEarner ? 'bg-[#D0B079]/20 border border-[#D0B079]/30 text-[#D0B079]' : 'bg-white/10'}`}>
+                                    {s.image ? <img src={s.image} className="w-full h-full object-cover" /> : <User size={14} className={isTopEarner ? "text-[#D0B079]" : "text-white/50"} />}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                                      {s.name}
+                                      {isTopEarner && <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-[#D0B079] text-[#0b1a3d]">Top Earner</span>}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="p-4 text-sm text-white/70">{s.designation}</td>
+                                <td className="p-4 text-sm text-white/70">{s.restaurant_name}</td>
+                                <td className="p-4 text-sm text-white/90 text-right font-medium">{s.hours}h</td>
+                                <td className="p-4 text-sm text-[#D0B079] text-right font-bold">£{s.cost}</td>
+                              </tr>
+                            );
+                          })}
+                          {!stats.snapshot?.single?.staff_list?.length && (
+                            <tr>
+                              <td colSpan="5" className="p-8 text-center text-white/40 text-sm italic">No records found for this period.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls for Single Snapshot */}
+                    {stats.snapshot?.single?.staff_list?.length > 10 && (
+                      <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 mt-4 -mx-6 -mb-6 bg-white/[0.02] rounded-b-3xl">
+                        <button
+                          disabled={snapshotPage === 1}
+                          onClick={() => setSnapshotPage(prev => Math.max(1, prev - 1))}
+                          className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-white transition-all"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-xs text-white/50">
+                          Page {snapshotPage} of {Math.ceil(stats.snapshot.single.staff_list.length / 10)}
+                        </span>
+                        <button
+                          disabled={snapshotPage === Math.ceil(stats.snapshot.single.staff_list.length / 10)}
+                          onClick={() => setSnapshotPage(prev => Math.min(Math.ceil(stats.snapshot.single.staff_list.length / 10), prev + 1))}
+                          className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-white transition-all"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
           </div>
         </main>
         <Footer />

@@ -449,7 +449,95 @@ export default function StaffManagement() {
   };
 
   const handlePrint = () => {
-    window.print();
+    const reportEl = document.getElementById('report-content');
+    if (!reportEl) { window.print(); return; }
+    const reportHtml = reportEl.outerHTML;
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Attendance Report</title>
+  <style>
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { font-family: Arial, sans-serif; background: white; color: #0f172a; margin: 0; padding: 32px; font-size: 14px; }
+    @page { size: A4; margin: 12mm; }
+    .flex { display: flex !important; }
+    .flex-col { flex-direction: column !important; }
+    .flex-1 { flex: 1 1 0% !important; }
+    .items-start { align-items: flex-start !important; }
+    .items-end { align-items: flex-end !important; }
+    .items-center { align-items: center !important; }
+    .justify-between { justify-content: space-between !important; }
+    .justify-end { justify-content: flex-end !important; }
+    .gap-6 { gap: 1.5rem !important; }
+    .gap-4 { gap: 1rem !important; }
+    .gap-3 { gap: 0.75rem !important; }
+    .gap-2 { gap: 0.5rem !important; }
+    .space-y-12 > * + * { margin-top: 3rem !important; }
+    .w-full { width: 100% !important; }
+    .min-w-\\[150px\\] { min-width: 150px !important; }
+    .p-12 { padding: 3rem !important; }
+    .p-8 { padding: 2rem !important; }
+    .p-6 { padding: 1.5rem !important; }
+    .p-4 { padding: 1rem !important; }
+    .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+    .py-4 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    .py-6 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+    .py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+    .py-20 { padding-top: 5rem !important; padding-bottom: 5rem !important; }
+    .pb-8 { padding-bottom: 2rem !important; }
+    .pt-8 { padding-top: 2rem !important; }
+    .mb-8 { margin-bottom: 2rem !important; }
+    .mb-10 { margin-bottom: 2.5rem !important; }
+    .mb-1 { margin-bottom: 0.25rem !important; }
+    .mt-12 { margin-top: 3rem !important; }
+    .mt-1 { margin-top: 0.25rem !important; }
+    .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+    .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+    .text-xl { font-size: 1.25rem !important; }
+    .text-lg { font-size: 1.125rem !important; }
+    .text-sm { font-size: 0.875rem !important; }
+    .text-xs { font-size: 0.75rem !important; }
+    .font-black { font-weight: 900 !important; }
+    .font-bold { font-weight: 700 !important; }
+    .font-semibold { font-weight: 600 !important; }
+    .font-medium { font-weight: 500 !important; }
+    .font-mono { font-family: 'Courier New', monospace !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .tracking-tighter { letter-spacing: -0.05em !important; }
+    .tracking-widest { letter-spacing: 0.1em !important; }
+    .italic { font-style: italic !important; }
+    .text-right { text-align: right !important; }
+    .text-center { text-align: center !important; }
+    .border-b-2 { border-bottom: 2px solid !important; }
+    .border-t-2 { border-top: 2px solid !important; }
+    .border-t { border-top: 1px solid !important; }
+    .border { border: 1px solid !important; }
+    .rounded-lg { border-radius: 0.5rem !important; }
+    .divide-y > * + * { border-top: 1px solid #f1f5f9 !important; }
+    .bg-slate-50 { background-color: #f8fafc !important; }
+    .bg-white { background-color: #ffffff !important; }
+    table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+    th, td { padding: 10px 14px; text-align: left; vertical-align: middle; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    thead tr { border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a; background-color: #f8fafc !important; }
+    tbody tr { border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; }
+    tfoot tr { border-top: 2px solid #0f172a; background-color: #f8fafc !important; }
+    .no-print { display: none !important; }
+  </style>
+</head>
+<body>
+  ${reportHtml}
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); window.close(); }, 400);
+    };
+  <\/script>
+</body>
+</html>`);
+    printWindow.document.close();
   };
 
   const formatWorkTime = (minutes) => {
@@ -571,12 +659,14 @@ export default function StaffManagement() {
   }, [staff, search, filterStatus, filterDesignation]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#071428] font-sans selection:bg-[#D0B079]/30 text-white overflow-x-hidden">
-      <Header onToggleSidebar={() => setSidebarOpen(s => !s)} darkMode={true} />
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="min-h-screen flex flex-col bg-[#071428] font-sans selection:bg-[#D0B079]/30 text-white overflow-x-hidden print:overflow-visible print:h-auto print:min-h-0 print:block">
+      <div className="print:hidden">
+        <Header onToggleSidebar={() => setSidebarOpen(s => !s)} darkMode={true} />
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
 
-      <div className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${sidebarOpen ? "lg:pl-[300px]" : "lg:pl-0"}`}>
-        <main className={`flex-1 pt-28 pb-20 px-6 sm:px-10 transition-all duration-500 ${sidebarOpen ? "lg:px-12" : "lg:px-20"}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-500 ease-in-out ${sidebarOpen ? "lg:pl-[300px]" : "lg:pl-0"} print:block`}>
+        <main className={`flex-1 pt-28 pb-20 px-6 sm:px-10 transition-all duration-500 print:hidden ${sidebarOpen ? "lg:px-12" : "lg:px-20"}`}>
           <div className="max-w-6xl mx-auto">
 
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
@@ -1273,12 +1363,12 @@ export default function StaffManagement() {
       {/* Report Modal */}
       <AnimatePresence>
         {showReportModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 print:static print:block print:p-0 print:bg-white">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl no-print" />
 
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+              exit={{ opacity: 0, scale: 0.95, y: 40 }} className="relative w-full max-w-5xl bg-[#0b1a3d] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col print:overflow-visible print:max-h-none print:shadow-none print:border-none print:bg-white print:rounded-none print:block print:w-full">
 
               <div className="bg-white/5 px-10 py-6 border-b border-white/10 flex items-center justify-between no-print">
                 <div>
@@ -1298,7 +1388,7 @@ export default function StaffManagement() {
                 </div>
               </div>
 
-              <div className="p-10 overflow-y-auto custom-scrollbar">
+              <div className="p-10 overflow-y-auto custom-scrollbar print:overflow-visible print:h-auto print:p-0 print:block">
                 <div id="report-content" style={{ backgroundColor: '#ffffff', color: '#0f172a' }} className="p-12 rounded-lg">
                   {/* Report Header */}
                   <div className="flex justify-between items-start border-b-2 border-slate-200 pb-8 mb-8" style={{ borderBottomColor: '#e2e8f0' }}>
@@ -1320,6 +1410,11 @@ export default function StaffManagement() {
                       <p className="text-sm font-semibold" style={{ color: '#64748b' }}>
                         ID: {attendanceData?.staff?.employee_id || "N/A"} • {attendanceData?.staff?.designation || "Staff"}
                       </p>
+                      {attendanceData?.staff?.restaurant_name && attendanceData?.staff?.id !== "all" && (
+                        <p className="text-sm font-bold mt-1" style={{ color: '#D0B079' }}>
+                          🏪 {attendanceData.staff.restaurant_name}
+                        </p>
+                      )}
 
                       <div className="mt-4 flex items-center gap-3 no-print">
                         <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
@@ -1447,23 +1542,27 @@ export default function StaffManagement() {
 
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          #report-content, #report-content * { 
-            visibility: visible !important; 
-            opacity: 1 !important;
+          @page { size: auto; margin: 15mm; }
+          body, html {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
           }
           #report-content {
-            position: fixed;
-            left: 0;
-            top: 0;
             width: 100%;
-            height: auto;
             margin: 0;
             padding: 0;
             background: white !important;
             color: black !important;
-            z-index: 9999999;
           }
+          /* Ensure parents don't clip the content */
+          div { overflow: visible !important; }
+          
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          thead { display: table-header-group; }
+          tfoot { display: table-footer-group; }
+          .page-break-inside-avoid { page-break-inside: avoid; }
           .no-print { display: none !important; }
         }
       `}</style>
