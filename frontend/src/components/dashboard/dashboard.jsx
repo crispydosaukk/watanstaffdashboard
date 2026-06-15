@@ -5,15 +5,16 @@ import {
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import {
-  Users, ArrowRight, CheckCircle, Clock, X,
-  TrendingUp, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2, Store, Send
+  Users, ArrowRight, CheckCircle, Clock, X, Check,
+  TrendingUp, TrendingDown, PoundSterling, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2, Store, Send, History, ShieldOff
 } from "lucide-react";
 
 
 import Header from "../common/header.jsx";
 import Sidebar from "../common/sidebar.jsx";
 import Footer from "../common/footer.jsx";
-import { db } from "../../lib/firebase";
+import { db, functionsInstance } from "../../lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { collection, query, onSnapshot, where, getDocs, orderBy, limit, Timestamp, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePopup } from "../../context/PopupContext";
@@ -36,6 +37,16 @@ const getAutoLogoutTime = (clockIn) => {
     logoutTime.setHours(18, 0, 0, 0);
   }
   return logoutTime;
+};
+
+const getTrend = (current, previous) => {
+  if (previous === 0) return current > 0 ? { text: "+100%", isUp: true } : { text: "0%", isUp: false };
+  const diff = current - previous;
+  const percent = (diff / previous) * 100;
+  return {
+    text: `${percent > 0 ? '+' : ''}${percent.toFixed(1)}%`,
+    isUp: percent > 0
+  };
 };
 
 // --- Components ---
@@ -79,8 +90,10 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
             </button>
           )}
           {trend && (
-            <div className="flex items-center gap-1 bg-[#D0B079]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[#D0B079] text-[9px] sm:text-[10px] font-black border border-[#D0B079]/20 shadow-sm">
-              <TrendingUp size={10} /> {trend}
+            <div className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9px] sm:text-[10px] font-black border shadow-sm ${
+              trend.isUp ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            }`}>
+              {trend.isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />} {trend.text}
             </div>
           )}
         </div>
@@ -115,6 +128,11 @@ export default function Dashboard() {
     total_staff: 0,
     present_today: 0,
     active_now: 0,
+    pending_clockouts: [],
+    yesterday_clock_outs: [],
+    auto_logouts: [],
+    total_hours_today: "0.0",
+    recent_activity: [],
     weekly_data: [],
   });
   const [loading, setLoading] = useState(true);
@@ -153,6 +171,10 @@ export default function Dashboard() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [showPendingClockouts, setShowPendingClockouts] = useState(false);
+  const [showYesterdayClockouts, setShowYesterdayClockouts] = useState(false);
+  const [showAutoLogouts, setShowAutoLogouts] = useState(false);
+  const [activityPage, setActivityPage] = useState(1);
+  const itemsPerPage = 10;
   const [sendingReminders, setSendingReminders] = useState(false);
 
   const handleRemindAll = async (e) => {
@@ -233,16 +255,16 @@ export default function Dashboard() {
     const from = new Date();
     const to = new Date();
 
-    if (p === 'today') {
+    if (p === 'today' || p === 'today_vs') {
       // already set
     } else if (p === 'yesterday') {
       from.setDate(from.getDate() - 1);
       to.setDate(to.getDate() - 1);
     } else if (p === '3days') {
       from.setDate(from.getDate() - 2);
-    } else if (p === 'week') {
+    } else if (p === 'week' || p === 'week_vs') {
       from.setDate(from.getDate() - 7);
-    } else if (p === 'month') {
+    } else if (p === 'month' || p === 'month_vs') {
       from.setMonth(from.getMonth() - 1);
     } else if (p === 'quarter') {
       from.setMonth(from.getMonth() - 3);
@@ -514,26 +536,68 @@ export default function Dashboard() {
         fetchTo.setHours(0,0,0,0);
       }
 
-      let costRecordsQuery = collection(db, "attendance");
-      if (fetchFrom && fetchTo) {
-        costRecordsQuery = query(
-          collection(db, "attendance"),
-          where("clock_in", ">=", fetchFrom),
-          where("clock_in", "<", fetchTo)
-        );
-      }
+      const costQueryStart = fetchFrom ? new Date(Math.min(startOfLastMonth.getTime(), fetchFrom.getTime())) : startOfLastMonth;
+
+      const costRecordsQuery = query(
+        collection(db, "attendance"),
+        where("clock_in", ">=", costQueryStart)
+      );
 
       const costSnap = await getDocs(costRecordsQuery);
       const costRecords = costSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       const staffMap = {};
-      staffList.forEach(s => staffMap[s.id] = s);
+      staffList.forEach(s => staffMap[s.id] = { ...s, hourly_rate: parseFloat(s.hourly_rate) || 0 });
 
       const filteredCostRecords = costRecords.filter(r => {
         const s = staffMap[r.staff_id];
         if (!s) return false;
         if (!isSuper && restaurantId && String(s.restaurant_id) !== String(restaurantId) && String(s.created_by) !== String(restaurantId)) return false;
         return true;
+      });
+
+      const costMetrics = {
+        today: 0, yesterday: 0,
+        thisWeek: 0, lastWeek: 0,
+        thisMonth: 0, lastMonth: 0,
+        selectedPeriod: 0, prevSelectedPeriod: 0
+      };
+
+      filteredCostRecords.forEach(r => {
+        if (!r.clock_in || !r.clock_out) return;
+        const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
+        const mins = calcCalculatedMinutes(r.clock_in, r.clock_out);
+        const hours = mins / 60;
+        const rate = staffMap[r.staff_id].hourly_rate;
+        const cost = hours * rate;
+
+        if (cin >= todayStart && cin < todayEnd) costMetrics.today += cost;
+        if (cin >= yesterdayStart && cin < yesterdayEnd) costMetrics.yesterday += cost;
+        if (cin >= thisWeekStart) costMetrics.thisWeek += cost;
+        if (cin >= lastWeekStart && cin < lastWeekEnd) costMetrics.lastWeek += cost;
+        if (cin >= thisMonthStart) costMetrics.thisMonth += cost;
+        if (cin >= startOfLastMonth && cin < lastMonthEnd) costMetrics.lastMonth += cost;
+        
+        if (fetchFrom && fetchTo) {
+          let pFrom, pTo, cFrom, cTo;
+          if (snapshotPeriod === 'today_vs') {
+            cFrom = todayStart; cTo = todayEnd;
+            pFrom = yesterdayStart; pTo = yesterdayEnd;
+          } else if (snapshotPeriod === 'week_vs') {
+            cFrom = thisWeekStart; cTo = todayEnd;
+            pFrom = lastWeekStart; pTo = lastWeekEnd;
+          } else if (snapshotPeriod === 'month_vs') {
+            cFrom = thisMonthStart; cTo = todayEnd;
+            pFrom = startOfLastMonth; pTo = lastMonthEnd;
+          } else if (snapshotPeriod === 'custom') {
+            cFrom = fetchFrom; cTo = fetchTo;
+            const durationMs = cTo.getTime() - cFrom.getTime();
+            pFrom = new Date(cFrom.getTime() - durationMs);
+            pTo = new Date(cTo.getTime() - durationMs);
+          }
+          if (cFrom && cin >= cFrom && cin < cTo) costMetrics.selectedPeriod += cost;
+          if (pFrom && cin >= pFrom && cin < pTo) costMetrics.prevSelectedPeriod += cost;
+        }
       });
 
       const currAgg = {};
@@ -654,7 +718,8 @@ export default function Dashboard() {
 
       setStats(prev => ({
         ...prev,
-        snapshot: snapshotData
+        snapshot: snapshotData,
+        cost_metrics: costMetrics
       }));
     } catch (error) {
       console.error("Error in calculateStaffStats:", error);
@@ -815,20 +880,32 @@ export default function Dashboard() {
 
       const pdfBase64 = await html2pdf().from(reportHtml).set(opt).outputPdf('datauristring');
 
-      const response = await fetch('https://us-central1-watanstaff-prod.cloudfunctions.net/sendEmailReport', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: userData?.email || "admin@example.com",
-          subject: `Period Snapshot Report - ${pLabel1}`,
-          text: `Attached is the ${pLabel1} snapshot report.`,
-          pdfData: pdfBase64.split(',')[1],
-          fileName: opt.filename
-        })
+      const sendEmailReportFunc = httpsCallable(functionsInstance, "sendEmailReport");
+      const emailHtmlBody = `<div style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;">
+          <div style="background:#0b1a3d;padding:30px;border-radius:12px 12px 0 0;text-align:center;">
+            <h1 style="color:#D0B079;margin:0;font-size:24px;font-weight:800;">Watan Group</h1>
+            <p style="color:#9ca3af;margin:8px 0 0;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Snapshot Report</p>
+          </div>
+          <div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;">
+            <p style="font-size:15px;color:#374151;">Dear Team,</p>
+            <p style="font-size:15px;color:#374151;line-height:1.6;">Attached is the ${pLabel1} snapshot report as a PDF.</p>
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:20px 0;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Period</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${pLabel1}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Generated</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${reportTime}</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>`;
+
+      await sendEmailReportFunc({
+        to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
+        subject: `Period Snapshot Report - ${pLabel1}`,
+        htmlBody: emailHtmlBody,
+        attachmentUrl: pdfBase64,
+        attachmentName: opt.filename
       });
 
-      if (!response.ok) throw new Error("Failed to send email");
-      
       showPopup({ title: "Email Sent", message: "Snapshot report sent to your email successfully.", type: "success" });
     } catch (err) {
       console.error("Error generating/sending snapshot PDF:", err);
@@ -1033,6 +1110,9 @@ export default function Dashboard() {
                               { id: 'yesterday', label: 'Yesterday' },
                               { id: '3days', label: 'Last 3 Days' },
                               { id: 'week', label: 'This Week' },
+                              { id: 'today_vs', label: 'Today vs. Yesterday' },
+                              { id: 'week_vs', label: 'This Week vs. Last Week' },
+                              { id: 'month_vs', label: 'This Month vs. Last Month' },
                               { id: 'custom', label: 'Custom Range' }
                             ].map((opt) => (
                               <div key={opt.id} className="w-full">
@@ -1091,9 +1171,9 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
-              <button 
+              <div 
                 onClick={() => setShowPendingClockouts(!showPendingClockouts)}
-                className={`w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
                   stats.pending_clockouts?.length > 0 ? 'bg-rose-500/10 hover:bg-rose-500/20' : 'bg-white/5 hover:bg-white/10'
                 }`}
               >
@@ -1115,7 +1195,10 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   {stats.pending_clockouts?.length > 0 && (
                     <button
-                      onClick={handleRemindAll}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemindAll(e);
+                      }}
                       disabled={sendingReminders}
                       className="flex items-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-rose-500/20 disabled:opacity-50"
                     >
@@ -1125,7 +1208,7 @@ export default function Dashboard() {
                   )}
                   <ChevronDown size={20} className={`transition-transform duration-300 ${stats.pending_clockouts?.length > 0 ? 'text-rose-400' : 'text-emerald-400'} ${showPendingClockouts ? 'rotate-180' : ''}`} />
                 </div>
-              </button>
+              </div>
 
               <AnimatePresence>
                 {showPendingClockouts && (
@@ -1169,6 +1252,193 @@ export default function Dashboard() {
             </div>
 
 
+            {/* Yesterday's Clock-Outs Dropdown */}
+            <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
+              <div
+                onClick={() => setShowYesterdayClockouts(!showYesterdayClockouts)}
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
+                  stats.yesterday_clock_outs?.length > 0 ? 'bg-[#D0B079]/10 hover:bg-[#D0B079]/20' : 'bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.yesterday_clock_outs?.length > 0 ? 'bg-[#D0B079]/20 text-[#D0B079]' : 'bg-white/10 text-white/40'}`}>
+                    <History size={20} />
+                  </div>
+                  <div className="text-left">
+                    <h3 className={`text-base font-bold mb-0.5 ${stats.yesterday_clock_outs?.length > 0 ? 'text-[#D0B079]' : 'text-white/40'}`}>
+                      Yesterday's Clock-Outs ({stats.yesterday_clock_outs?.length || 0})
+                    </h3>
+                    <p className="text-xs text-white/60">
+                      {stats.yesterday_clock_outs?.length > 0
+                        ? 'Staff members who clocked out yesterday. Expand to view.'
+                        : 'No clock-outs recorded for yesterday.'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown size={20} className={`transition-transform duration-300 ${stats.yesterday_clock_outs?.length > 0 ? 'text-[#D0B079]' : 'text-white/40'} ${showYesterdayClockouts ? 'rotate-180' : ''}`} />
+              </div>
+
+              <AnimatePresence>
+                {showYesterdayClockouts && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/5">
+                      {stats.yesterday_clock_outs?.length > 0 ? (
+                        <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
+                          <table className="w-full text-left">
+                            <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+                              <tr>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff Name</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Restaurant</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#D0B079]/70 text-right">Clock Out</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {stats.yesterday_clock_outs.map((staff, idx) => (
+                                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#D0B079] font-bold text-xs overflow-hidden shrink-0">
+                                        {staff.profile_image ? <img src={staff.profile_image} className="w-full h-full object-cover" /> : staff.full_name?.[0]}
+                                      </div>
+                                      <p className="text-white font-bold text-sm truncate">{staff.full_name}</p>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-white/60 font-medium text-xs">{staff.restaurant_name}</td>
+                                  <td className="px-6 py-4 text-right">
+                                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-mono text-xs font-bold inline-block">
+                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <History size={32} className="text-white/20 mx-auto mb-3" />
+                          <p className="text-white/40 font-bold">No Data</p>
+                          <p className="text-white/30 text-sm mt-1">There are no clock-out records for yesterday.</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Auto Logouts Dropdown */}
+            <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
+              <div
+                onClick={() => setShowAutoLogouts(!showAutoLogouts)}
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
+                  stats.auto_logouts?.length > 0 ? 'bg-violet-500/10 hover:bg-violet-500/20' : 'bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.auto_logouts?.length > 0 ? 'bg-violet-500/20 text-violet-400' : 'bg-white/10 text-white/40'}`}>
+                    <ShieldOff size={20} />
+                  </div>
+                  <div className="text-left">
+                    <h3 className={`text-base font-bold mb-0.5 ${stats.auto_logouts?.length > 0 ? 'text-violet-400' : 'text-white/40'}`}>
+                      Auto Logouts ({stats.auto_logouts?.length || 0})
+                    </h3>
+                    <p className="text-xs text-white/60">
+                      {stats.auto_logouts?.length > 0
+                        ? 'Staff members automatically logged out by the system in this period.'
+                        : 'No auto-logouts recorded for this period.'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown size={20} className={`transition-transform duration-300 ${stats.auto_logouts?.length > 0 ? 'text-violet-400' : 'text-white/40'} ${showAutoLogouts ? 'rotate-180' : ''}`} />
+              </div>
+
+              <AnimatePresence>
+                {showAutoLogouts && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-white/5">
+                      {stats.auto_logouts?.length > 0 ? (
+                        <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
+                          <table className="w-full text-left">
+                            <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
+                              <tr>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff Name</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Restaurant</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock In</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-violet-400/70 text-right">Auto Logged Out At</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {stats.auto_logouts.map((staff, idx) => (
+                                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-violet-400 font-bold text-xs overflow-hidden shrink-0">
+                                        {staff.profile_image ? <img src={staff.profile_image} className="w-full h-full object-cover" /> : staff.full_name?.[0]}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-bold text-white">{staff.full_name}</p>
+                                        <p className="text-[10px] text-white/40 mt-0.5">{staff.designation || 'Staff'}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                      <Store size={14} className="text-white/40" />
+                                      <span className="text-xs font-medium text-white/80">{staff.restaurant_name}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex flex-col">
+                                      <span className="text-xs font-bold text-white/80">
+                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                      </span>
+                                      <span className="text-[10px] text-white/40">
+                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleDateString('en-GB') : '-'}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    <div className="flex flex-col items-end">
+                                      <span className="text-sm font-black text-violet-400 flex items-center gap-2">
+                                        <Clock size={12} className="text-violet-400/50" />
+                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                      </span>
+                                      <span className="text-[10px] text-violet-400/50 mt-0.5">
+                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleDateString('en-GB') : '-'}
+                                      </span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <ShieldOff size={32} className="text-white/20 mx-auto mb-3" />
+                          <p className="text-white/40 font-bold">No Data</p>
+                          <p className="text-white/30 text-sm mt-1">There are no auto-logouts for the selected period.</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+
+
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
               <StatCard
                 title="Total Staff"
@@ -1206,6 +1476,51 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-8">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <PoundSterling size={20} className="text-[#D0B079]" />
+                Labour Cost Metrics
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <StatCard
+                  title={
+                    period === 'custom' ? 'Selected Period Cost' :
+                    period === 'today' || period === 'today_vs' ? "Today's Cost" :
+                    period === 'yesterday' ? "Yesterday's Cost" :
+                    period === '3days' ? "Last 3 Days Cost" :
+                    period === 'week' || period === 'week_vs' ? "This Week's Cost" :
+                    period === 'month' || period === 'month_vs' ? "This Month's Cost" :
+                    period === 'quarter' ? "This Qtr's Cost" :
+                    period === 'halfyear' ? "Half Year Cost" : "Selected Period Cost"
+                  }
+                  value={`£${(stats.cost_metrics?.selectedPeriod || 0).toFixed(2)}`}
+                  subtext={`Prev Period: £${(stats.cost_metrics?.prevSelectedPeriod || 0).toFixed(2)}`}
+                  icon={PoundSterling}
+                  colorClass="bg-slate-500/20 border border-slate-400/30"
+                  trend={stats.cost_metrics ? getTrend(stats.cost_metrics.selectedPeriod, stats.cost_metrics.prevSelectedPeriod) : null}
+                  delay={0.1}
+                />
+                <StatCard
+                  title="This Week's Cost"
+                  value={`£${(stats.cost_metrics?.thisWeek || 0).toFixed(2)}`}
+                  subtext={`Last Week: £${(stats.cost_metrics?.lastWeek || 0).toFixed(2)}`}
+                  icon={PoundSterling}
+                  colorClass="bg-slate-500/20 border border-slate-400/30"
+                  trend={stats.cost_metrics ? getTrend(stats.cost_metrics.thisWeek, stats.cost_metrics.lastWeek) : null}
+                  delay={0.2}
+                />
+                <StatCard
+                  title="This Month's Cost"
+                  value={`£${(stats.cost_metrics?.thisMonth || 0).toFixed(2)}`}
+                  subtext={`Last Month: £${(stats.cost_metrics?.lastMonth || 0).toFixed(2)}`}
+                  icon={PoundSterling}
+                  colorClass="bg-slate-500/20 border border-slate-400/30"
+                  trend={stats.cost_metrics ? getTrend(stats.cost_metrics.thisMonth, stats.cost_metrics.lastMonth) : null}
+                  delay={0.3}
+                />
+              </div>
+            </div>
+
+            <div className="mb-8">
               <ChartCard title="Weekly Attendance Trends" subtitle="Attendance volume over the last 7 days" delay={0.35}>
                  <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={stats.weekly_data}>
@@ -1229,8 +1544,8 @@ export default function Dashboard() {
             </div>
 
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <ChartCard title="Recent Activity" subtitle="Real-time attendance log" delay={0.4} className="lg:col-span-2">
+            <div className="grid grid-cols-1 gap-6 mb-8">
+              <ChartCard title="Recent Activity" subtitle="Real-time attendance log" delay={0.4}>
                 <div className="overflow-x-auto h-full">
                    <table className="w-full text-left">
                      <thead className="bg-white/5 border-b border-white/10">
@@ -1246,7 +1561,7 @@ export default function Dashboard() {
                         {loading ? (
                           <tr><td colSpan="5" className="px-6 py-12 text-center text-white/20 font-bold uppercase tracking-widest text-xs">Loading activity...</td></tr>
                         ) : stats.recent_activity?.length > 0 ? (
-                          stats.recent_activity.map((act, i) => {
+                          stats.recent_activity.slice((activityPage - 1) * itemsPerPage, activityPage * itemsPerPage).map((act, i) => {
                             const actualIn = act.clock_in?.toDate ? act.clock_in.toDate() : new Date(act.clock_in);
                             const actualOut = act.clock_out ? (act.clock_out?.toDate ? act.clock_out.toDate() : new Date(act.clock_out)) : null;
                             const calcIn = getCalculatedTime(actualIn);
@@ -1300,45 +1615,30 @@ export default function Dashboard() {
                      </tbody>
                    </table>
                 </div>
+                {stats.recent_activity?.length > 0 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 mt-4 -mx-6 -mb-6 bg-white/[0.02] rounded-b-2xl">
+                    <button
+                      disabled={activityPage === 1}
+                      onClick={() => setActivityPage(prev => Math.max(1, prev - 1))}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-white transition-all"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs text-white/50">
+                      Page {activityPage} of {Math.max(1, Math.ceil(stats.recent_activity.length / itemsPerPage))}
+                    </span>
+                    <button
+                      disabled={activityPage === Math.max(1, Math.ceil(stats.recent_activity.length / itemsPerPage))}
+                      onClick={() => setActivityPage(prev => Math.min(Math.ceil(stats.recent_activity.length / itemsPerPage), prev + 1))}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-xs font-bold text-white transition-all"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </ChartCard>
 
-              <ChartCard title="Quick Actions" subtitle="One-click operations" delay={0.5}>
-                 <div className="flex flex-col gap-3 h-full">
-                    <button onClick={() => navigate('/allstaff')} className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-[#D0B079]/10 hover:border-[#D0B079]/40 transition-all group">
-                       <div className="flex items-center gap-4">
-                          <div className="p-3 bg-[#D0B079]/20 text-[#D0B079] rounded-xl group-hover:bg-[#D0B079] group-hover:text-slate-900 transition-all"><Users size={20} /></div>
-                          <div className="text-left">
-                             <p className="text-white font-bold text-sm">All Staff members</p>
-                             <p className="text-[10px] text-white/30 uppercase tracking-widest">Full Directory</p>
-                          </div>
-                       </div>
-                       <ArrowRight size={18} className="text-white/20 group-hover:text-[#D0B079] transition-all translate-x-0 group-hover:translate-x-1" />
-                    </button>
-
-                    <button onClick={() => navigate('/staff')} className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all group">
-                       <div className="flex items-center gap-4">
-                          <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl group-hover:bg-emerald-500 group-hover:text-slate-900 transition-all"><Clock size={20} /></div>
-                          <div className="text-left">
-                             <p className="text-white font-bold text-sm">Register Attendance</p>
-                             <p className="text-[10px] text-white/30 uppercase tracking-widest">Manual Clock-in</p>
-                          </div>
-                       </div>
-                       <ArrowRight size={18} className="text-white/20 group-hover:text-emerald-400 transition-all translate-x-0 group-hover:translate-x-1" />
-                    </button>
-
-                    <button onClick={() => navigate('/access/roles')} className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-blue-500/10 hover:border-blue-500/40 transition-all group">
-                       <div className="flex items-center gap-4">
-                          <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl group-hover:bg-blue-500 group-hover:text-slate-900 transition-all"><Shield size={20} /></div>
-                          <div className="text-left">
-                             <p className="text-white font-bold text-sm">Manage Permissions</p>
-                             <p className="text-[10px] text-white/30 uppercase tracking-widest">Access Control</p>
-                          </div>
-                       </div>
-                       <ArrowRight size={18} className="text-white/20 group-hover:text-blue-400 transition-all translate-x-0 group-hover:translate-x-1" />
-                    </button>
-
-                 </div>
-              </ChartCard>
+              
             </div>
 
             {/* --- Snapshot Module --- */}

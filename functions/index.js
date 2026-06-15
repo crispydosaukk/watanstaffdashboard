@@ -1,3 +1,4 @@
+const nodemailer = require("nodemailer");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
@@ -115,6 +116,45 @@ exports.sendpushnotification = functions.https.onCall(async (data, context) => {
     return { success: true, messageId: response };
   } catch (error) {
     console.error("Error sending push notification:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+
+exports.sendEmailReport = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Unauthorized");
+
+  const { to, subject, htmlBody, attachmentUrl, attachmentName } = data;
+  if (!to || !subject || !htmlBody) {
+    throw new functions.https.HttpsError("invalid-argument", "Missing required email fields");
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: functions.config().email?.user || process.env.EMAIL_USER || "your-email@gmail.com",
+      pass: functions.config().email?.pass || process.env.EMAIL_PASS || "your-app-password"
+    }
+  });
+
+  const mailOptions = {
+    from: '"Watan Staff Dashboard" <noreply@watan.com>',
+    to: to,
+    subject: subject,
+    html: htmlBody,
+    attachments: attachmentUrl ? [
+      {
+        filename: attachmentName || "Report.pdf",
+        path: attachmentUrl
+      }
+    ] : []
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true, message: "Email sent successfully" };
+  } catch (error) {
+    console.error("Error sending email:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });

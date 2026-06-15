@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { getCalculatedTime, calcCalculatedMinutes } from "../../utils/timeRounding";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Edit2, Save, Loader2, User, Camera, Briefcase, Shield, Calendar, Eye, EyeOff, Clock, XCircle,
-  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download, Bell, Store, PoundSterling, Trash2
+  Edit2, Save, Loader2, User, Camera, Briefcase, Shield, Calendar, Eye, EyeOff, Clock, XCircle, Plus,
+  Users, Search, X, Building2, Phone, Mail, ShieldCheck, ShieldOff, ChevronRight, Printer, FileText, Download, Bell, Store, PoundSterling, Trash2, Send
 } from "lucide-react";
 import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
@@ -144,7 +144,14 @@ export default function AllStaffPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [attendanceData, setAttendanceData] = useState(null);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [sendingProgress, setSendingProgress] = useState("");
+  const [showManualAddModal, setShowManualAddModal] = useState(false);
+  const [manualAddData, setManualAddData] = useState({ clock_in: "", clock_out: "", edit_reason: "" });
+  const [addingAttendance, setAddingAttendance] = useState(false);
   const [attendanceFilters, setAttendanceFilters] = useState({ from: "", to: "" });
+  const [reportRestaurantFilter, setReportRestaurantFilter] = useState("all");
+  const [reportEmployeeFilter, setReportEmployeeFilter] = useState("all");
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
 
@@ -363,12 +370,107 @@ export default function AllStaffPage() {
     });
   }, [attendanceData?.records]);
 
+  const summaryGroupedRecords = useMemo(() => {
+    if (!attendanceData || attendanceData.staff.id !== "all" || !Array.isArray(attendanceData.records)) return [];
+
+    const staffGroups = {};
+    attendanceData.records.forEach(record => {
+      if (!record || (!record.date && !record.clock_in)) return;
+      
+      // Apply Local Filters
+      if (typeof reportRestaurantFilter !== "undefined" && reportRestaurantFilter !== "all" && record.restaurant_id !== reportRestaurantFilter) return;
+      if (typeof reportEmployeeFilter !== "undefined" && reportEmployeeFilter !== "all" && record.staff_id !== reportEmployeeFilter) return;
+
+      const staffId = record.staff_id;
+      if (!staffGroups[staffId]) {
+        const staffMember = typeof staff !== 'undefined' ? staff.find(s => s.id === staffId) : null;
+        staffGroups[staffId] = {
+          staff_id: staffId,
+          staff_name: staffMember?.full_name || "Unknown Staff",
+          designation: staffMember?.designation || "Staff",
+          hourly_rate: Number(staffMember?.hourly_rate || 0),
+          restaurant_name: typeof restaurantsMap !== "undefined" && restaurantsMap[record.restaurant_id] ? restaurantsMap[record.restaurant_id] : "Unknown Restaurant",
+          total_minutes: 0,
+          sessions: []
+        };
+      }
+      
+      const sessionMin = calcSessionMinutes(record);
+      staffGroups[staffId].total_minutes += sessionMin;
+      staffGroups[staffId].sessions.push({ ...record, _calc_minutes: sessionMin });
+    });
+
+    const sortedGroups = Object.values(staffGroups).map(g => {
+       g.sessions.sort((a, b) => {
+         const dateA = a.clock_in instanceof Date ? a.clock_in : new Date(a.clock_in || 0);
+         const dateB = b.clock_in instanceof Date ? b.clock_in : new Date(b.clock_in || 0);
+         return dateB - dateA;
+       });
+       return g;
+    });
+
+    return sortedGroups.sort((a, b) => a.staff_name.localeCompare(b.staff_name));
+  }, [attendanceData?.records, typeof staff !== 'undefined' ? staff : [], typeof restaurantsMap !== 'undefined' ? restaurantsMap : {}, typeof reportRestaurantFilter !== 'undefined' ? reportRestaurantFilter : null, typeof reportEmployeeFilter !== 'undefined' ? reportEmployeeFilter : null]);
+
   const toLocalISO = (dateStr) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     const tzOffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
     return localISOTime;
+  };
+
+  const handleAddAttendanceRecord = async (e) => {
+    e.preventDefault();
+    if (!manualAddData.clock_in || !manualAddData.clock_out) {
+      showPopup({ title: "Required", message: "Please provide both clock in and clock out times", type: "warning" });
+      return;
+    }
+    if (!manualAddData.edit_reason || manualAddData.edit_reason.trim() === "") {
+      showPopup({ title: "Required", message: "Please provide a reason for manual entry", type: "warning" });
+      return;
+    }
+    setAddingAttendance(true);
+    try {
+      const cin = new Date(manualAddData.clock_in);
+      const cout = new Date(manualAddData.clock_out);
+      const totalMinutes = Math.floor((cout - cin) / 60000);
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      const dateObj = new Date(cin);
+      dateObj.setHours(0, 0, 0, 0);
+
+      const staffMember = attendanceData?.staff;
+      if (!staffMember) throw new Error("Staff member data not available");
+
+      await addDoc(collection(db, "attendance"), {
+        staff_id: staffMember.id,
+        restaurant_id: staffMember.restaurant_id || user.uid,
+        clock_in: cin,
+        clock_out: cout,
+        date: dateObj,
+        total_minutes: Math.max(0, totalMinutes),
+        edit_reason: manualAddData.edit_reason.trim(),
+        is_manual: true,
+        created_at: new Date(),
+        audit_log: [{
+          action: "created",
+          by: user.email || user.uid,
+          at: new Date(),
+          reason: manualAddData.edit_reason.trim(),
+          changes: `Manual record created. Cin: ${cin.toISOString()} Cout: ${cout.toISOString()}`
+        }]
+      });
+
+      showPopup({ title: "Success", message: "Manual attendance record added", type: "success" });
+      setShowManualAddModal(false);
+      setManualAddData({ clock_in: "", clock_out: "", edit_reason: "" });
+      handleViewAttendance(staffMember.id, attendanceFilters || null);
+    } catch (err) {
+      console.error(err);
+      showPopup({ title: "Error", message: err.message, type: "error" });
+    }
+    setAddingAttendance(false);
   };
 
   const handleUpdateAttendanceRecord = async (e) => {
@@ -465,6 +567,8 @@ export default function AllStaffPage() {
         },
         records: allRecords
       });
+      setReportRestaurantFilter(filterRestaurant);
+      setReportEmployeeFilter("all");
       setShowReportModal(true);
     } catch (err) {
       console.error(err);
@@ -587,6 +691,206 @@ export default function AllStaffPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEmailReport = async () => {
+    setSendingEmail(true);
+    setSendingProgress("Generating PDF...");
+    try {
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+
+      const reportDate = new Date().toLocaleDateString('en-GB');
+      const reportTime = new Date().toLocaleString('en-GB');
+
+      const period = `${attendanceFilters.from || "All Time"} - ${attendanceFilters.to || "Present"}`;
+
+      const isIndividualView = attendanceData?.staff?.id !== "all";
+      const isFilterEmployeeView = typeof reportEmployeeFilter !== 'undefined' && reportEmployeeFilter !== "all";
+
+      const selectedRestaurantName = typeof reportRestaurantFilter !== 'undefined' && reportRestaurantFilter !== "all" ? (restaurantsMap[reportRestaurantFilter] || reportRestaurantFilter) : "All Restaurants";
+      const selectedEmployee = isIndividualView ? attendanceData.staff : (isFilterEmployeeView ? staff.find(s => s.id === reportEmployeeFilter) : null);
+      
+      const scopeLabel = isIndividualView 
+        ? `${selectedEmployee.full_name} — ${selectedEmployee.restaurant_name || "Restaurant"}`
+        : (isFilterEmployeeView 
+            ? `${selectedEmployee?.full_name || ""} — ${selectedRestaurantName}` 
+            : (typeof reportRestaurantFilter !== 'undefined' && reportRestaurantFilter !== "all" ? selectedRestaurantName : "All Staff"));
+      const scope = scopeLabel;
+
+      let tableRows = "";
+      let thead = "";
+
+      if (isIndividualView || isFilterEmployeeView) {
+        thead = `<tr style="background-color:#1e3a5f;"><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Date</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Clock In</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Clock Out</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:right;">Duration</th></tr>`;
+        const filteredRecs = isIndividualView 
+          ? (attendanceData?.records || [])
+          : (attendanceData?.records || []).filter(r => {
+            if (typeof reportRestaurantFilter !== 'undefined' && reportRestaurantFilter !== "all" && r.restaurant_id !== reportRestaurantFilter) return false;
+            if (typeof reportEmployeeFilter !== 'undefined' && reportEmployeeFilter !== "all" && r.staff_id !== reportEmployeeFilter) return false;
+            return true;
+          });
+        const formatTime = (d) => d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "-";
+        filteredRecs.forEach((rec, idx) => {
+          const actualCin = rec.clock_in?.toDate ? rec.clock_in.toDate() : new Date(rec.clock_in);
+          const actualCout = rec.clock_out?.toDate ? rec.clock_out.toDate() : (rec.clock_out ? new Date(rec.clock_out) : null);
+          
+          const calcCin = getCalculatedTime(actualCin);
+          const calcCout = actualCout ? getCalculatedTime(actualCout) : null;
+
+          const bg = idx % 2 === 0 ? "#ffffff" : "#f9fafb";
+          const calcMins = calcSessionMinutes(rec);
+          const hrs = Math.floor(calcMins / 60);
+          const mins = calcMins % 60;
+          tableRows += `<tr style="background-color:${bg};border-bottom:1px solid #e5e7eb;">
+            <td style="padding:10px 12px;font-size:13px;color:#111827;">${actualCin.toLocaleDateString('en-GB')}</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;">${formatTime(calcCin)}</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;">${formatTime(calcCout)}</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;text-align:right;">${hrs}h ${mins}m</td>
+          </tr>`;
+        });
+        if (filteredRecs.length > 0) {
+          const totalMins = filteredRecs.reduce((s, r) => s + calcSessionMinutes(r), 0);
+          const tHrs = Math.floor(totalMins / 60);
+          const tMins = totalMins % 60;
+          const rate = Number(selectedEmployee?.hourly_rate || 0);
+          const totalPay = rate > 0 ? (totalMins / 60) * rate : 0;
+          tableRows += `<tr style="background-color:#0b1a3d;">
+            <td style="padding:12px 12px;font-size:13px;font-weight:700;color:white;" colspan="2">TOTAL HOURS</td>
+            <td style="padding:12px 12px;font-size:14px;font-weight:800;color:#D0B079;text-align:right;" colspan="2">${tHrs}h ${tMins}m</td>
+          </tr>`;
+          if (rate > 0) {
+            tableRows += `<tr style="background-color:#1a2f5a;">
+              <td style="padding:12px 12px;font-size:13px;font-weight:700;color:white;" colspan="2">TOTAL PAY (£${rate}/hr)</td>
+              <td style="padding:14px 12px;font-size:18px;font-weight:900;color:#D0B079;text-align:right;" colspan="2">£${totalPay.toFixed(2)}</td>
+            </tr>`;
+          }
+        }
+      } else {
+        thead = `<tr style="background-color:#1e3a5f;"><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Date</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Clock In</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:left;">Clock Out</th><th style="padding:10px 12px;color:white;font-size:12px;text-align:right;">Duration</th></tr>`;
+
+        const grouped = typeof summaryGroupedRecords !== 'undefined' ? summaryGroupedRecords : [];
+        grouped.forEach(sg => {
+          const rate = Number(sg.hourly_rate || 0);
+          const tHrs = Math.floor(sg.total_minutes / 60);
+          const tMins = sg.total_minutes % 60;
+          const totalPay = rate > 0 ? (sg.total_minutes / 60) * rate : 0;
+
+          tableRows += `<tr style="background-color:#1e3a5f;">
+            <td style="padding:10px 12px;font-size:13px;font-weight:800;color:#D0B079;" colspan="3">${sg.staff_name || "Unknown"} &nbsp;<span style="font-weight:400;font-size:11px;color:#9ca3af;">${sg.designation || "Staff"} — ${sg.restaurant_name || ""}</span></td>
+            <td style="padding:10px 12px;font-size:12px;color:#9ca3af;text-align:right;">${sg.sessions?.length || 0} session(s)</td>
+          </tr>`;
+
+          const sortedSessions = [...(sg.sessions || [])].sort((a, b) => {
+            const da = a.clock_in?.toDate ? a.clock_in.toDate() : new Date(a.clock_in);
+            const db = b.clock_in?.toDate ? b.clock_in.toDate() : new Date(b.clock_in);
+            return db - da;
+          });
+          const formatTime = (d) => d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "-";
+          sortedSessions.forEach((sess, idx) => {
+            const actualCin = sess.clock_in?.toDate ? sess.clock_in.toDate() : new Date(sess.clock_in);
+            const actualCout = sess.clock_out?.toDate ? sess.clock_out.toDate() : (sess.clock_out ? new Date(sess.clock_out) : null);
+            
+            const calcCin = getCalculatedTime(actualCin);
+            const calcCout = actualCout ? getCalculatedTime(actualCout) : null;
+
+            const calcMins = calcSessionMinutes(sess);
+            const sHrs = Math.floor(calcMins / 60);
+            const sMins = calcMins % 60;
+            const bg = idx % 2 === 0 ? "#ffffff" : "#f9fafb";
+            tableRows += `<tr style="background-color:${bg};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:8px 12px 8px 24px;font-size:12px;color:#374151;">${actualCin.toLocaleDateString('en-GB')}</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;">${formatTime(calcCin)}</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;">${formatTime(calcCout)}</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;text-align:right;">${sHrs}h ${sMins}m</td>
+            </tr>`;
+          });
+
+          tableRows += `<tr style="background-color:#f0f4ff;border-top:1px solid #c7d2fe;border-bottom:3px solid #e5e7eb;">
+            <td style="padding:10px 12px 10px 24px;font-size:12px;font-weight:700;color:#1e3a5f;" colspan="2">Subtotal — ${tHrs}h ${tMins}m${rate > 0 ? ` &nbsp;|&nbsp; <span style="color:#b45309;">£${totalPay.toFixed(2)}</span>` : ""}</td>
+            <td style="padding:10px 12px;font-size:12px;color:#374151;text-align:right;" colspan="2">${sg.sessions?.length || 0} session(s)</td>
+          </tr>
+          <tr><td colspan="4" style="padding:4px;background-color:#e5e7eb;"></td></tr>`;
+        });
+      }
+
+      const reportHtml = `<div style="font-family:Arial,Helvetica,sans-serif;background-color:#ffffff;padding:0;margin:0;color:#111827;">
+        <div style="background-color:#0b1a3d;padding:28px 36px;">
+          <table style="width:100%;border-collapse:collapse;"><tr>
+            <td><div style="color:#D0B079;font-size:24px;font-weight:900;">Watan Group</div><div style="color:#9ca3af;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">Staff Attendance Report</div></td>
+            <td style="text-align:right;"><div style="color:white;font-size:18px;font-weight:800;">ATTENDANCE REPORT</div><div style="color:#9ca3af;font-size:11px;margin-top:3px;">Generated: ${reportDate}</div></td>
+          </tr></table>
+        </div>
+        <div style="background-color:#f3f4f6;padding:16px 36px;border-bottom:2px solid #e5e7eb;">
+          <table style="width:100%;border-collapse:collapse;"><tr>
+            <td><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Period</div><div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px;">${period}</div></td>
+            <td><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Scope</div><div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px;">${scope}</div></td>
+            <td style="text-align:right;"><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;font-weight:700;">Generated</div><div style="font-size:12px;font-weight:600;color:#374151;margin-top:2px;">${reportTime}</div></td>
+          </tr></table>
+        </div>
+        <div style="padding:28px 36px;">
+          <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;">
+            <thead>${thead}</thead>
+            <tbody>${tableRows || '<tr><td colspan="4" style="text-align:center;padding:20px;color:#6b7280;">No records found for selected period</td></tr>'}</tbody>
+          </table>
+        </div>
+        <div style="background-color:#0b1a3d;padding:16px 36px;text-align:center;">
+          <div style="color:#6b7280;font-size:11px;">Watan Group - Confidential - Watan Staff Dashboard</div>
+        </div>
+      </div>`;
+
+      const opt = {
+        margin: [0.3, 0.3, 0.3, 0.3],
+        filename: `Watan_Attendance_${new Date().getTime()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 1024, allowTaint: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const pdfDataUri = await html2pdf().from(reportHtml).set(opt).outputPdf('datauristring');
+
+      setSendingProgress("Sending Email...");
+      const sendEmailReportFunc = httpsCallable(functionsInstance, "sendEmailReport");
+      const emailHtmlBody = `<div style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;">
+          <div style="background:#0b1a3d;padding:30px;border-radius:12px 12px 0 0;text-align:center;">
+            <h1 style="color:#D0B079;margin:0;font-size:24px;font-weight:800;">Watan Group</h1>
+            <p style="color:#9ca3af;margin:8px 0 0;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Staff Attendance Report</p>
+          </div>
+          <div style="background:#f9fafb;padding:30px;border:1px solid #e5e7eb;">
+            <p style="font-size:15px;color:#374151;">Dear Team,</p>
+            <p style="font-size:15px;color:#374151;line-height:1.6;">Please find the attendance report attached as a PDF.</p>
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:20px 0;">
+              <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Period</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${period}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Scope</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${scope}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Generated</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${reportTime}</td></tr>
+              </table>
+            </div>
+          </div>
+          <div style="background:#0b1a3d;padding:20px;border-radius:0 0 12px 12px;text-align:center;">
+            <p style="color:#6b7280;font-size:12px;margin:0;">Watan Staff Dashboard - Confidential</p>
+          </div>
+        </div>`;
+
+      await Promise.all([
+        sendEmailReportFunc({
+          to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
+          subject: `Watan Group Attendance Report - ${reportDate}`,
+          htmlBody: emailHtmlBody,
+          attachmentUrl: pdfDataUri,
+          attachmentName: opt.filename
+        })
+      ]);
+
+      showPopup({ title: "Email Sent!", message: "Report emailed successfully to all recipients.", type: "success" });
+    } catch (error) {
+      console.error("Error emailing report:", error);
+      showPopup({ title: "Error", message: `Email failed: ${error.message}`, type: "error" });
+    } finally {
+      setSendingEmail(false);
+      setSendingProgress("");
     }
   };
 
@@ -1094,12 +1398,20 @@ export default function AllStaffPage() {
                       className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-4 focus:ring-[#D0B079]/5 transition-all"
                     />
                   </div>
-                  <button
-                    onClick={() => handleViewAttendance(attendanceData?.staff?.id, attendanceFilters)}
-                    className="w-full md:w-auto px-10 py-4 bg-[#D0B079] text-slate-900 font-bold rounded-2xl text-xs tracking-widest hover:bg-[#b8965f] shadow-xl shadow-[#D0B079]/10 transition-all active:scale-95"
-                  >
-                    REFRESH DATA
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <button
+                      onClick={() => handleViewAttendance(attendanceData?.staff?.id, attendanceFilters)}
+                      className="flex-1 px-10 py-4 bg-[#D0B079] text-slate-900 font-bold rounded-2xl text-xs tracking-widest hover:bg-[#b8965f] shadow-xl shadow-[#D0B079]/10 transition-all active:scale-95 whitespace-nowrap"
+                    >
+                      REFRESH DATA
+                    </button>
+                    <button
+                      onClick={() => setShowManualAddModal(true)}
+                      className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-2xl text-xs tracking-widest hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      <Plus size={16} /> MANUAL ADD
+                    </button>
+                  </div>
                 </div>
 
                 {/* Table Container */}
@@ -1415,6 +1727,14 @@ export default function AllStaffPage() {
                       {restaurants.length} Restaurants
                     </p>
                   </div>
+                  <button 
+                    onClick={handleEmailReport} 
+                    disabled={sendingEmail}
+                    className="px-6 py-3 bg-white text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-slate-100 transition-all disabled:opacity-50"
+                  >
+                    {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} 
+                    {sendingEmail ? "Sending..." : "Email Report"}
+                  </button>
                   <button
                     onClick={handlePrint}
                     className="px-6 py-3 bg-[#D0B079] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-[#b8965f] transition-all"
@@ -1471,6 +1791,36 @@ export default function AllStaffPage() {
                             className="bg-transparent border-none text-[10px] font-bold text-slate-400 focus:ring-0 uppercase px-2 py-1 cursor-pointer"
                           />
                         </div>
+
+                        {attendanceData?.staff?.id === "all" && (
+                          <>
+                            <select
+                              value={reportRestaurantFilter}
+                              onChange={(e) => {
+                                setReportRestaurantFilter(e.target.value);
+                                setReportEmployeeFilter("all");
+                              }}
+                              className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm text-[10px] font-bold text-slate-500 uppercase cursor-pointer outline-none"
+                            >
+                              <option value="all">All Restaurants</option>
+                              {restaurantsList.map(r => (
+                                <option key={r.id} value={r.id}>{r.name}</option>
+                              ))}
+                            </select>
+
+                            <select
+                              value={reportEmployeeFilter}
+                              onChange={(e) => setReportEmployeeFilter(e.target.value)}
+                              className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm text-[10px] font-bold text-slate-500 uppercase cursor-pointer outline-none max-w-[200px]"
+                            >
+                              <option value="all">All Employees</option>
+                              {staff.filter(s => reportRestaurantFilter === "all" || s.restaurant_id === reportRestaurantFilter).map(s => (
+                                <option key={s.id} value={s.id}>{s.full_name} {s.designation ? `(${s.designation})` : ""}</option>
+                              ))}
+                            </select>
+                          </>
+                        )}
+
                         <button
                           onClick={() => {
                             if (attendanceData?.staff?.id === "all") handleAllStaffReport();
@@ -1493,80 +1843,153 @@ export default function AllStaffPage() {
                       </div>
                     )}
                   </div>
-
                   {/* Table */}
-                  <table className="w-full border-collapse text-sm">
-                    <thead>
-                      <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
-                        <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
-                        <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
-                      {groupedRecords.length > 0 ? (
-                        groupedRecords.map((group, i) => (
-                          <React.Fragment key={i}>
-                            {/* Day header row */}
-                            {group.sessions.length > 1 && (
-                              <tr style={{ backgroundColor: '#f1f5f9' }}>
-                                <td colSpan="3" className="px-4 py-3 font-black text-[10px] uppercase tracking-widest" style={{ color: '#64748b' }}>
-                                  {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} — {group.sessions.length} Sessions
-                                </td>
-                                <td className="px-4 py-3 text-right font-black text-xs" style={{ color: '#0f172a' }}>
-                                  Day Total: {formatWorkTime(group.total_minutes)}
-                                </td>
-                              </tr>
-                            )}
-                            {/* Session rows */}
-                            {group.sessions.map((session, sIdx) => (
-                              <tr key={session.id || sIdx}>
-                                <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
-                                  {group.sessions.length > 1 ? (
-                                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Session #{group.sessions.length - sIdx}</span>
-                                  ) : (
-                                    new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                  {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
-                                </td>
-                                <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                  {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
-                                </td>
-                                <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
-                                  {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
-                                </td>
-                              </tr>
-                            ))}
-                          </React.Fragment>
-                        ))
+                  {attendanceData?.staff?.id === "all" ? (
+                    <div className="space-y-12">
+                      {summaryGroupedRecords.length > 0 ? (
+                        summaryGroupedRecords.map((staffGroup, i) => {
+                          const staffPay = staffGroup.hourly_rate > 0 
+                            ? `£${((staffGroup.total_minutes / 60) * staffGroup.hourly_rate).toFixed(2)}` 
+                            : formatWorkTime(staffGroup.total_minutes);
+                          return (
+                            <div key={i} className="bg-white border border-slate-200 rounded-[2rem] print:overflow-visible overflow-hidden shadow-sm" style={{ pageBreakInside: 'auto', pageBreakAfter: 'auto' }}>
+                              <div className="bg-slate-50 border-b border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                  <h4 className="text-xl font-bold text-slate-900">{staffGroup.staff_name}</h4>
+                                  <p className="text-sm font-semibold text-slate-500">{staffGroup.designation} — {staffGroup.restaurant_name}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Period Pay</p>
+                                  <p className="text-xl font-black text-[#D0B079]">{staffPay}</p>
+                                </div>
+                              </div>
+                              <table className="w-full border-collapse text-sm">
+                                <thead>
+                                  <tr className="border-b border-slate-100 bg-white">
+                                    <th className="px-6 py-3 text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Date</th>
+                                    <th className="px-6 py-3 text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Clock in</th>
+                                    <th className="px-6 py-3 text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Clock out</th>
+                                    <th className="px-6 py-3 text-right font-black uppercase tracking-widest text-[10px] text-slate-400">Duration</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                  {staffGroup.sessions.map((session, sIdx) => (
+                                    <tr key={sIdx} className="hover:bg-slate-50 transition-colors">
+                                      <td className="px-6 py-4 font-bold text-slate-600">
+                                        {new Date(session.clock_in).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                      </td>
+                                      <td className="px-6 py-4 font-mono font-bold text-slate-500">
+                                        {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                      </td>
+                                      <td className="px-6 py-4 font-mono font-bold text-slate-500">
+                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                      </td>
+                                      <td className="px-6 py-4 text-right font-mono font-black text-slate-700">
+                                        {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        })
                       ) : (
-                        <tr>
-                          <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
-                        </tr>
+                        <div className="py-20 text-center font-bold italic text-slate-400">No attendance records found for this period</div>
                       )}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
-                        <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
-                          Grand Total ({formatWorkTime(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0))})
-                        </td>
-                        <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
-                          {(() => {
-                            const totalMinutes = groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
-                            const rate = Number(attendanceData?.staff?.hourly_rate || 0);
-                            if (rate > 0) {
-                              const pay = (totalMinutes / 60) * rate;
-                              return `£${pay.toFixed(2)}`;
-                            }
-                            return formatWorkTime(totalMinutes);
-                          })()}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      
+                      {summaryGroupedRecords.length > 0 && (
+                        <div className="bg-slate-900 p-8 rounded-[2rem] text-right mt-8" style={{ pageBreakInside: 'avoid' }}>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Grand Total Output</p>
+                          <p className="text-3xl font-black text-white">
+                            {(() => {
+                              const totalMinutes = summaryGroupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
+                              return formatWorkTime(totalMinutes);
+                            })()}
+                          </p>
+                          <p className="text-sm font-bold text-[#D0B079] mt-2">
+                            {(() => {
+                              const totalPay = summaryGroupedRecords.reduce((sum, g) => sum + (g.hourly_rate > 0 ? (g.total_minutes / 60) * g.hourly_rate : 0), 0);
+                              return totalPay > 0 ? `Total Est. Pay: £${totalPay.toFixed(2)}` : "";
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="border-y-2 border-slate-900 bg-slate-50/50" style={{ borderTopColor: '#0f172a', borderBottomColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Date</th>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock in</th>
+                          <th className="px-4 py-4 text-left font-black uppercase tracking-widest text-[10px]">Clock out</th>
+                          <th className="px-4 py-4 text-right font-black uppercase tracking-widest text-[10px]">Total hours</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100" style={{ borderColor: '#f1f5f9' }}>
+                        {groupedRecords.length > 0 ? (
+                          groupedRecords.map((group, i) => (
+                            <React.Fragment key={i}>
+                              {/* Day header row */}
+                              {group.sessions.length > 1 && (
+                                <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                  <td colSpan="3" className="px-4 py-3 font-black text-[10px] uppercase tracking-widest" style={{ color: '#64748b' }}>
+                                    {new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} — {group.sessions.length} Sessions
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-black text-xs" style={{ color: '#0f172a' }}>
+                                    Day Total: {formatWorkTime(group.total_minutes)}
+                                  </td>
+                                </tr>
+                              )}
+                              {/* Session rows */}
+                              {group.sessions.map((session, sIdx) => (
+                                <tr key={session.id || sIdx}>
+                                  <td className="px-4 py-4 font-bold" style={{ color: '#334155' }}>
+                                    {group.sessions.length > 1 ? (
+                                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#94a3b8' }}>Session #{group.sessions.length - sIdx}</span>
+                                    ) : (
+                                      new Date(group.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                    {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                  </td>
+                                  <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
+                                    {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                  </td>
+                                  <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
+                                    {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                  </td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="py-20 text-center font-bold italic" style={{ color: '#94a3b8' }}>No attendance records found for this period</td>
+                          </tr>
+                        )}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-slate-900 bg-slate-50/30" style={{ borderTopColor: '#0f172a', backgroundColor: '#f8fafc' }}>
+                          <td colSpan="3" className="px-4 py-6 text-right font-black uppercase tracking-widest text-xs" style={{ color: '#94a3b8' }}>
+                            Grand Total ({formatWorkTime(groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0))})
+                          </td>
+                          <td className="px-4 py-6 text-right font-black text-2xl" style={{ color: '#0f172a' }}>
+                            {(() => {
+                              const totalMinutes = groupedRecords.reduce((sum, g) => sum + g.total_minutes, 0);
+                              const rate = Number(attendanceData?.staff?.hourly_rate || 0);
+                              if (rate > 0) {
+                                const pay = (totalMinutes / 60) * rate;
+                                return `£${pay.toFixed(2)}`;
+                              }
+                              return formatWorkTime(totalMinutes);
+                            })()}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  )}
 
                   {/* Footer */}
                   <div className="mt-12 pt-8 border-t border-slate-100 text-center italic text-[10px]" style={{ borderTopColor: '#f1f5f9', color: '#94a3b8' }}>
@@ -1656,6 +2079,75 @@ export default function AllStaffPage() {
                     )}
                   </button>
                 </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Manual Add Modal */}
+      <AnimatePresence>
+        {showManualAddModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowManualAddModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-[#0b1a3d] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col p-8"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                    <Plus className="text-[#D0B079]" size={20} /> Add Missing Record
+                  </h3>
+                  <p className="text-white/40 text-xs mt-1">Manual entry will be logged for audit purposes.</p>
+                </div>
+                <button onClick={() => setShowManualAddModal(false)} className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/50 hover:text-rose-500 rounded-xl transition-all">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAttendanceRecord} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Clock In Time <span className="text-rose-500">*</span></label>
+                  <input
+                    type="datetime-local"
+                    value={manualAddData.clock_in}
+                    onChange={(e) => setManualAddData(p => ({ ...p, clock_in: e.target.value }))}
+                    className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-2 focus:ring-[#D0B079]/10 transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Clock Out Time <span className="text-rose-500">*</span></label>
+                  <input
+                    type="datetime-local"
+                    value={manualAddData.clock_out}
+                    onChange={(e) => setManualAddData(p => ({ ...p, clock_out: e.target.value }))}
+                    className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-2 focus:ring-[#D0B079]/10 transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Reason for manual entry <span className="text-rose-500">*</span></label>
+                  <textarea
+                    value={manualAddData.edit_reason}
+                    onChange={(e) => setManualAddData(p => ({ ...p, edit_reason: e.target.value }))}
+                    placeholder="e.g. Forgot to clock in due to app issue"
+                    rows="2"
+                    className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-2 focus:ring-[#D0B079]/10 transition-all placeholder:text-white/20 resize-none"
+                    required
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={addingAttendance}
+                  className="w-full py-4 mt-6 bg-[#D0B079] text-slate-900 font-bold rounded-2xl text-xs tracking-widest hover:bg-[#b8965f] shadow-xl shadow-[#D0B079]/20 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                >
+                  {addingAttendance ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  {addingAttendance ? 'SAVING...' : 'SAVE RECORD'}
+                </button>
               </form>
             </motion.div>
           </div>
