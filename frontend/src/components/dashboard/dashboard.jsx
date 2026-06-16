@@ -151,7 +151,7 @@ export default function Dashboard() {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Snapshot States
-  const [snapshotPeriod, setSnapshotPeriod] = useState("today_vs");
+  const [snapshotPeriod, setSnapshotPeriod] = useState("yesterday");
   const [snapshotCustomDates, setSnapshotCustomDates] = useState({
     from: new Date().toISOString().split('T')[0],
     to: new Date().toISOString().split('T')[0]
@@ -1301,7 +1301,7 @@ export default function Dashboard() {
                               <div className="overflow-hidden">
                                 <p className="text-sm font-bold text-white truncate">{staff.full_name}</p>
                                 <p className="text-[10px] text-white/50 uppercase tracking-widest truncate">{staff.restaurant_name}</p>
-                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                               </div>
                             </div>
                           ))}
@@ -1378,7 +1378,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4 text-white/60 font-medium text-xs">{staff.restaurant_name}</td>
                                   <td className="px-6 py-4 text-right">
                                     <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-mono text-xs font-bold inline-block">
-                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                                     </span>
                                   </td>
                                 </tr>
@@ -1467,7 +1467,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                       <span className="text-xs font-bold text-white/80">
-                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-white/40">
                                         {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleDateString('en-GB') : '-'}
@@ -1478,7 +1478,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col items-end">
                                       <span className="text-sm font-black text-violet-400 flex items-center gap-2">
                                         <Clock size={12} className="text-violet-400/50" />
-                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-violet-400/50 mt-0.5">
                                         {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleDateString('en-GB') : '-'}
