@@ -28,7 +28,7 @@ export function getCalculatedTime(timestamp) {
 }
 
 /**
- * Format a time as HH:MM (24-hour) string
+ * Format a time as HH:MM AM/PM string
  * @param {Date|string|object} timestamp 
  * @returns {string}
  */
@@ -43,7 +43,7 @@ export function formatTimeShort(timestamp) {
     date = new Date(timestamp);
   }
   if (isNaN(date.getTime())) return "--:--";
-  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
 /**

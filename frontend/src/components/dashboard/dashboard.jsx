@@ -26,11 +26,11 @@ import { sendPushNotification } from "../../utils/fcm";
 const getAutoLogoutTime = (clockIn) => {
   const d = new Date(clockIn);
   const hour = d.getHours();
-  
+
   const logoutTime = new Date(d);
   if (hour >= 0 && hour < 18) {
     // Clocked in between 00:00 and 17:59 -> Auto logout at next midnight
-    logoutTime.setHours(24, 0, 0, 0); 
+    logoutTime.setHours(24, 0, 0, 0);
   } else {
     // Clocked in between 18:00 and 23:59 -> Auto logout at next 18:00 (6 PM)
     logoutTime.setDate(logoutTime.getDate() + 1);
@@ -90,9 +90,8 @@ const StatCard = ({ title, value, subtext, icon: Icon, colorClass, delay, onEyeC
             </button>
           )}
           {trend && (
-            <div className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9px] sm:text-[10px] font-black border shadow-sm ${
-              trend.isUp ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}>
+            <div className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9px] sm:text-[10px] font-black border shadow-sm ${trend.isUp ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              }`}>
               {trend.isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />} {trend.text}
             </div>
           )}
@@ -129,9 +128,9 @@ export default function Dashboard() {
     present_today: 0,
     active_now: 0,
     pending_clockouts: [],
-    yesterday_clock_outs: [],
+    completed_shifts: [],
     auto_logouts: [],
-    total_hours_today: "0.0",
+    total_hours_period: "0.0",
     recent_activity: [],
     weekly_data: [],
   });
@@ -180,16 +179,16 @@ export default function Dashboard() {
   const handleRemindAll = async (e) => {
     e.stopPropagation();
     if (!stats.pending_clockouts || stats.pending_clockouts.length === 0) return;
-    
+
     setSendingReminders(true);
-    
+
     try {
       const broadcastId = `bcast_${Date.now()}_reminder`;
-      
+
       const promises = stats.pending_clockouts.map(async (record) => {
         const staffDoc = allStaffList.find(s => s.id === record.staff_id);
         const fcmToken = staffDoc?.fcmToken || staffDoc?.fcm_token;
-        
+
         // Add to Firestore
         const docRef = await addDoc(collection(db, "notifications"), {
           title: "Clock-Out Reminder",
@@ -206,7 +205,7 @@ export default function Dashboard() {
           fcm_token: fcmToken || null,
           platform: staffDoc?.platform || "unknown"
         });
-        
+
         if (fcmToken) {
           sendPushNotification({
             fcm_token: fcmToken,
@@ -218,15 +217,15 @@ export default function Dashboard() {
           });
         }
       });
-      
+
       await Promise.all(promises);
-      
+
       showPopup({
         title: "Reminders Sent",
         message: `Successfully sent clock-out reminders to ${stats.pending_clockouts.length} staff members.`,
         type: "success"
       });
-      
+
     } catch (err) {
       console.error(err);
       showPopup({
@@ -295,12 +294,12 @@ export default function Dashboard() {
   const calculateStaffStats = async (staffList) => {
     // 1. Determine the effective Restaurant ID
     const restaurantId = selectedRestaurant || String(userData?.restaurant_id || "");
-    
+
     // Check super admin status directly from current userData
     const currentRoleTitle = String(userData?.role_title || userData?.role || "").toLowerCase().trim();
     const currentRoleId = String(userData?.role_id || "");
     const currentIsSuper = currentRoleId === "6" || currentRoleTitle === "super admin" || currentRoleTitle === "superadmin";
-    
+
     let filteredStaff = [];
 
     if (currentIsSuper && !selectedRestaurant) {
@@ -315,11 +314,11 @@ export default function Dashboard() {
         const sRestId = String(s.restaurant_id || "");
         const sCreatedBy = String(s.created_by || "");
         const sRestName = String(s.restaurant_name || "");
-        
-        return sRestId === String(selectedRestaurant) || 
-               sCreatedBy === String(selectedRestaurant) ||
-               (restName && sRestId === String(restName)) ||
-               (restName && sRestName === String(restName));
+
+        return sRestId === String(selectedRestaurant) ||
+          sCreatedBy === String(selectedRestaurant) ||
+          (restName && sRestId === String(restName)) ||
+          (restName && sRestName === String(restName));
       });
     } else if (restaurantId) {
       // Regular Admin restricted to their restaurant
@@ -330,11 +329,11 @@ export default function Dashboard() {
         const sRestId = String(s.restaurant_id || "");
         const sCreatedBy = String(s.created_by || "");
         const sRestName = String(s.restaurant_name || "");
-        
-        return sRestId === String(restaurantId) || 
-               sCreatedBy === String(restaurantId) ||
-               (restName && sRestId === String(restName)) ||
-               (restName && sRestName === String(restName));
+
+        return sRestId === String(restaurantId) ||
+          sCreatedBy === String(restaurantId) ||
+          (restName && sRestId === String(restName)) ||
+          (restName && sRestName === String(restName));
       });
     } else if (currentIsSuper) {
       // Super Admin fallback (no restaurant_id on user, no selection) - show all
@@ -368,7 +367,7 @@ export default function Dashboard() {
 
     const presentStaffIds = new Set(attendanceRecords.map(r => r.staff_id));
     const presentCount = filteredStaff.filter(s => presentStaffIds.has(s.id)).length;
-    
+
     // Filter attendance records to ONLY those belonging to staff in the selected restaurant
     const filteredStaffIds = new Set(filteredStaff.map(s => s.id));
     let filteredAttendance = attendanceRecords.filter(r => filteredStaffIds.has(r.staff_id));
@@ -404,7 +403,7 @@ export default function Dashboard() {
     // Auto-logout expired sessions
     const now = new Date();
     const expiredSessions = [];
-    
+
     activeAllRecords = activeAllRecords.filter(r => {
       if (!r.clock_in) return true; // safety check
       const cinDate = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
@@ -415,7 +414,7 @@ export default function Dashboard() {
       }
       return true;
     });
-    
+
     if (expiredSessions.length > 0) {
       Promise.all(expiredSessions.map(session => {
         const diffMin = Math.max(1, Math.round((session.autoLogout.getTime() - session.cinDate.getTime()) / 60000));
@@ -430,7 +429,7 @@ export default function Dashboard() {
 
     const activeSessions = activeAllRecords.filter(r => filteredStaffIds.has(r.staff_id));
     const activeNowCount = activeSessions.length;
-    
+
     const pendingClockouts = activeSessions.map(r => {
       const s = filteredStaff.find(staff => staff.id === r.staff_id);
       return {
@@ -443,13 +442,13 @@ export default function Dashboard() {
     });
 
     // Recalculate total_minutes from actual timestamps instead of trusting stored values
-    const totalMinutesToday = filteredAttendance.reduce((sum, r) => {
+    const totalMinutesPeriod = filteredAttendance.reduce((sum, r) => {
       if (r.clock_in && r.clock_out) {
         return sum + calcCalculatedMinutes(r.clock_in, r.clock_out);
       }
       return sum;
     }, 0);
-    const totalHoursToday = (totalMinutesToday / 60).toFixed(1);
+    const totalHoursPeriod = (totalMinutesPeriod / 60).toFixed(1);
 
     const recentActivity = filteredAttendance.slice(0, 10).map(r => {
       const s = filteredStaff.find(staff => staff.id === r.staff_id);
@@ -461,20 +460,37 @@ export default function Dashboard() {
       };
     });
 
+    const autoLogoutsList = filteredAttendance.filter(r => r.location_out === "System Auto-Logout").map(r => {
+      const s = filteredStaff.find(staff => staff.id === r.staff_id);
+      return {
+        ...r,
+        full_name: s?.full_name || "Unknown Staff",
+        profile_image: s?.profile_image,
+        designation: s?.designation,
+        restaurant_name: s?.restaurant_name || "Unknown Restaurant"
+      };
+    });
+
+    const completedShiftsList = filteredAttendance.filter(r => r.clock_out && r.location_out !== "System Auto-Logout").map(r => {
+      const s = filteredStaff.find(staff => staff.id === r.staff_id);
+      return {
+        ...r,
+        full_name: s?.full_name || "Unknown Staff",
+        profile_image: s?.profile_image,
+        designation: s?.designation,
+        restaurant_name: s?.restaurant_name || "Unknown Restaurant"
+      };
+    });
+
     // Calculate weekly data (last 7 days from the END date)
     const weeklyData = [];
     const sevenDaysBeforeEnd = new Date(toDate);
     sevenDaysBeforeEnd.setDate(sevenDaysBeforeEnd.getDate() - 7);
-    
-    // For the chart, we might want a different range, but let's stick to the filtered set if it covers enough days
-    // or just use the filteredAttendance if the range is small.
-    // To be safe and show a trend, we'll fetch the last 7 days regardless of filter for the chart part? 
-    // No, it should follow the filter.
-    
+
     for (let i = 6; i >= 0; i--) {
       const d = new Date(toDate);
       d.setDate(d.getDate() - i);
-      d.setHours(0,0,0,0);
+      d.setHours(0, 0, 0, 0);
       const nextD = new Date(d);
       nextD.setDate(d.getDate() + 1);
 
@@ -493,20 +509,22 @@ export default function Dashboard() {
       present_today: presentCount,
       active_now: activeNowCount,
       pending_clockouts: pendingClockouts,
-      total_hours_today: totalHoursToday,
+      completed_shifts: completedShiftsList,
+      auto_logouts: autoLogoutsList,
+      total_hours_period: totalHoursPeriod,
       recent_activity: recentActivity,
       weekly_data: weeklyData
     }));
 
     try {
-      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date(todayStart); todayEnd.setDate(todayEnd.getDate() + 1);
       const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
       const yesterdayEnd = new Date(todayStart);
 
       const thisWeekStart = new Date(todayStart);
       thisWeekStart.setDate(todayStart.getDate() - todayStart.getDay());
-      
+
       const lastWeekStart = new Date(thisWeekStart);
       lastWeekStart.setDate(lastWeekStart.getDate() - 7);
       const lastWeekEnd = new Date(thisWeekStart);
@@ -530,10 +548,10 @@ export default function Dashboard() {
         fetchTo = new Date(todayEnd);
       } else if (snapshotPeriod === 'custom') {
         fetchFrom = new Date(snapshotCustomDates.from);
-        fetchFrom.setHours(0,0,0,0);
+        fetchFrom.setHours(0, 0, 0, 0);
         fetchTo = new Date(snapshotCustomDates.to);
         fetchTo.setDate(fetchTo.getDate() + 1);
-        fetchTo.setHours(0,0,0,0);
+        fetchTo.setHours(0, 0, 0, 0);
       }
 
       const costQueryStart = fetchFrom ? new Date(Math.min(startOfLastMonth.getTime(), fetchFrom.getTime())) : startOfLastMonth;
@@ -577,7 +595,7 @@ export default function Dashboard() {
         if (cin >= lastWeekStart && cin < lastWeekEnd) costMetrics.lastWeek += cost;
         if (cin >= thisMonthStart) costMetrics.thisMonth += cost;
         if (cin >= startOfLastMonth && cin < lastMonthEnd) costMetrics.lastMonth += cost;
-        
+
         if (fetchFrom && fetchTo) {
           let pFrom, pTo, cFrom, cTo;
           if (snapshotPeriod === 'today_vs') {
@@ -608,7 +626,7 @@ export default function Dashboard() {
       filteredCostRecords.forEach(r => {
         if (!r.clock_in || !r.clock_out) return;
         const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
-        
+
         const s = staffMap[r.staff_id];
         const rest = isSuper && restaurants ? restaurants.find(res => String(res.id) === String(s?.restaurant_id || s?.created_by)) : null;
         const rId = rest?.id || s?.restaurant_id || 'unknown';
@@ -654,7 +672,7 @@ export default function Dashboard() {
         }
 
         const isCompareTime = ['today', 'yesterday', 'this_week', 'this_month', 'custom'].includes(snapshotPeriod) ? isSingle : isCurr;
-        
+
         if (snapshotCompareMode && isCompareTime) {
           const mins = calcCalculatedMinutes(r.clock_in, r.clock_out);
           if (mins > 0) {
@@ -678,7 +696,7 @@ export default function Dashboard() {
           totalMins += agg.mins;
           totalCost += agg.cost;
           const s = staffList.find(staff => staff.id === id);
-          
+
           const empData = {
             id,
             name: s?.full_name || "Unknown",
@@ -766,8 +784,8 @@ export default function Dashboard() {
         }[snapshotPeriod];
       }
 
-      const restLabel = snapshotCompareMode 
-        ? `${snapshotCompareRestIds.length} Restaurants Selected` 
+      const restLabel = snapshotCompareMode
+        ? `${snapshotCompareRestIds.length} Restaurants Selected`
         : (snapshotRestaurant === 'all' ? 'All Restaurants' : (restaurants.find(r => String(r.id) === String(snapshotRestaurant))?.restaurant_name || 'Selected Restaurant'));
 
       const filterDetailsHtml = `
@@ -990,7 +1008,7 @@ export default function Dashboard() {
                   Welcome, {userData?.name || "Admin"}
                 </h1>
                 <p className="text-white/60 mt-2 text-sm tracking-wider font-medium">Real-time overview of your team's attendance and performance</p>
-                
+
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-3xl mx-auto mt-6 z-40">
                   {isSuper && (
                     <>
@@ -1009,7 +1027,7 @@ export default function Dashboard() {
 
                         <AnimatePresence>
                           {showRestaurantMenu && (
-                            <motion.div 
+                            <motion.div
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 10 }}
@@ -1052,9 +1070,8 @@ export default function Dashboard() {
                       <div className="relative w-full sm:w-auto">
                         <button
                           onClick={() => { setShowUserMenu(!showUserMenu); setShowRestaurantMenu(false); setShowPeriodMenu(false); }}
-                          className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 backdrop-blur-md rounded-2xl border font-semibold hover:bg-white/10 transition-all text-sm tracking-wider shadow-xl group ${
-                            selectedUser ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/80'
-                          }`}
+                          className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-3 px-6 py-3.5 backdrop-blur-md rounded-2xl border font-semibold hover:bg-white/10 transition-all text-sm tracking-wider shadow-xl group ${selectedUser ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/80'
+                            }`}
                         >
                           <User size={18} className="text-emerald-400 group-hover:scale-110 transition-transform" />
                           <span className="flex-1 sm:min-w-[120px] text-left truncate">
@@ -1065,7 +1082,7 @@ export default function Dashboard() {
 
                         <AnimatePresence>
                           {showUserMenu && (
-                            <motion.div 
+                            <motion.div
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 10 }}
@@ -1101,27 +1118,27 @@ export default function Dashboard() {
                                 {allStaffList
                                   .filter(s => !userSearch || s.full_name?.toLowerCase().includes(userSearch.toLowerCase()) || s.email?.toLowerCase().includes(userSearch.toLowerCase()))
                                   .map((s) => (
-                                  <button
-                                    key={s.id}
-                                    onClick={() => {
-                                      setSelectedUser(s.id);
-                                      setShowUserMenu(false);
-                                      setUserSearch("");
-                                    }}
-                                    className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between gap-2 ${selectedUser === s.id ? 'text-emerald-400 bg-emerald-500/5' : 'text-white/60'}`}
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#D0B079] shrink-0 overflow-hidden">
-                                        {s.profile_image ? <img src={s.profile_image} className="w-full h-full object-cover" alt="" /> : s.full_name?.[0]?.toUpperCase()}
+                                    <button
+                                      key={s.id}
+                                      onClick={() => {
+                                        setSelectedUser(s.id);
+                                        setShowUserMenu(false);
+                                        setUserSearch("");
+                                      }}
+                                      className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-sm font-medium flex items-center justify-between gap-2 ${selectedUser === s.id ? 'text-emerald-400 bg-emerald-500/5' : 'text-white/60'}`}
+                                    >
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-[#D0B079] shrink-0 overflow-hidden">
+                                          {s.profile_image ? <img src={s.profile_image} className="w-full h-full object-cover" alt="" /> : s.full_name?.[0]?.toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="truncate text-sm">{s.full_name}</p>
+                                          <p className="text-[10px] text-white/30 truncate">{s.designation || 'Staff'}</p>
+                                        </div>
                                       </div>
-                                      <div className="min-w-0">
-                                        <p className="truncate text-sm">{s.full_name}</p>
-                                        <p className="text-[10px] text-white/30 truncate">{s.designation || 'Staff'}</p>
-                                      </div>
-                                    </div>
-                                    {selectedUser === s.id && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] shrink-0" />}
-                                  </button>
-                                ))}
+                                      {selectedUser === s.id && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] shrink-0" />}
+                                    </button>
+                                  ))}
                               </div>
                             </motion.div>
                           )}
@@ -1138,16 +1155,16 @@ export default function Dashboard() {
                     >
                       <Filter size={18} className="group-hover:rotate-12 transition-transform" />
                       <span className="flex-1 sm:flex-none whitespace-nowrap">
-                        {period === 'custom' ? `${dateRange.from} to ${dateRange.to}` : 
-                         period === '3days' ? 'Last 3 Days' :
-                         period.charAt(0).toUpperCase() + period.slice(1)}
+                        {period === 'custom' ? `${dateRange.from} to ${dateRange.to}` :
+                          period === '3days' ? 'Last 3 Days' :
+                            period.charAt(0).toUpperCase() + period.slice(1)}
                       </span>
                       <ChevronDown size={16} className={`transition-transform duration-300 ${showPeriodMenu ? 'rotate-180' : ''}`} />
                     </button>
 
                     <AnimatePresence>
                       {showPeriodMenu && (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
@@ -1178,7 +1195,7 @@ export default function Dashboard() {
                                   {opt.label}
                                   {period === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
                                 </button>
-                                
+
                                 {/* Inline Custom Date Picker */}
                                 {opt.id === 'custom' && period === 'custom' && (
                                   <div className="px-5 pb-4 pt-2 bg-black/20 border-t border-white/5 space-y-3">
@@ -1200,7 +1217,7 @@ export default function Dashboard() {
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:border-[#D0B079]/50 text-sm"
                                       />
                                     </div>
-                                    <button 
+                                    <button
                                       onClick={() => setShowPeriodMenu(false)}
                                       className="w-full py-2 bg-[#D0B079]/20 text-[#D0B079] rounded-xl text-xs font-bold hover:bg-[#D0B079]/30 transition-all mt-2"
                                     >
@@ -1223,11 +1240,10 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
-              <div 
+              <div
                 onClick={() => setShowPendingClockouts(!showPendingClockouts)}
-                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
-                  stats.pending_clockouts?.length > 0 ? 'bg-rose-500/10 hover:bg-rose-500/20' : 'bg-white/5 hover:bg-white/10'
-                }`}
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${stats.pending_clockouts?.length > 0 ? 'bg-rose-500/10 hover:bg-rose-500/20' : 'bg-white/5 hover:bg-white/10'
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   <div className={`p-2.5 rounded-xl shrink-0 ${stats.pending_clockouts?.length > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
@@ -1238,7 +1254,7 @@ export default function Dashboard() {
                       Active Shifts Pending Clock-Out ({stats.pending_clockouts?.length || 0})
                     </h3>
                     <p className="text-xs text-white/60">
-                      {stats.pending_clockouts?.length > 0 
+                      {stats.pending_clockouts?.length > 0
                         ? 'Staff members currently clocked in. Expand to view.'
                         : 'No active shifts at the moment.'}
                     </p>
@@ -1285,7 +1301,7 @@ export default function Dashboard() {
                               <div className="overflow-hidden">
                                 <p className="text-sm font-bold text-white truncate">{staff.full_name}</p>
                                 <p className="text-[10px] text-white/50 uppercase tracking-widest truncate">{staff.restaurant_name}</p>
-                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                               </div>
                             </div>
                           ))}
@@ -1304,30 +1320,29 @@ export default function Dashboard() {
             </div>
 
 
-            {/* Yesterday's Clock-Outs Dropdown */}
+            {/* Completed Shifts Dropdown */}
             <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
               <div
                 onClick={() => setShowYesterdayClockouts(!showYesterdayClockouts)}
-                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
-                  stats.yesterday_clock_outs?.length > 0 ? 'bg-[#D0B079]/10 hover:bg-[#D0B079]/20' : 'bg-white/5 hover:bg-white/10'
-                }`}
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${stats.completed_shifts?.length > 0 ? 'bg-blue-500/10 hover:bg-blue-500/20' : 'bg-white/5 hover:bg-white/10'
+                  }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.yesterday_clock_outs?.length > 0 ? 'bg-[#D0B079]/20 text-[#D0B079]' : 'bg-white/10 text-white/40'}`}>
+                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.completed_shifts?.length > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/40'}`}>
                     <History size={20} />
                   </div>
                   <div className="text-left">
-                    <h3 className={`text-base font-bold mb-0.5 ${stats.yesterday_clock_outs?.length > 0 ? 'text-[#D0B079]' : 'text-white/40'}`}>
-                      Yesterday's Clock-Outs ({stats.yesterday_clock_outs?.length || 0})
+                    <h3 className={`text-base font-bold mb-0.5 ${stats.completed_shifts?.length > 0 ? 'text-blue-400' : 'text-white/40'}`}>
+                      Completed Shifts ({stats.completed_shifts?.length || 0})
                     </h3>
                     <p className="text-xs text-white/60">
-                      {stats.yesterday_clock_outs?.length > 0
-                        ? 'Staff members who clocked out yesterday. Expand to view.'
-                        : 'No clock-outs recorded for yesterday.'}
+                      {stats.completed_shifts?.length > 0
+                        ? 'Staff members who completed shifts in this period. Expand to view.'
+                        : 'No completed shifts recorded for this period.'}
                     </p>
                   </div>
                 </div>
-                <ChevronDown size={20} className={`transition-transform duration-300 ${stats.yesterday_clock_outs?.length > 0 ? 'text-[#D0B079]' : 'text-white/40'} ${showYesterdayClockouts ? 'rotate-180' : ''}`} />
+                <ChevronDown size={20} className={`transition-transform duration-300 ${stats.completed_shifts?.length > 0 ? 'text-blue-400' : 'text-white/40'} ${showYesterdayClockouts ? 'rotate-180' : ''}`} />
               </div>
 
               <AnimatePresence>
@@ -1339,18 +1354,18 @@ export default function Dashboard() {
                     className="overflow-hidden"
                   >
                     <div className="border-t border-white/5">
-                      {stats.yesterday_clock_outs?.length > 0 ? (
+                      {stats.completed_shifts?.length > 0 ? (
                         <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
                           <table className="w-full text-left">
                             <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                               <tr>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff Name</th>
                                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Restaurant</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#D0B079]/70 text-right">Clock Out</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-blue-400/70 text-right">Clock Out</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                              {stats.yesterday_clock_outs.map((staff, idx) => (
+                              {stats.completed_shifts.map((staff, idx) => (
                                 <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                                   <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -1363,7 +1378,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4 text-white/60 font-medium text-xs">{staff.restaurant_name}</td>
                                   <td className="px-6 py-4 text-right">
                                     <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-mono text-xs font-bold inline-block">
-                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </td>
                                 </tr>
@@ -1375,7 +1390,7 @@ export default function Dashboard() {
                         <div className="text-center py-8">
                           <History size={32} className="text-white/20 mx-auto mb-3" />
                           <p className="text-white/40 font-bold">No Data</p>
-                          <p className="text-white/30 text-sm mt-1">There are no clock-out records for yesterday.</p>
+                          <p className="text-white/30 text-sm mt-1">There are no completed shifts for this period.</p>
                         </div>
                       )}
                     </div>
@@ -1388,9 +1403,8 @@ export default function Dashboard() {
             <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
               <div
                 onClick={() => setShowAutoLogouts(!showAutoLogouts)}
-                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${
-                  stats.auto_logouts?.length > 0 ? 'bg-violet-500/10 hover:bg-violet-500/20' : 'bg-white/5 hover:bg-white/10'
-                }`}
+                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${stats.auto_logouts?.length > 0 ? 'bg-violet-500/10 hover:bg-violet-500/20' : 'bg-white/5 hover:bg-white/10'
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   <div className={`p-2.5 rounded-xl shrink-0 ${stats.auto_logouts?.length > 0 ? 'bg-violet-500/20 text-violet-400' : 'bg-white/10 text-white/40'}`}>
@@ -1453,7 +1467,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                       <span className="text-xs font-bold text-white/80">
-                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-white/40">
                                         {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleDateString('en-GB') : '-'}
@@ -1464,7 +1478,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col items-end">
                                       <span className="text-sm font-black text-violet-400 flex items-center gap-2">
                                         <Clock size={12} className="text-violet-400/50" />
-                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
+                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-violet-400/50 mt-0.5">
                                         {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleDateString('en-GB') : '-'}
@@ -1502,9 +1516,9 @@ export default function Dashboard() {
                 onEyeClick={() => navigate('/allstaff')}
               />
               <StatCard
-                title="Present Today"
+                title={period === 'custom' ? 'Present (Selected)' : period === 'today' ? 'Present Today' : `Present (${period.charAt(0).toUpperCase() + period.slice(1)})`}
                 value={stats.present_today}
-                subtext="Currently Working"
+                subtext="Staff Members Active"
                 icon={CheckCircle}
                 colorClass="bg-emerald-500/20 border border-emerald-400/30"
                 delay={0.1}
@@ -1518,8 +1532,8 @@ export default function Dashboard() {
                 delay={0.2}
               />
               <StatCard
-                title="Total Hours Today"
-                value={`${stats.total_hours_today}h`}
+                title={period === 'custom' ? 'Total Hours' : period === 'today' ? 'Total Hours Today' : `Total Hours (${period.charAt(0).toUpperCase() + period.slice(1)})`}
+                value={`${stats.total_hours_period}h`}
                 subtext="Combined Work Time"
                 icon={Clock}
                 colorClass="bg-blue-500/20 border border-blue-400/30"
@@ -1536,13 +1550,13 @@ export default function Dashboard() {
                 <StatCard
                   title={
                     period === 'custom' ? 'Selected Period Cost' :
-                    period === 'today' || period === 'today_vs' ? "Today's Cost" :
-                    period === 'yesterday' ? "Yesterday's Cost" :
-                    period === '3days' ? "Last 3 Days Cost" :
-                    period === 'week' || period === 'week_vs' ? "This Week's Cost" :
-                    period === 'month' || period === 'month_vs' ? "This Month's Cost" :
-                    period === 'quarter' ? "This Qtr's Cost" :
-                    period === 'halfyear' ? "Half Year Cost" : "Selected Period Cost"
+                      period === 'today' || period === 'today_vs' ? "Today's Cost" :
+                        period === 'yesterday' ? "Yesterday's Cost" :
+                          period === '3days' ? "Last 3 Days Cost" :
+                            period === 'week' || period === 'week_vs' ? "This Week's Cost" :
+                              period === 'month' || period === 'month_vs' ? "This Month's Cost" :
+                                period === 'quarter' ? "This Qtr's Cost" :
+                                  period === 'halfyear' ? "Half Year Cost" : "Selected Period Cost"
                   }
                   value={`£${(stats.cost_metrics?.selectedPeriod || 0).toFixed(2)}`}
                   subtext={`Prev Period: £${(stats.cost_metrics?.prevSelectedPeriod || 0).toFixed(2)}`}
@@ -1574,24 +1588,24 @@ export default function Dashboard() {
 
             <div className="mb-8">
               <ChartCard title="Weekly Attendance Trends" subtitle="Attendance volume over the last 7 days" delay={0.35}>
-                 <ResponsiveContainer width="100%" height={250}>
-                    <AreaChart data={stats.weekly_data}>
-                      <defs>
-                        <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#D0B079" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#D0B079" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fill: 'rgba(255,255,255,0.4)', fontSize: 10}} />
-                      <Tooltip 
-                        contentStyle={{backgroundColor: '#0b1a3d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px'}}
-                        itemStyle={{color: '#D0B079'}}
-                      />
-                      <Area type="monotone" dataKey="count" stroke="#D0B079" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
-                    </AreaChart>
-                 </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={stats.weekly_data}>
+                    <defs>
+                      <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#D0B079" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#D0B079" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0b1a3d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#D0B079' }}
+                    />
+                    <Area type="monotone" dataKey="count" stroke="#D0B079" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </ChartCard>
             </div>
 
@@ -1599,29 +1613,29 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-6 mb-8">
               <ChartCard title="Recent Activity" subtitle="Real-time attendance log" delay={0.4}>
                 <div className="overflow-x-auto h-full">
-                   <table className="w-full text-left">
-                     <thead className="bg-white/5 border-b border-white/10">
-                       <tr>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff member</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock In</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock Out</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Date</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Status</th>
-                       </tr>
-                     </thead>
-                     <tbody className="divide-y divide-white/5">
-                        {loading ? (
-                          <tr><td colSpan="5" className="px-6 py-12 text-center text-white/20 font-bold uppercase tracking-widest text-xs">Loading activity...</td></tr>
-                        ) : stats.recent_activity?.length > 0 ? (
-                          stats.recent_activity.slice((activityPage - 1) * itemsPerPage, activityPage * itemsPerPage).map((act, i) => {
-                            const actualIn = act.clock_in?.toDate ? act.clock_in.toDate() : new Date(act.clock_in);
-                            const actualOut = act.clock_out ? (act.clock_out?.toDate ? act.clock_out.toDate() : new Date(act.clock_out)) : null;
-                            return (
+                  <table className="w-full text-left">
+                    <thead className="bg-white/5 border-b border-white/10">
+                      <tr>
+                        <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff member</th>
+                        <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock In</th>
+                        <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock Out</th>
+                        <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Date</th>
+                        <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {loading ? (
+                        <tr><td colSpan="5" className="px-6 py-12 text-center text-white/20 font-bold uppercase tracking-widest text-xs">Loading activity...</td></tr>
+                      ) : stats.recent_activity?.length > 0 ? (
+                        stats.recent_activity.slice((activityPage - 1) * itemsPerPage, activityPage * itemsPerPage).map((act, i) => {
+                          const actualIn = act.clock_in?.toDate ? act.clock_in.toDate() : new Date(act.clock_in);
+                          const actualOut = act.clock_out ? (act.clock_out?.toDate ? act.clock_out.toDate() : new Date(act.clock_out)) : null;
+                          return (
                             <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#D0B079] font-bold text-xs overflow-hidden shrink-0">
-                                     {act.profile_image ? <img src={act.profile_image} className="w-full h-full object-cover" /> : act.full_name?.[0]}
+                                    {act.profile_image ? <img src={act.profile_image} className="w-full h-full object-cover" /> : act.full_name?.[0]}
                                   </div>
                                   <div className="min-w-0">
                                     <p className="text-white font-bold text-sm truncate">{act.full_name}</p>
@@ -1639,19 +1653,19 @@ export default function Dashboard() {
                                 <span className="text-white/30 font-mono text-xs">{actualIn.toLocaleDateString('en-GB')}</span>
                               </td>
                               <td className="px-4 py-4 text-right">
-                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
-                                  !act.clock_out ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                                }`}>
+                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${!act.clock_out ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                  }`}>
                                   {!act.clock_out ? "ACTIVE" : "COMPLETED"}
                                 </span>
                               </td>
                             </tr>
-                          );})
-                        ) : (
-                          <tr><td colSpan="5" className="px-6 py-20 text-center text-white/20 font-bold uppercase tracking-widest text-xs">No activity found today</td></tr>
-                        )}
-                     </tbody>
-                   </table>
+                          );
+                        })
+                      ) : (
+                        <tr><td colSpan="5" className="px-6 py-20 text-center text-white/20 font-bold uppercase tracking-widest text-xs">No activity found today</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
                 {stats.recent_activity?.length > 0 && (
                   <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 mt-4 -mx-6 -mb-6 bg-white/[0.02] rounded-b-2xl">
@@ -1676,7 +1690,7 @@ export default function Dashboard() {
                 )}
               </ChartCard>
 
-              
+
             </div>
 
             {/* --- Snapshot Module --- */}
@@ -1714,7 +1728,7 @@ export default function Dashboard() {
                     }[snapshotPeriod] || 'Period'}
                     <ChevronDown size={16} className={`transition-transform duration-300 ${showSnapshotMenu ? 'rotate-180' : ''}`} />
                   </button>
-                  
+
                   <AnimatePresence>
                     {showSnapshotMenu && (
                       <motion.div
@@ -1757,15 +1771,15 @@ export default function Dashboard() {
 
                   {snapshotPeriod === 'custom' && (
                     <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-2">
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={snapshotCustomDates.from}
                         onChange={(e) => setSnapshotCustomDates(prev => ({ ...prev, from: e.target.value }))}
                         className="bg-transparent text-white text-sm py-2 px-2 outline-none cursor-pointer [color-scheme:dark]"
                       />
                       <span className="text-white/30 text-sm">to</span>
-                      <input 
-                        type="date" 
+                      <input
+                        type="date"
                         value={snapshotCustomDates.to}
                         onChange={(e) => setSnapshotCustomDates(prev => ({ ...prev, to: e.target.value }))}
                         className="bg-transparent text-white text-sm py-2 px-2 outline-none cursor-pointer [color-scheme:dark]"
@@ -1806,8 +1820,8 @@ export default function Dashboard() {
                                       <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border transition-all ${isChecked ? 'bg-[#D0B079] border-[#D0B079] shadow-[0_0_10px_rgba(208,176,121,0.3)]' : 'border-white/20 bg-black/20'}`}>
                                         {isChecked && <Check size={14} strokeWidth={4} className="text-[#0b1a3d]" />}
                                       </div>
-                                      <input 
-                                        type="checkbox" 
+                                      <input
+                                        type="checkbox"
                                         className="hidden"
                                         checked={isChecked}
                                         onChange={(e) => {
@@ -1858,56 +1872,56 @@ export default function Dashboard() {
                     const tCost = restData?.stats?.total_cost || "0.00";
 
                     return (
-                    <div key={idx} className="bg-[#0b1a3d] border border-[#D0B079]/20 rounded-3xl p-6 relative overflow-hidden shadow-2xl group hover:border-[#D0B079]/40 transition-all">
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#D0B079]/5 to-transparent opacity-50" />
-                      <div className="relative z-10">
-                        <h3 className="text-xl font-black text-[#D0B079] mb-6 uppercase tracking-widest truncate">
-                          {restName}
-                        </h3>
+                      <div key={idx} className="bg-[#0b1a3d] border border-[#D0B079]/20 rounded-3xl p-6 relative overflow-hidden shadow-2xl group hover:border-[#D0B079]/40 transition-all">
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#D0B079]/5 to-transparent opacity-50" />
+                        <div className="relative z-10">
+                          <h3 className="text-xl font-black text-[#D0B079] mb-6 uppercase tracking-widest truncate">
+                            {restName}
+                          </h3>
 
-                        <div className="space-y-4">
-                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex justify-between items-center">
-                            <div>
-                              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
-                              <p className="text-2xl font-black text-white">{pCount}</p>
-                            </div>
-                            <div className="p-2.5 bg-[#D0B079]/20 text-[#D0B079] rounded-xl"><Users size={20} /></div>
-                          </div>
-
-                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                            <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3 font-bold">Highest Earner</p>
-                            {topEmp ? (
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-[#D0B079]/20 border border-[#D0B079]/30 flex items-center justify-center text-[#D0B079] font-bold overflow-hidden shrink-0">
-                                  {topEmp.image ? <img src={topEmp.image} className="w-full h-full object-cover" /> : <User size={16} />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-white text-sm truncate">{topEmp.name}</p>
-                                  <p className="text-[9px] text-white/40 uppercase tracking-wider truncate">{topEmp.designation}</p>
-                                </div>
-                                <div className="text-right shrink-0">
-                                  <p className="text-base font-black text-[#D0B079]">£{topEmp.cost}</p>
-                                  <p className="text-[9px] text-white/40 font-bold">{topEmp.hours}h</p>
-                                </div>
+                          <div className="space-y-4">
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex justify-between items-center">
+                              <div>
+                                <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Members</p>
+                                <p className="text-2xl font-black text-white">{pCount}</p>
                               </div>
-                            ) : (
-                              <p className="text-xs text-white/30 italic">No earners in this period</p>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                              <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
-                              <p className="text-lg font-bold text-white">{tHours}h</p>
+                              <div className="p-2.5 bg-[#D0B079]/20 text-[#D0B079] rounded-xl"><Users size={20} /></div>
                             </div>
-                            <div className="bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-2xl p-4 shadow-[0_0_15px_rgba(208,176,121,0.1)]">
-                              <p className="text-[9px] text-[#D0B079]/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
-                              <p className="text-lg font-black text-[#D0B079]">£{tCost}</p>
+
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                              <p className="text-[10px] text-white/40 uppercase tracking-wider mb-3 font-bold">Highest Earner</p>
+                              {topEmp ? (
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-lg bg-[#D0B079]/20 border border-[#D0B079]/30 flex items-center justify-center text-[#D0B079] font-bold overflow-hidden shrink-0">
+                                    {topEmp.image ? <img src={topEmp.image} className="w-full h-full object-cover" /> : <User size={16} />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-white text-sm truncate">{topEmp.name}</p>
+                                    <p className="text-[9px] text-white/40 uppercase tracking-wider truncate">{topEmp.designation}</p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <p className="text-base font-black text-[#D0B079]">£{topEmp.cost}</p>
+                                    <p className="text-[9px] text-white/40 font-bold">{topEmp.hours}h</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-white/30 italic">No earners in this period</p>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                <p className="text-[9px] text-white/40 uppercase tracking-wider mb-1 font-bold">Total Hours</p>
+                                <p className="text-lg font-bold text-white">{tHours}h</p>
+                              </div>
+                              <div className="bg-[#D0B079]/10 border border-[#D0B079]/20 rounded-2xl p-4 shadow-[0_0_15px_rgba(208,176,121,0.1)]">
+                                <p className="text-[9px] text-[#D0B079]/70 uppercase tracking-wider mb-1 font-bold">Total Pay</p>
+                                <p className="text-lg font-black text-[#D0B079]">£{tCost}</p>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
                     );
                   })}
                   {snapshotCompareRestIds.length === 0 && (
@@ -2141,10 +2155,10 @@ export default function Dashboard() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowFilterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            
+
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="relative w-full max-w-2xl bg-[#0b1a3d] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              
+
               <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <Filter size={20} className="text-[#D0B079]" />
@@ -2171,15 +2185,13 @@ export default function Dashboard() {
                       <button
                         key={opt.id}
                         onClick={() => handlePeriodChange(opt.id)}
-                        className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left group ${
-                          period === opt.id 
-                          ? 'bg-[#D0B079]/10 border-[#D0B079] text-[#D0B079]' 
-                          : 'bg-white/5 border-white/10 text-white/60 hover:border-white/20'
-                        }`}
+                        className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left group ${period === opt.id
+                            ? 'bg-[#D0B079]/10 border-[#D0B079] text-[#D0B079]'
+                            : 'bg-white/5 border-white/10 text-white/60 hover:border-white/20'
+                          }`}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                          period === opt.id ? 'border-[#D0B079]' : 'border-white/20 group-hover:border-white/40'
-                        }`}>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${period === opt.id ? 'border-[#D0B079]' : 'border-white/20 group-hover:border-white/40'
+                          }`}>
                           {period === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[#D0B079]" />}
                         </div>
                         <span className="font-bold text-sm">{opt.label}</span>
@@ -2262,13 +2274,13 @@ export default function Dashboard() {
 
 
               <div className="p-6 border-t border-white/10 bg-white/5 flex gap-4">
-                <button 
+                <button
                   onClick={() => setShowFilterModal(false)}
                   className="flex-1 py-4 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 transition-all"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={() => setShowFilterModal(false)}
                   className="flex-1 py-4 bg-[#D0B079] text-slate-900 font-black rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#D0B079]/10"
                 >
