@@ -516,7 +516,7 @@ export default function AllStaffPage() {
   const formatTimeWithDateDiff = (cinStr, coutStr) => {
     if (!coutStr) return "--:--";
     const cout = coutStr instanceof Date ? coutStr : new Date(coutStr);
-    return cout.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    return cout.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
 
@@ -731,7 +731,7 @@ export default function AllStaffPage() {
             if (typeof reportEmployeeFilter !== 'undefined' && reportEmployeeFilter !== "all" && r.staff_id !== reportEmployeeFilter) return false;
             return true;
           });
-        const formatTime = (d) => d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "-";
+        const formatTime = (d) => d ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "-";
         filteredRecs.forEach((rec, idx) => {
           const actualCin = rec.clock_in?.toDate ? rec.clock_in.toDate() : new Date(rec.clock_in);
           const actualCout = rec.clock_out?.toDate ? rec.clock_out.toDate() : (rec.clock_out ? new Date(rec.clock_out) : null);
@@ -787,7 +787,7 @@ export default function AllStaffPage() {
             const db = b.clock_in?.toDate ? b.clock_in.toDate() : new Date(b.clock_in);
             return db - da;
           });
-          const formatTime = (d) => d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : "-";
+          const formatTime = (d) => d ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "-";
           sortedSessions.forEach((sess, idx) => {
             const actualCin = sess.clock_in?.toDate ? sess.clock_in.toDate() : new Date(sess.clock_in);
             const actualCout = sess.clock_out?.toDate ? sess.clock_out.toDate() : (sess.clock_out ? new Date(sess.clock_out) : null);
@@ -1542,7 +1542,7 @@ export default function AllStaffPage() {
                                     <div className="flex items-center gap-3">
                                       <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
                                       <span className="text-white font-mono text-base font-medium">
-                                        {session.clock_in ? new Date(session.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                        {session.clock_in ? new Date(session.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "--:--"}
                                       </span>
                                     </div>
                                   </td>
@@ -1879,7 +1879,7 @@ export default function AllStaffPage() {
                                         {new Date(session.clock_in).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                                       </td>
                                       <td className="px-6 py-4 font-mono font-bold text-slate-500">
-                                        {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                        {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "--:--"}
                                       </td>
                                       <td className="px-6 py-4 font-mono font-bold text-slate-500">
                                         {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
@@ -1952,7 +1952,7 @@ export default function AllStaffPage() {
                                     )}
                                   </td>
                                   <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                    {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
+                                    {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "--:--"}
                                   </td>
                                   <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
                                     {formatTimeWithDateDiff(session.clock_in, session.clock_out)}

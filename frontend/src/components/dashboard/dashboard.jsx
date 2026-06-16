@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getCalculatedTime, formatTimeShort, calcCalculatedMinutes } from "../../utils/timeRounding";
+import { formatTimeShort, calcCalculatedMinutes } from "../../utils/timeRounding";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend
 } from "recharts";
@@ -671,6 +671,7 @@ export default function Dashboard() {
         let totalMins = 0;
         let presentCount = Object.keys(aggData).length;
         let totalCost = 0;
+        const staff_list = [];
 
         Object.keys(aggData).forEach(id => {
           const agg = aggData[id];
@@ -683,19 +684,24 @@ export default function Dashboard() {
             name: s?.full_name || "Unknown",
             designation: s?.designation || "Staff",
             image: s?.profile_image || null,
+            restaurant_name: s?.restaurant_name || "Unknown",
             hours: (agg.mins / 60).toFixed(1),
             cost: agg.cost.toFixed(2)
           };
+          staff_list.push(empData);
           if (!topEmp || Number(empData.cost) > Number(topEmp.cost)) {
             topEmp = empData;
           }
         });
 
+        staff_list.sort((a, b) => Number(b.cost) - Number(a.cost));
+
         return {
           total_hours: (totalMins / 60).toFixed(1),
           total_cost: totalCost.toFixed(2),
           present_count: presentCount,
-          top_employee: topEmp
+          top_employee: topEmp,
+          staff_list: staff_list
         };
       };
 
@@ -760,6 +766,22 @@ export default function Dashboard() {
         }[snapshotPeriod];
       }
 
+      const restLabel = snapshotCompareMode 
+        ? `${snapshotCompareRestIds.length} Restaurants Selected` 
+        : (snapshotRestaurant === 'all' ? 'All Restaurants' : (restaurants.find(r => String(r.id) === String(snapshotRestaurant))?.restaurant_name || 'Selected Restaurant'));
+
+      const filterDetailsHtml = `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:15px;border-radius:8px;margin-bottom:20px;font-size:13px;">
+          <p style="margin:0 0 5px 0;color:#64748b;"><strong>Report Details:</strong></p>
+          <ul style="margin:0;padding-left:20px;color:#334155;line-height:1.6;">
+            <li><strong>Restaurant:</strong> ${restLabel}</li>
+            <li><strong>Period:</strong> ${snapshotPeriod === 'custom' ? `Custom (${snapshotCustomDates.from} to ${snapshotCustomDates.to})` : pLabel1.replace('Totals', '').trim()}</li>
+            ${snapshotCompareMode ? `<li><strong>Compare Mode:</strong> Enabled</li>` : ''}
+            <li><strong>Generated:</strong> ${reportTime}</li>
+          </ul>
+        </div>
+      `;
+
       let reportHtml = "";
 
       if (snapshotCompareMode) {
@@ -783,7 +805,8 @@ export default function Dashboard() {
 
         reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
           <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
-          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Restaurant Comparison Report</p>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 20px 0;letter-spacing:1px;">Restaurant Comparison Report</p>
+          ${filterDetailsHtml}
           <h2 style="color:#1e40af;margin:0 0 15px 0;font-size:18px;text-transform:uppercase;">${pLabel1}</h2>
           
           <table style="width:100%;border-collapse:collapse;margin-bottom:30px;text-align:left;">
@@ -805,7 +828,8 @@ export default function Dashboard() {
       } else if (isComparative) {
         reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
           <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
-          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Period Snapshot Report${snapshotRestaurant !== 'all' ? ' - Filtered' : ''}</p>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 20px 0;letter-spacing:1px;">Period Snapshot Report</p>
+          ${filterDetailsHtml}
                    <table style="width:100%;border-collapse:collapse;margin-bottom:30px;">
             <tr>
               <td style="width:50%;vertical-align:top;padding-right:15px;">
@@ -847,9 +871,20 @@ export default function Dashboard() {
           <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
         </div>`;
       } else {
+        const staffRows = stats.snapshot?.single?.staff_list?.map(s => `
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:10px;font-size:13px;font-weight:bold;">${s.name}</td>
+            <td style="padding:10px;font-size:13px;color:#6b7280;">${s.designation}</td>
+            <td style="padding:10px;font-size:13px;color:#6b7280;">${s.restaurant_name}</td>
+            <td style="padding:10px;font-size:13px;text-align:right;">${s.hours}h</td>
+            <td style="padding:10px;font-size:13px;text-align:right;color:#d97706;font-weight:bold;">£${s.cost}</td>
+          </tr>
+        `).join('') || `<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;font-style:italic;">No records found for this period.</td></tr>`;
+
         reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
           <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
-          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 30px 0;letter-spacing:1px;">Period Snapshot Report${snapshotRestaurant !== 'all' ? ' - Filtered' : ''}</p>
+          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 20px 0;letter-spacing:1px;">Period Snapshot Report</p>
+          ${filterDetailsHtml}
           
           <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:30px;border-radius:8px;max-width:400px;margin:0 auto 30px auto;">
             <h3 style="color:#d97706;margin:0 0 20px 0;font-size:18px;text-transform:uppercase;text-align:center;">${pLabel1}</h3>
@@ -866,6 +901,22 @@ export default function Dashboard() {
               <p style="font-size:24px;font-weight:bold;margin:0;color:#d97706;">£${stats.snapshot?.single?.total_cost || "0.00"}</p>
             </div>
           </div>
+
+          <table style="width:100%;border-collapse:collapse;margin-bottom:30px;text-align:left;">
+            <thead>
+              <tr style="background:#f3f4f6;border-bottom:2px solid #e5e7eb;">
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;">Staff Member</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;">Designation</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;">Restaurant</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;text-align:right;">Hours</th>
+                <th style="padding:10px;font-size:11px;color:#374151;text-transform:uppercase;text-align:right;">Total Pay</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${staffRows}
+            </tbody>
+          </table>
+
           <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
         </div>`;
       }
@@ -891,6 +942,7 @@ export default function Dashboard() {
             <p style="font-size:15px;color:#374151;line-height:1.6;">Attached is the ${pLabel1} snapshot report as a PDF.</p>
             <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:20px 0;">
               <table style="width:100%;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Restaurant(s)</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${restLabel}</td></tr>
                 <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Period</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${pLabel1}</td></tr>
                 <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Generated</td><td style="padding:8px 0;font-weight:600;color:#111827;font-size:13px;">${reportTime}</td></tr>
               </table>
@@ -1233,7 +1285,7 @@ export default function Dashboard() {
                               <div className="overflow-hidden">
                                 <p className="text-sm font-bold text-white truncate">{staff.full_name}</p>
                                 <p className="text-[10px] text-white/50 uppercase tracking-widest truncate">{staff.restaurant_name}</p>
-                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-[10px] font-mono text-rose-400/80 mt-0.5">In: {new Date(staff.clock_in?.toDate ? staff.clock_in.toDate() : staff.clock_in).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
                               </div>
                             </div>
                           ))}
@@ -1311,7 +1363,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4 text-white/60 font-medium text-xs">{staff.restaurant_name}</td>
                                   <td className="px-6 py-4 text-right">
                                     <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-mono text-xs font-bold inline-block">
-                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      {new Date(staff.clock_out?.toDate ? staff.clock_out.toDate() : staff.clock_out).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                     </span>
                                   </td>
                                 </tr>
@@ -1401,7 +1453,7 @@ export default function Dashboard() {
                                   <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                       <span className="text-xs font-bold text-white/80">
-                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-white/40">
                                         {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleDateString('en-GB') : '-'}
@@ -1412,7 +1464,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col items-end">
                                       <span className="text-sm font-black text-violet-400 flex items-center gap-2">
                                         <Clock size={12} className="text-violet-400/50" />
-                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
+                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : '-'}
                                       </span>
                                       <span className="text-[10px] text-violet-400/50 mt-0.5">
                                         {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleDateString('en-GB') : '-'}
@@ -1551,9 +1603,9 @@ export default function Dashboard() {
                      <thead className="bg-white/5 border-b border-white/10">
                        <tr>
                          <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff member</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Actual Time</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Calc. Clock In</th>
-                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Calc. Clock Out</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock In</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock Out</th>
+                         <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Date</th>
                          <th className="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white/40 text-right">Status</th>
                        </tr>
                      </thead>
@@ -1564,8 +1616,6 @@ export default function Dashboard() {
                           stats.recent_activity.slice((activityPage - 1) * itemsPerPage, activityPage * itemsPerPage).map((act, i) => {
                             const actualIn = act.clock_in?.toDate ? act.clock_in.toDate() : new Date(act.clock_in);
                             const actualOut = act.clock_out ? (act.clock_out?.toDate ? act.clock_out.toDate() : new Date(act.clock_out)) : null;
-                            const calcIn = getCalculatedTime(actualIn);
-                            const calcOut = actualOut ? getCalculatedTime(actualOut) : null;
                             return (
                             <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
                               <td className="px-4 py-4">
@@ -1580,25 +1630,13 @@ export default function Dashboard() {
                                 </div>
                               </td>
                               <td className="px-4 py-4">
-                                <div className="flex flex-col">
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
-                                    <span className="text-white/70 font-mono text-xs">{formatTimeShort(actualIn)}</span>
-                                  </div>
-                                  {actualOut && (
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500/60" />
-                                      <span className="text-white/70 font-mono text-xs">{formatTimeShort(actualOut)}</span>
-                                    </div>
-                                  )}
-                                  <p className="text-[9px] text-white/25 font-medium mt-0.5">{actualIn.toLocaleDateString()}</p>
-                                </div>
+                                <span className="text-emerald-400 font-mono text-sm font-bold">{formatTimeShort(actualIn)}</span>
                               </td>
                               <td className="px-4 py-4">
-                                <span className="text-emerald-400 font-mono text-sm font-bold">{formatTimeShort(calcIn)}</span>
+                                <span className="text-rose-400 font-mono text-sm font-bold">{actualOut ? formatTimeShort(actualOut) : '--:--'}</span>
                               </td>
                               <td className="px-4 py-4">
-                                <span className="text-rose-400 font-mono text-sm font-bold">{calcOut ? formatTimeShort(calcOut) : '--:--'}</span>
+                                <span className="text-white/30 font-mono text-xs">{actualIn.toLocaleDateString('en-GB')}</span>
                               </td>
                               <td className="px-4 py-4 text-right">
                                 <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
