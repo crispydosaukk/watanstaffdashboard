@@ -6,7 +6,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   Users, ArrowRight, CheckCircle, Clock, X, Check,
-  TrendingUp, TrendingDown, PoundSterling, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2, Store, Send, History, ShieldOff
+  TrendingUp, TrendingDown, PoundSterling, ChevronDown, LayoutDashboard, XCircle, Shield, Calendar, Filter, Search, User, AlertTriangle, BellRing, Loader2, Store, Send, History
 } from "lucide-react";
 
 
@@ -129,7 +129,6 @@ export default function Dashboard() {
     active_now: 0,
     pending_clockouts: [],
     completed_shifts: [],
-    auto_logouts: [],
     total_hours_period: "0.0",
     recent_activity: [],
     weekly_data: [],
@@ -171,7 +170,6 @@ export default function Dashboard() {
   const [userSearch, setUserSearch] = useState("");
   const [showPendingClockouts, setShowPendingClockouts] = useState(false);
   const [showYesterdayClockouts, setShowYesterdayClockouts] = useState(false);
-  const [showAutoLogouts, setShowAutoLogouts] = useState(false);
   const [activityPage, setActivityPage] = useState(1);
   const itemsPerPage = 10;
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -288,7 +286,13 @@ export default function Dashboard() {
     });
     return () => unsubStaff();
   }, [selectedRestaurant, selectedUser, dateRange, timeRange, isSuper, userData, restaurants, snapshotPeriod, snapshotCustomDates, snapshotRestaurant, snapshotCompareMode]);
-
+  useEffect(() => {
+    if (selectedRestaurant) {
+      setSnapshotRestaurant(selectedRestaurant);
+    } else {
+      setSnapshotRestaurant("all");
+    }
+  }, [selectedRestaurant]);
 
 
   const calculateStaffStats = async (staffList) => {
@@ -460,17 +464,6 @@ export default function Dashboard() {
       };
     });
 
-    const autoLogoutsList = filteredAttendance.filter(r => r.location_out === "System Auto-Logout").map(r => {
-      const s = filteredStaff.find(staff => staff.id === r.staff_id);
-      return {
-        ...r,
-        full_name: s?.full_name || "Unknown Staff",
-        profile_image: s?.profile_image,
-        designation: s?.designation,
-        restaurant_name: s?.restaurant_name || "Unknown Restaurant"
-      };
-    });
-
     const completedShiftsList = filteredAttendance.filter(r => r.clock_out && r.location_out !== "System Auto-Logout").map(r => {
       const s = filteredStaff.find(staff => staff.id === r.staff_id);
       return {
@@ -510,7 +503,6 @@ export default function Dashboard() {
       active_now: activeNowCount,
       pending_clockouts: pendingClockouts,
       completed_shifts: completedShiftsList,
-      auto_logouts: autoLogoutsList,
       total_hours_period: totalHoursPeriod,
       recent_activity: recentActivity,
       weekly_data: weeklyData
@@ -570,7 +562,36 @@ export default function Dashboard() {
       const filteredCostRecords = costRecords.filter(r => {
         const s = staffMap[r.staff_id];
         if (!s) return false;
-        if (!isSuper && restaurantId && String(s.restaurant_id) !== String(restaurantId) && String(s.created_by) !== String(restaurantId)) return false;
+
+        if (isSuper) {
+          if (selectedRestaurant) {
+            const selectedRest = restaurants.find(res => String(res.id) === String(selectedRestaurant));
+            const restName = selectedRest?.restaurant_name;
+            const sRestId = String(s.restaurant_id || "");
+            const sCreatedBy = String(s.created_by || "");
+            const sRestName = String(s.restaurant_name || "");
+
+            const matches = sRestId === String(selectedRestaurant) ||
+              sCreatedBy === String(selectedRestaurant) ||
+              (restName && sRestId === String(restName)) ||
+              (restName && sRestName === String(restName));
+            if (!matches) return false;
+          }
+        } else {
+          if (restaurantId) {
+            const selectedRest = restaurants.find(res => String(res.id) === String(restaurantId));
+            const restName = selectedRest?.restaurant_name;
+            const sRestId = String(s.restaurant_id || "");
+            const sCreatedBy = String(s.created_by || "");
+            const sRestName = String(s.restaurant_name || "");
+
+            const matches = sRestId === String(restaurantId) ||
+              sCreatedBy === String(restaurantId) ||
+              (restName && sRestId === String(restName)) ||
+              (restName && sRestName === String(restName));
+            if (!matches) return false;
+          }
+        }
         return true;
       });
 
@@ -784,9 +805,19 @@ export default function Dashboard() {
         }[snapshotPeriod];
       }
 
+      const effectiveRestId = snapshotCompareMode 
+        ? null 
+        : (isSuper 
+            ? (snapshotRestaurant !== 'all' ? snapshotRestaurant : (selectedRestaurant || 'all'))
+            : (String(userData?.restaurant_id || ''))
+          );
+
       const restLabel = snapshotCompareMode
         ? `${snapshotCompareRestIds.length} Restaurants Selected`
-        : (snapshotRestaurant === 'all' ? 'All Restaurants' : (restaurants.find(r => String(r.id) === String(snapshotRestaurant))?.restaurant_name || 'Selected Restaurant'));
+        : (effectiveRestId === 'all' || !effectiveRestId
+            ? 'All Restaurants'
+            : (restaurants.find(r => String(r.id) === String(effectiveRestId))?.restaurant_name || 'Selected Restaurant')
+          );
 
       const filterDetailsHtml = `
         <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:15px;border-radius:8px;margin-bottom:20px;font-size:13px;">
@@ -1399,109 +1430,6 @@ export default function Dashboard() {
               </AnimatePresence>
             </div>
 
-            {/* Auto Logouts Dropdown */}
-            <div className="mb-8 bg-[#0b1a3d] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md shadow-lg">
-              <div
-                onClick={() => setShowAutoLogouts(!showAutoLogouts)}
-                className={`cursor-pointer w-full flex items-center justify-between p-4 sm:p-5 transition-all ${stats.auto_logouts?.length > 0 ? 'bg-violet-500/10 hover:bg-violet-500/20' : 'bg-white/5 hover:bg-white/10'
-                  }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`p-2.5 rounded-xl shrink-0 ${stats.auto_logouts?.length > 0 ? 'bg-violet-500/20 text-violet-400' : 'bg-white/10 text-white/40'}`}>
-                    <ShieldOff size={20} />
-                  </div>
-                  <div className="text-left">
-                    <h3 className={`text-base font-bold mb-0.5 ${stats.auto_logouts?.length > 0 ? 'text-violet-400' : 'text-white/40'}`}>
-                      Auto Logouts ({stats.auto_logouts?.length || 0})
-                    </h3>
-                    <p className="text-xs text-white/60">
-                      {stats.auto_logouts?.length > 0
-                        ? 'Staff members automatically logged out by the system in this period.'
-                        : 'No auto-logouts recorded for this period.'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronDown size={20} className={`transition-transform duration-300 ${stats.auto_logouts?.length > 0 ? 'text-violet-400' : 'text-white/40'} ${showAutoLogouts ? 'rotate-180' : ''}`} />
-              </div>
-
-              <AnimatePresence>
-                {showAutoLogouts && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-t border-white/5">
-                      {stats.auto_logouts?.length > 0 ? (
-                        <div className="overflow-x-auto max-h-[400px] custom-scrollbar">
-                          <table className="w-full text-left">
-                            <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-                              <tr>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Staff Name</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Restaurant</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white/40">Clock In</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-violet-400/70 text-right">Auto Logged Out At</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                              {stats.auto_logouts.map((staff, idx) => (
-                                <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-violet-400 font-bold text-xs overflow-hidden shrink-0">
-                                        {staff.profile_image ? <img src={staff.profile_image} className="w-full h-full object-cover" /> : staff.full_name?.[0]}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-bold text-white">{staff.full_name}</p>
-                                        <p className="text-[10px] text-white/40 mt-0.5">{staff.designation || 'Staff'}</p>
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                      <Store size={14} className="text-white/40" />
-                                      <span className="text-xs font-medium text-white/80">{staff.restaurant_name}</span>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-bold text-white/80">
-                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
-                                      </span>
-                                      <span className="text-[10px] text-white/40">
-                                        {staff.clock_in?.toDate ? staff.clock_in.toDate().toLocaleDateString('en-GB') : '-'}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 text-right">
-                                    <div className="flex flex-col items-end">
-                                      <span className="text-sm font-black text-violet-400 flex items-center gap-2">
-                                        <Clock size={12} className="text-violet-400/50" />
-                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '-'}
-                                      </span>
-                                      <span className="text-[10px] text-violet-400/50 mt-0.5">
-                                        {staff.clock_out?.toDate ? staff.clock_out.toDate().toLocaleDateString('en-GB') : '-'}
-                                      </span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <ShieldOff size={32} className="text-white/20 mx-auto mb-3" />
-                          <p className="text-white/40 font-bold">No Data</p>
-                          <p className="text-white/30 text-sm mt-1">There are no auto-logouts for the selected period.</p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
 
 
@@ -1647,7 +1575,10 @@ export default function Dashboard() {
                                 <span className="text-emerald-400 font-mono text-sm font-bold">{formatTimeShort(actualIn)}</span>
                               </td>
                               <td className="px-4 py-4">
-                                <span className="text-rose-400 font-mono text-sm font-bold">{actualOut ? formatTimeShort(actualOut) : '--:--'}</span>
+                                <span className="text-rose-400 font-mono text-sm font-bold">{actualOut ? (act.location_out === "System Auto-Logout" && (!act.edit_reason || act.edit_reason.trim() === "") ? "--" : formatTimeShort(actualOut)) : '--:--'}</span>
+                                {actualOut && act.location_out === "System Auto-Logout" && (!act.edit_reason || act.edit_reason.trim() === "") && (
+                                  <span className="text-[9px] uppercase tracking-widest text-white/40 block mt-1">(Auto Logouted)</span>
+                                )}
                               </td>
                               <td className="px-4 py-4">
                                 <span className="text-white/30 font-mono text-xs">{actualIn.toLocaleDateString('en-GB')}</span>

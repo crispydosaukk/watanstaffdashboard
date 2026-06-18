@@ -1625,8 +1625,11 @@ export default function StaffManagement() {
                                     <div className="flex flex-col gap-1">
                                       <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
-                                        <span className="text-white font-mono text-base font-medium">
-                                          {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        <span className="text-white font-mono text-base font-medium flex items-center gap-2">
+                                          {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")
+                                            ? <><span className="text-white/40">--</span> <span className="text-[10px] uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md text-white/50 border border-white/10">(Auto Logouted)</span></>
+                                            : formatTimeWithDateDiff(session.clock_in, session.clock_out)
+                                          }
                                         </span>
                                       </div>
                                     </div>
@@ -1836,7 +1839,7 @@ export default function StaffManagement() {
                                         {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </td>
                                       <td className="px-6 py-4 font-mono font-bold text-slate-500">
-                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                       </td>
                                       <td className="px-6 py-4 text-right font-mono font-black text-slate-700">
                                         {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
@@ -1903,7 +1906,7 @@ export default function StaffManagement() {
                                     {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                   </td>
                                   <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                    {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                    {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                   </td>
                                   <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
                                     {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}

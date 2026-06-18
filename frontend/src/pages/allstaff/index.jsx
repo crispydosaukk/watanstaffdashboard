@@ -746,7 +746,7 @@ export default function AllStaffPage() {
           tableRows += `<tr style="background-color:${bg};border-bottom:1px solid #e5e7eb;">
             <td style="padding:10px 12px;font-size:13px;color:#111827;">${actualCin.toLocaleDateString('en-GB')}</td>
             <td style="padding:10px 12px;font-size:13px;color:#374151;">${formatTime(calcCin)}</td>
-            <td style="padding:10px 12px;font-size:13px;color:#374151;">${formatTime(calcCout)}</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;">${rec.location_out === "System Auto-Logout" && (!rec.edit_reason || rec.edit_reason.trim() === "") ? '--' : formatTime(calcCout)} ${rec.location_out === "System Auto-Logout" && (!rec.edit_reason || rec.edit_reason.trim() === "") ? '<span style="font-size:10px;color:#9ca3af;">(Auto Logouted)</span>' : ''}</td>
             <td style="padding:10px 12px;font-size:13px;color:#374151;text-align:right;">${hrs}h ${mins}m</td>
           </tr>`;
         });
@@ -802,7 +802,7 @@ export default function AllStaffPage() {
             tableRows += `<tr style="background-color:${bg};border-bottom:1px solid #e5e7eb;">
               <td style="padding:8px 12px 8px 24px;font-size:12px;color:#374151;">${actualCin.toLocaleDateString('en-GB')}</td>
               <td style="padding:8px 12px;font-size:12px;color:#374151;">${formatTime(calcCin)}</td>
-              <td style="padding:8px 12px;font-size:12px;color:#374151;">${formatTime(calcCout)}</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;">${sess.location_out === "System Auto-Logout" && (!sess.edit_reason || sess.edit_reason.trim() === "") ? '--' : formatTime(calcCout)} ${sess.location_out === "System Auto-Logout" && (!sess.edit_reason || sess.edit_reason.trim() === "") ? '<span style="font-size:9px;color:#9ca3af;">(Auto Logouted)</span>' : ''}</td>
               <td style="padding:8px 12px;font-size:12px;color:#374151;text-align:right;">${sHrs}h ${sMins}m</td>
             </tr>`;
           });
@@ -1550,8 +1550,11 @@ export default function AllStaffPage() {
                                     <div className="flex flex-col gap-1">
                                       <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
-                                        <span className="text-white font-mono text-base font-medium">
-                                          {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        <span className="text-white font-mono text-base font-medium flex items-center gap-2">
+                                          {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")
+                                            ? <><span className="text-white/40">--</span> <span className="text-[10px] uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md text-white/50 border border-white/10">(Auto Logouted)</span></>
+                                            : formatTimeWithDateDiff(session.clock_in, session.clock_out)
+                                          }
                                         </span>
                                       </div>
                                     </div>
@@ -1882,7 +1885,7 @@ export default function AllStaffPage() {
                                         {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                       </td>
                                       <td className="px-6 py-4 font-mono font-bold text-slate-500">
-                                        {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                        {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                       </td>
                                       <td className="px-6 py-4 text-right font-mono font-black text-slate-700">
                                         {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
@@ -1955,7 +1958,7 @@ export default function AllStaffPage() {
                                     {session.clock_in ? getCalculatedTime(new Date(session.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "--:--"}
                                   </td>
                                   <td className="px-4 py-4 font-mono font-bold" style={{ color: '#475569' }}>
-                                    {formatTimeWithDateDiff(session.clock_in, session.clock_out)}
+                                    {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                   </td>
                                   <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
                                     {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}

@@ -97,6 +97,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "All Staff", to: "/allstaff", icon: iconAllStaff(), perm: "all_staff" },
       { label: "Staff Management", to: "/staff", icon: iconUsers(), perm: "staff_management" },
       { label: "Notifications", to: "/notifications", icon: iconBell(), perm: "notifications" },
+      { label: "Auto Logouts", to: "/autologouts", icon: iconAutoLogouts(), perm: "auto_logouts" },
     ],
     []
   );
@@ -327,6 +328,17 @@ function iconBell() {
     <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="18" cy="8" r="2" fill="currentColor" className="text-[#D0B079]" />
+    </svg>
+  );
+}
+
+function iconAutoLogouts() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="19" cy="5" r="2" fill="currentColor" className="text-[#D0B079]" />
     </svg>
   );
 }

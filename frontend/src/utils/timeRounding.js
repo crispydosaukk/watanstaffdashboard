@@ -27,6 +27,7 @@ export function getCalculatedTime(timestamp) {
   return date;
 }
 
+
 /**
  * Format a time as HH:MM AM/PM string
  * @param {Date|string|object} timestamp 

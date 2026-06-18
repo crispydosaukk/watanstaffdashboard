@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/login/index.jsx";
 import Dashboard from "./components/dashboard/dashboard.jsx";
 import AccessManagement from "./pages/access/index.jsx";
+import AutoLogoutsPage from "./pages/autologouts/index.jsx";
 import Roles from "./pages/roles/index.jsx";
 import Users from "./pages/users/index.jsx";
 import Restuarent from "./pages/restuarent/index.jsx";
@@ -102,6 +103,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <RequirePerm perm="access"><AccessManagement /></RequirePerm>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/autologouts"
+          element={
+            <PrivateRoute>
+              <RequirePerm perm="auto_logouts"><AutoLogoutsPage /></RequirePerm>
             </PrivateRoute>
           }
         />
