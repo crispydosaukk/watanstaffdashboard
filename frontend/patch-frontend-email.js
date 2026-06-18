@@ -53,8 +53,8 @@ const emailReportLogic = `
           tableRows += \`<tr style="background-color:\${bg};border-bottom:1px solid #e5e7eb;">
             <td style="padding:10px 12px;font-size:13px;color:#111827;">\${actualCin.toLocaleDateString('en-GB')}</td>
             <td style="padding:10px 12px;font-size:13px;color:#374151;">\${formatTime(calcCin)}</td>
-            <td style="padding:10px 12px;font-size:13px;color:#374151;">\${formatTime(calcCout)}</td>
-            <td style="padding:10px 12px;font-size:13px;color:#374151;text-align:right;">\${hrs}h \${mins}m</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;">\${rec.location_out === "System Auto-Logout" && (!rec.edit_reason || rec.edit_reason.trim() === "") ? '--' : formatTime(calcCout)} \${rec.location_out === "System Auto-Logout" && (!rec.edit_reason || rec.edit_reason.trim() === "") ? '<span style="font-size:10px;color:#9ca3af;">(Auto Logouted)</span>' : ''}</td>
+            <td style="padding:10px 12px;font-size:13px;color:#374151;text-align:right;">\${rec.location_out === "System Auto-Logout" && (!rec.edit_reason || rec.edit_reason.trim() === "") ? '--' : \`\${hrs}h \${mins}m\`}</td>
           </tr>\`;
         });
         if (filteredRecs.length > 0) {
@@ -110,8 +110,8 @@ const emailReportLogic = `
             tableRows += \`<tr style="background-color:\${bg};border-bottom:1px solid #e5e7eb;">
               <td style="padding:8px 12px 8px 24px;font-size:12px;color:#374151;">\${actualCin.toLocaleDateString('en-GB')}</td>
               <td style="padding:8px 12px;font-size:12px;color:#374151;">\${formatTime(calcCin)}</td>
-              <td style="padding:8px 12px;font-size:12px;color:#374151;">\${formatTime(calcCout)}</td>
-              <td style="padding:8px 12px;font-size:12px;color:#374151;text-align:right;">\${sHrs}h \${sMins}m</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;">\${sess.location_out === "System Auto-Logout" && (!sess.edit_reason || sess.edit_reason.trim() === "") ? '--' : formatTime(calcCout)} \${sess.location_out === "System Auto-Logout" && (!sess.edit_reason || sess.edit_reason.trim() === "") ? '<span style="font-size:9px;color:#9ca3af;">(Auto Logouted)</span>' : ''}</td>
+              <td style="padding:8px 12px;font-size:12px;color:#374151;text-align:right;">\${sess.location_out === "System Auto-Logout" && (!sess.edit_reason || sess.edit_reason.trim() === "") ? '--' : \`\${sHrs}h \${sMins}m\`}</td>
             </tr>\`;
           });
 

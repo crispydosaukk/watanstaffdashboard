@@ -775,6 +775,9 @@ export default function StaffManagement() {
 
   // Recalculate minutes from actual timestamps using calculated (rounded) times
   const calcSessionMinutes = (record) => {
+    if (record.location_out === "System Auto-Logout" && (!record.edit_reason || record.edit_reason.trim() === "")) {
+      return 0;
+    }
     if (record.clock_in && record.clock_out) {
       return calcCalculatedMinutes(record.clock_in, record.clock_out);
     }
@@ -1637,10 +1640,13 @@ export default function StaffManagement() {
                                   <td className="px-8 py-5 text-right">
                                     <div className="flex items-center justify-end gap-6">
                                       <div className="flex flex-col items-end">
-                                        <span className={`text-sm font-black tracking-tight ${(session._calc_minutes || 0) === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
-                                          {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : session.total_minutes)}
+                                        <span className={`text-sm font-black tracking-tight ${session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? 'text-white/40' : (session._calc_minutes || 0) === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
+                                          {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")
+                                            ? '--'
+                                            : formatWorkTime(session._calc_minutes != null ? session._calc_minutes : session.total_minutes)
+                                          }
                                         </span>
-                                        {(session._calc_minutes != null ? session._calc_minutes : session.total_minutes) === 0 && (
+                                        {(session._calc_minutes != null ? session._calc_minutes : session.total_minutes) === 0 && !(session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")) && (
                                           <span className="text-[8px] font-black text-rose-500/40 uppercase tracking-widest mt-0.5">{session.clock_out ? 'Short Session' : 'Active'}</span>
                                         )}
                                       </div>
@@ -1842,7 +1848,10 @@ export default function StaffManagement() {
                                         {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                       </td>
                                       <td className="px-6 py-4 text-right font-mono font-black text-slate-700">
-                                        {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                        {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")
+                                          ? '--'
+                                          : formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))
+                                        }
                                       </td>
                                     </tr>
                                   ))}
@@ -1909,7 +1918,10 @@ export default function StaffManagement() {
                                     {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? '--' : formatTimeWithDateDiff(session.clock_in, session.clock_out)} {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? <span className="text-[9px] uppercase tracking-widest text-slate-400 block">(Auto Logouted)</span> : null}
                                   </td>
                                   <td className="px-4 py-4 text-right font-mono font-black" style={{ color: '#0f172a' }}>
-                                    {formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))}
+                                    {session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "")
+                                      ? '--'
+                                      : formatWorkTime(session._calc_minutes != null ? session._calc_minutes : calcSessionMinutes(session))
+                                    }
                                   </td>
                                 </tr>
                               ))}

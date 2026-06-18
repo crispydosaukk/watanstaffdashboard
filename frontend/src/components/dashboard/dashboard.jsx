@@ -447,6 +447,9 @@ export default function Dashboard() {
 
     // Recalculate total_minutes from actual timestamps instead of trusting stored values
     const totalMinutesPeriod = filteredAttendance.reduce((sum, r) => {
+      if (r.location_out === "System Auto-Logout" && (!r.edit_reason || r.edit_reason.trim() === "")) {
+        return sum;
+      }
       if (r.clock_in && r.clock_out) {
         return sum + calcCalculatedMinutes(r.clock_in, r.clock_out);
       }
@@ -646,6 +649,7 @@ export default function Dashboard() {
 
       filteredCostRecords.forEach(r => {
         if (!r.clock_in || !r.clock_out) return;
+        if (r.location_out === "System Auto-Logout" && (!r.edit_reason || r.edit_reason.trim() === "")) return;
         const cin = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
 
         const s = staffMap[r.staff_id];
