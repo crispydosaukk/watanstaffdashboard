@@ -36,15 +36,29 @@ export default function AutoLogoutsPage() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [period, setPeriod] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showPeriodMenu, setShowPeriodMenu] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    from: new Date().toISOString().split('T')[0],
-    to: new Date().toISOString().split('T')[0]
+  const [dateRange, setDateRange] = useState(() => {
+    const from = new Date();
+    from.setFullYear(2000);
+    const to = new Date();
+    return {
+      from: from.toISOString().split('T')[0],
+      to: to.toISOString().split('T')[0]
+    };
   });
 
   // Edit State
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [updatingAttendance, setUpdatingAttendance] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRestaurant, selectedUser, period, dateRange, searchQuery]);
 
   useEffect(() => {
     if (isSuper) {
@@ -130,7 +144,7 @@ export default function AutoLogoutsPage() {
       }
 
       // Map with staff details
-      const finalRecords = records.map(r => {
+      let finalRecords = records.map(r => {
         const s = staffList.find(staff => staff.id === r.staff_id);
         const rest = isSuper && restaurants ? restaurants.find(res => String(res.id) === String(r.restaurant_id || s?.restaurant_id || s?.created_by)) : null;
         return {
@@ -140,7 +154,19 @@ export default function AutoLogoutsPage() {
           designation: s?.designation,
           restaurant_name: rest?.restaurant_name || s?.restaurant_name || "Unknown Restaurant"
         };
-      }).sort((a, b) => {
+      });
+
+      // Apply Search Filter
+      if (searchQuery) {
+        const queryLower = searchQuery.toLowerCase().trim();
+        finalRecords = finalRecords.filter(r => 
+          r.full_name?.toLowerCase().includes(queryLower) ||
+          (r.designation && r.designation.toLowerCase().includes(queryLower)) ||
+          r.restaurant_name?.toLowerCase().includes(queryLower)
+        );
+      }
+
+      finalRecords.sort((a, b) => {
         const da = a.clock_out?.toDate ? a.clock_out.toDate() : new Date(a.clock_out);
         const db = b.clock_out?.toDate ? b.clock_out.toDate() : new Date(b.clock_out);
         return db - da;
@@ -159,7 +185,7 @@ export default function AutoLogoutsPage() {
     if (staffList.length > 0) {
       fetchAutoLogouts();
     }
-  }, [staffList, dateRange, period, selectedUser, selectedRestaurant, isSuper, userData, restaurants]);
+  }, [staffList, dateRange, period, selectedUser, selectedRestaurant, isSuper, userData, restaurants, searchQuery]);
 
   const toLocalISO = (dateStr) => {
     if (!dateStr) return "";
@@ -207,6 +233,18 @@ export default function AutoLogoutsPage() {
     } finally {
       setUpdatingAttendance(false);
     }
+  };
+
+  const totalPages = Math.ceil(autoLogouts.length / rowsPerPage) || 1;
+  const currentRecords = useMemo(() => {
+    return autoLogouts.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  }, [autoLogouts, currentPage, rowsPerPage]);
+
+  const getVisiblePages = (current, total) => {
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 3) return [1, 2, 3, 4, 5];
+    if (current >= total - 2) return [total - 4, total - 3, total - 2, total - 1, total];
+    return [current - 2, current - 1, current, current + 1, current + 2];
   };
 
   return (
@@ -439,6 +477,28 @@ export default function AutoLogoutsPage() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Search Input Filter */}
+                  <div className="relative w-full sm:w-64">
+                    <div className="relative">
+                      <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name..."
+                        className="w-full pl-11 pr-10 py-3.5 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl text-sm text-white placeholder:text-white/35 focus:outline-none focus:border-[#D0B079]/50 transition-all font-semibold shadow-xl"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -451,7 +511,8 @@ export default function AutoLogoutsPage() {
                   <p>Loading records...</p>
                 </div>
               ) : autoLogouts.length > 0 ? (
-                <div className="overflow-x-auto custom-scrollbar">
+                <>
+                  <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left">
                     <thead className="bg-white/5 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
                       <tr>
@@ -463,7 +524,7 @@ export default function AutoLogoutsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {autoLogouts.map((staff, idx) => (
+                      {currentRecords.map((staff, idx) => (
                         <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -522,6 +583,47 @@ export default function AutoLogoutsPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Component */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-5 border-t border-white/10 bg-[#0b1a3d]/80 backdrop-blur-md gap-4">
+                    <div className="text-xs font-semibold text-white/40">
+                      Showing <span className="text-white/70">{(currentPage - 1) * rowsPerPage + 1}</span> to{" "}
+                      <span className="text-white/70">{Math.min(currentPage * rowsPerPage, autoLogouts.length)}</span> of{" "}
+                      <span className="text-white/70">{autoLogouts.length}</span> entries
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30 hover:bg-white/10 transition-colors"
+                      >
+                        Prev
+                      </button>
+                      {getVisiblePages(currentPage, totalPages).map(num => (
+                        <button
+                          key={num}
+                          onClick={() => setCurrentPage(num)}
+                          className={`w-9 h-9 rounded-xl font-black text-[10px] transition-all ${
+                            currentPage === num
+                              ? 'bg-gradient-to-r from-[#D0B079] to-[#b8965f] text-[#071428] scale-105 shadow-md shadow-[#D0B079]/10'
+                              : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest disabled:opacity-30 hover:bg-white/10 transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </>
               ) : (
                 <div className="text-center py-20">
                   <ShieldOff size={48} className="text-white/20 mx-auto mb-4" />
