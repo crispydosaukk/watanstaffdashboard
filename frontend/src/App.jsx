@@ -11,7 +11,7 @@ import RequirePerm from "./components/RequirePerm.jsx";
 // import Product from "./pages/product/index.jsx";
 // import CustomerInfo from "./pages/customerinfo/index.jsx";
 // import Orders from "./pages/orders/index.jsx";
-// import Settings from "./pages/settings/index.jsx";
+import Settings from "./pages/settings/index.jsx";
 // import CustomerDetails from "./pages/customerdetails/index.jsx";
 // import RestaurantRegistration from "./pages/restaurantregistration/index.jsx";
 // import OffersPage from "./pages/offers/index.jsx";
@@ -197,6 +197,8 @@ export default function App() {
           }
         />
 
+        */}
+
         <Route
           path="/settings"
           element={
@@ -207,6 +209,18 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/setttings"
+          element={
+            <PrivateRoute>
+              <RequirePerm perm="settings">
+                <Settings />
+              </RequirePerm>
+            </PrivateRoute>
+          }
+        />
+
+        {/*
 
         <Route
           path="/restaurantregistration"

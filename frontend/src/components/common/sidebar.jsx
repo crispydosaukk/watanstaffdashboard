@@ -9,24 +9,28 @@ import { X } from "lucide-react";
 
 
 /* Sidebar link item */
-const Item = ({ to = "#", icon, label }) => (
-  <NavLink
-    to={to}
-    end
-    className={({ isActive }) =>
-      `flex items-center gap-3 px-4 py-2.5 rounded-xl text-[15px] font-medium tracking-wide
-      transition-all duration-200 group relative
-      ${
-        isActive
-          ? "bg-[#D0B079]/15 text-[#D0B079] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-[#D0B079]"
-          : "text-white/85 hover:bg-white/8 hover:text-white"
-      }`
-    }
-  >
-    <span className="h-[18px] w-[18px] text-current shrink-0">{icon}</span>
-    <span className="truncate">{label}</span>
-  </NavLink>
-);
+const Item = ({ to = "#", icon, label }) => {
+  const location = useLocation();
+  const isSettingsActive = to === "/settings" && (location.pathname === "/settings" || location.pathname === "/setttings");
+  return (
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-4 py-2.5 rounded-xl text-[15px] font-medium tracking-wide
+        transition-all duration-200 group relative
+        ${
+          isActive || isSettingsActive
+            ? "bg-[#D0B079]/15 text-[#D0B079] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-[#D0B079]"
+            : "text-white/85 hover:bg-white/8 hover:text-white"
+        }`
+      }
+    >
+      <span className="h-[18px] w-[18px] text-current shrink-0">{icon}</span>
+      <span className="truncate">{label}</span>
+    </NavLink>
+  );
+};
 
 /* Dropdown (group) */
 function Group({ label, icon, children, defaultOpen = false, hidden = false, openProp }) {
@@ -98,6 +102,7 @@ export default function Sidebar({ open, onClose }) {
       { label: "Staff Management", to: "/staff", icon: iconUsers(), perm: "staff_management" },
       { label: "Notifications", to: "/notifications", icon: iconBell(), perm: "notifications" },
       { label: "Auto Logouts", to: "/autologouts", icon: iconAutoLogouts(), perm: "auto_logouts" },
+      { label: "Settings", to: "/settings", icon: iconSettings(), perm: "settings" },
     ],
     []
   );
@@ -339,6 +344,15 @@ function iconAutoLogouts() {
       <polyline points="16 17 21 12 16 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
       <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx="19" cy="5" r="2" fill="currentColor" className="text-[#D0B079]" />
+    </svg>
+  );
+}
+
+function iconSettings() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

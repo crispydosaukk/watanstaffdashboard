@@ -47,6 +47,7 @@ export default function RestaurantProfile() {
     email: "",
     latitude: "",
     longitude: "",
+    geofence_radius: "50",
   });
 
   const [timings, setTimings] = useState([]);
@@ -110,6 +111,7 @@ export default function RestaurantProfile() {
           email: data.restaurant_email ?? "",
           latitude: data.latitude ?? "",
           longitude: data.longitude ?? "",
+          geofence_radius: data.geofence_radius !== undefined ? data.geofence_radius.toString() : "50",
         });
 
         if (data.timings?.length) {
@@ -189,6 +191,7 @@ export default function RestaurantProfile() {
         restaurant_email: info.email,
         latitude: info.latitude,
         longitude: info.longitude,
+        geofence_radius: parseFloat(info.geofence_radius) || 50,
         timings: timings.map(t => ({
           day: t.day,
           opening_time: t.start,
@@ -327,7 +330,7 @@ export default function RestaurantProfile() {
                         placeholder="Search Google Maps for address..."
                         required
                       />
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-white/50 ml-1">Latitude</label>
                           <input
@@ -346,6 +349,18 @@ export default function RestaurantProfile() {
                             readOnly
                             placeholder="0.000000"
                             className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-[#D0B079]/70 text-xs font-mono focus:outline-none cursor-default"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-white ml-1">Geofence Radius (meters)</label>
+                          <input
+                            type="number"
+                            value={info.geofence_radius}
+                            onChange={onInfoChange("geofence_radius")}
+                            placeholder="50"
+                            min="10"
+                            max="5000"
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white font-bold placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-[#D0B079]/20 focus:border-[#D0B079]/40 transition-all text-xs"
                           />
                         </div>
                       </div>

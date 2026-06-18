@@ -3,7 +3,7 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { db } from "../../lib/firebase";
-import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, orderBy, getDocs } from "firebase/firestore";
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, orderBy, getDocs, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Shield, ChevronDown, Check } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
@@ -120,7 +120,7 @@ export default function Roles() {
     return () => unsubscribe();
   }, []);
 
-  // Sync Notifications permission to DB
+  // Sync Notifications and Settings permissions to DB
   useEffect(() => {
     if (!permLoading && permissions.length > 0) {
       const hasNotif = permissions.find(p => p.id === "notifications" || p.title === "Notifications");
@@ -128,6 +128,13 @@ export default function Roles() {
         addDoc(collection(db, "permissions"), {
           title: "Notifications",
           id: "notifications",
+          created_at: new Date()
+        }).catch(console.error);
+      }
+      const hasSettings = permissions.find(p => p.id === "settings" || p.title === "Settings");
+      if (!hasSettings) {
+        setDoc(doc(db, "permissions", "settings"), {
+          title: "Settings",
           created_at: new Date()
         }).catch(console.error);
       }
