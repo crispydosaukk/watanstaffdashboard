@@ -3,11 +3,12 @@ import Header from "../../components/common/header.jsx";
 import Sidebar from "../../components/common/sidebar.jsx";
 import Footer from "../../components/common/footer.jsx";
 import { db } from "../../lib/firebase";
-import { collection, doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, getDoc, updateDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings as SettingsIcon, Save, Loader2, MapPin, Navigation, HelpCircle, ChevronDown, Store, Clock } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { Mail, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 
 export default function Settings() {
   const { showPopup } = usePopup();
@@ -39,6 +40,51 @@ export default function Settings() {
   const handleToggleApplyToAll = (checked) => {
     setApplyToAll(checked);
     localStorage.setItem("settings_apply_to_all", checked ? "true" : "false");
+  };
+
+  const [reportEmails, setReportEmails] = useState([]);
+  const [newEmail, setNewEmail] = useState("");
+
+  // Load global settings
+  useEffect(() => {
+    if (isSuper) {
+      const unsub = onSnapshot(doc(db, "settings", "global"), (docSnap) => {
+        if (docSnap.exists() && docSnap.data().reportEmails) {
+          setReportEmails(docSnap.data().reportEmails);
+        } else {
+          // Initialize with default if empty
+          setReportEmails([
+            { email: "rahulbadugu22@gmail.com", active: true },
+            { email: "digitalbotsolutions@gmail.com", active: true },
+            { email: "ataullah3@icloud.com", active: true }
+          ]);
+        }
+      });
+      return () => unsub();
+    }
+  }, [isSuper]);
+
+  const handleAddEmail = async (e) => {
+    e.preventDefault();
+    if (!newEmail || !newEmail.includes('@')) {
+      showPopup({ title: "Invalid Email", message: "Please enter a valid email address.", type: "warning" });
+      return;
+    }
+    const updated = [...reportEmails, { email: newEmail.trim(), active: true }];
+    await setDoc(doc(db, "settings", "global"), { reportEmails: updated }, { merge: true });
+    setNewEmail("");
+    showPopup({ title: "Email Added", message: "Recipient added successfully.", type: "success" });
+  };
+
+  const handleToggleEmail = async (index) => {
+    const updated = [...reportEmails];
+    updated[index].active = !updated[index].active;
+    await setDoc(doc(db, "settings", "global"), { reportEmails: updated }, { merge: true });
+  };
+
+  const handleRemoveEmail = async (index) => {
+    const updated = reportEmails.filter((_, i) => i !== index);
+    await setDoc(doc(db, "settings", "global"), { reportEmails: updated }, { merge: true });
   };
 
   // Load list of all restaurants if Super Admin
@@ -259,6 +305,71 @@ export default function Settings() {
                   </div>
                 )}
               </div>
+
+              {/* Global Report Emails Card (Super Admin Only) */}
+              {isSuper && (
+                <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/[0.08] mb-8">
+                  <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4 mb-6">
+                    <Mail className="text-[#D0B079]" size={22} />
+                    <div>
+                      <h3 className="text-lg font-bold text-white tracking-tight">Report Delivery Settings</h3>
+                      <p className="text-white/60 mt-1 text-sm">Manage who receives automated attendance and snapshot emails.</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleAddEmail} className="flex gap-4 mb-6">
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Enter new email address..."
+                      className="flex-1 px-4 py-3 bg-white/5 border border-white/[0.08] rounded-2xl text-white font-medium placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-[#D0B079]/40"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newEmail}
+                      className="flex items-center gap-2 px-6 py-3 bg-[#D0B079]/10 text-[#D0B079] font-bold rounded-2xl border border-[#D0B079]/20 hover:bg-[#D0B079]/20 transition-colors disabled:opacity-50"
+                    >
+                      <Plus size={18} />
+                      Add
+                    </button>
+                  </form>
+
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    {reportEmails.map((item, idx) => (
+                      <div key={idx} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${item.active ? 'bg-white/5 border-white/10' : 'bg-black/20 border-white/5 opacity-60'}`}>
+                        <div className="flex flex-col">
+                          <span className={`font-bold ${item.active ? 'text-white' : 'text-white/50'}`}>{item.email}</span>
+                          <span className={`text-[10px] uppercase tracking-wider ${item.active ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {item.active ? 'Active Recipient' : 'Inactive'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleEmail(idx)}
+                            className={`p-2 rounded-xl transition-colors ${item.active ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-white/40 hover:bg-white/10'}`}
+                            title={item.active ? "Deactivate" : "Activate"}
+                          >
+                            {item.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEmail(idx)}
+                            className="p-2 text-red-400 hover:bg-red-400/10 rounded-xl transition-colors"
+                            title="Remove Email"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {reportEmails.length === 0 && (
+                      <div className="text-center py-6 text-white/40 text-sm font-medium">No recipients configured.</div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Form Card */}
               <div className="bg-[#0b1a3d]/60 backdrop-blur-xl rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/[0.08] space-y-6">

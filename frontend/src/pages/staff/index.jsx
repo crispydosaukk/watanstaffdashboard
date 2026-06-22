@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { logoBase64 } from "../../logoBase64";
 import { getCalculatedTime, calcCalculatedMinutes } from "../../utils/timeRounding";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../../components/common/header.jsx";
@@ -591,8 +592,11 @@ export default function StaffManagement() {
       const reportHtml = `<div style="font-family:Arial,Helvetica,sans-serif;background-color:#ffffff;padding:0;margin:0;color:#111827;">
         <div style="background-color:#0b1a3d;padding:28px 36px;">
           <table style="width:100%;border-collapse:collapse;"><tr>
-            <td><div style="color:#D0B079;font-size:24px;font-weight:900;">Watan Group</div><div style="color:#9ca3af;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">Staff Attendance Report</div></td>
-            <td style="text-align:right;"><div style="color:white;font-size:18px;font-weight:800;">ATTENDANCE REPORT</div><div style="color:#9ca3af;font-size:11px;margin-top:3px;">Generated: ${reportDate}</div></td>
+            <td style="vertical-align:top;"><div style="color:#D0B079;font-size:24px;font-weight:900;">Watan Group</div><div style="color:#9ca3af;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">Staff Attendance Report</div></td>
+            <td style="text-align:right; vertical-align:top;">
+              <img src="${logoBase64}" style="display:block; width:120px; height:40px; margin-left:auto; object-fit:contain; margin-bottom:5px;" alt="Logo" /><br/>
+              <div style="color:white;font-size:18px;font-weight:800;">ATTENDANCE REPORT</div><div style="color:#9ca3af;font-size:11px;margin-top:3px;">Generated: ${reportDate}</div>
+            </td>
           </tr></table>
         </div>
         <div style="background-color:#f3f4f6;padding:16px 36px;border-bottom:2px solid #e5e7eb;">
@@ -617,7 +621,7 @@ export default function StaffManagement() {
         margin: [0.3, 0.3, 0.3, 0.3],
         filename: `Watan_Attendance_${new Date().getTime()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 1024, allowTaint: true },
+        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, windowWidth: 1024 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
@@ -647,9 +651,22 @@ export default function StaffManagement() {
           </div>
         </div>`;
 
+      let recipientEmails = "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com";
+      try {
+        const globalRef = await getDoc(doc(db, "settings", "global"));
+        if (globalRef.exists() && globalRef.data().reportEmails) {
+          const activeEmails = globalRef.data().reportEmails.filter(r => r.active).map(r => r.email);
+          if (activeEmails.length > 0) {
+            recipientEmails = activeEmails.join(", ");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load recipient emails:", err);
+      }
+
       await Promise.all([
         sendEmailReportFunc({
-          to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
+          to: recipientEmails,
           subject: `Watan Group Attendance Report - ${reportDate}`,
           htmlBody: emailHtmlBody,
           attachmentUrl: pdfDataUri,

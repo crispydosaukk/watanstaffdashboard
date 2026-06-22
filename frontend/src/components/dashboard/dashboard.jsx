@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { logoBase64 } from "../../logoBase64";
 import { formatTimeShort, calcCalculatedMinutes } from "../../utils/timeRounding";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend
@@ -15,7 +16,7 @@ import Sidebar from "../common/sidebar.jsx";
 import Footer from "../common/footer.jsx";
 import { db, functionsInstance } from "../../lib/firebase";
 import { httpsCallable } from "firebase/functions";
-import { collection, query, onSnapshot, where, getDocs, orderBy, limit, Timestamp, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
+import { collection, query, onSnapshot, where, getDocs, orderBy, limit, Timestamp, addDoc, serverTimestamp, updateDoc, doc, getDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePopup } from "../../context/PopupContext";
 import { useAuth } from "../../context/AuthContext";
@@ -243,8 +244,15 @@ export default function Dashboard() {
         setRestaurants(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       });
       return () => unsubRestaurants();
+    } else if (userData?.restaurant_id) {
+      const unsubRestaurant = onSnapshot(doc(db, "restaurants", String(userData.restaurant_id)), (docSnap) => {
+        if (docSnap.exists()) {
+          setRestaurants([{ id: docSnap.id, ...docSnap.data() }]);
+        }
+      });
+      return () => unsubRestaurant();
     }
-  }, [isSuper]);
+  }, [isSuper, userData?.restaurant_id]);
 
 
   const handlePeriodChange = (p) => {
@@ -859,9 +867,21 @@ export default function Dashboard() {
           </tr>
         `}).join('') || `<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;font-style:italic;">No restaurants selected for comparison.</td></tr>`;
 
-        reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
-          <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
-          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 20px 0;letter-spacing:1px;">Restaurant Comparison Report</p>
+        reportHtml = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:0;">
+          <div style="background-color:#0b1a3d;padding:28px 36px;margin-bottom:20px;">
+            <table style="width: 100%; border-collapse:collapse;">
+              <tr>
+                <td style="vertical-align: top;">
+                  <div style="color:#D0B079;font-size:24px;font-weight:900;">Watan Group</div>
+                  <div style="color:#9ca3af;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">Restaurant Comparison Report</div>
+                </td>
+                <td style="vertical-align: top; text-align: right;">
+                  <img src="${logoBase64}" style="display:block; width:120px; height:40px; margin-left:auto; object-fit:contain; margin-bottom:5px;" alt="Logo" />
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="padding:0 40px 40px 40px;">
           ${filterDetailsHtml}
           <h2 style="color:#1e40af;margin:0 0 15px 0;font-size:18px;text-transform:uppercase;">${pLabel1}</h2>
           
@@ -925,6 +945,7 @@ export default function Dashboard() {
             </tr>
           </table>
           <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
+          </div>
         </div>`;
       } else {
         const staffRows = stats.snapshot?.single?.staff_list?.map(s => `
@@ -937,25 +958,41 @@ export default function Dashboard() {
           </tr>
         `).join('') || `<tr><td colspan="5" style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;font-style:italic;">No records found for this period.</td></tr>`;
 
-        reportHtml = `<div style="font-family:Arial,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:40px;">
-          <h1 style="color:#1e3a5f;margin:0 0 5px 0;">Watan Group</h1>
-          <p style="color:#6b7280;text-transform:uppercase;font-size:12px;margin:0 0 20px 0;letter-spacing:1px;">Period Snapshot Report</p>
+        reportHtml = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111827;max-width:800px;margin:0 auto;background:#fff;padding:0;">
+          <div style="background-color:#0b1a3d;padding:28px 36px;margin-bottom:20px;">
+            <table style="width: 100%; border-collapse:collapse;">
+              <tr>
+                <td style="vertical-align: top;">
+                  <div style="color:#D0B079;font-size:24px;font-weight:900;">Watan Group</div>
+                  <div style="color:#9ca3af;font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">Period Snapshot Report</div>
+                </td>
+                <td style="vertical-align: top; text-align: right;">
+                  <img src="${logoBase64}" style="display:block; width:120px; height:40px; margin-left:auto; object-fit:contain; margin-bottom:5px;" alt="Logo" />
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div style="padding:0 40px 40px 40px;">
           ${filterDetailsHtml}
           
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:30px;border-radius:8px;max-width:400px;margin:0 auto 30px auto;">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:30px;border-radius:8px;max-width:600px;margin:0 auto 30px auto;">
             <h3 style="color:#d97706;margin:0 0 20px 0;font-size:18px;text-transform:uppercase;text-align:center;">${pLabel1}</h3>
-            <div style="margin-bottom:20px;text-align:center;">
-              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Members</p>
-              <p style="font-size:32px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.present_count || 0}</p>
-            </div>
-            <div style="margin-bottom:20px;text-align:center;">
-              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Hours</p>
-              <p style="font-size:24px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.total_hours || 0}h</p>
-            </div>
-            <div style="text-align:center;">
-              <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Pay</p>
-              <p style="font-size:24px;font-weight:bold;margin:0;color:#d97706;">£${stats.snapshot?.single?.total_cost || "0.00"}</p>
-            </div>
+            <table style="width:100%; border-collapse:collapse;">
+              <tr>
+                <td style="text-align:center; width:33%;">
+                  <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Members</p>
+                  <p style="font-size:28px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.present_count || 0}</p>
+                </td>
+                <td style="text-align:center; width:33%; border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                  <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Hours</p>
+                  <p style="font-size:24px;font-weight:bold;margin:0;color:#0f172a;">${stats.snapshot?.single?.total_hours || 0}h</p>
+                </td>
+                <td style="text-align:center; width:33%;">
+                  <p style="font-size:12px;color:#64748b;text-transform:uppercase;margin:0 0 5px 0;">Total Pay</p>
+                  <p style="font-size:24px;font-weight:bold;margin:0;color:#d97706;">£${stats.snapshot?.single?.total_cost || "0.00"}</p>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <table style="width:100%;border-collapse:collapse;margin-bottom:30px;text-align:left;">
@@ -974,6 +1011,7 @@ export default function Dashboard() {
           </table>
 
           <p style="color:#9ca3af;font-size:11px;text-align:center;">Generated on ${reportTime}</p>
+          </div>
         </div>`;
       }
 
@@ -981,9 +1019,9 @@ export default function Dashboard() {
         margin: 10,
         filename: `snapshot_report_${reportDate.replace(/\//g, '-')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       const pdfBase64 = await html2pdf().from(reportHtml).set(opt).outputPdf('datauristring');
@@ -1007,9 +1045,22 @@ export default function Dashboard() {
           </div>
         </div>`;
 
+      let recipientEmails = "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com";
+      try {
+        const globalRef = await getDoc(doc(db, "settings", "global"));
+        if (globalRef.exists() && globalRef.data().reportEmails) {
+          const activeEmails = globalRef.data().reportEmails.filter(r => r.active).map(r => r.email);
+          if (activeEmails.length > 0) {
+            recipientEmails = activeEmails.join(", ");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load recipient emails:", err);
+      }
+
       await sendEmailReportFunc({
-        to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
-        subject: `Period Snapshot Report - ${pLabel1}`,
+        to: recipientEmails,
+        subject: `Period Snapshot Report - ${restLabel} - ${pLabel1}`,
         htmlBody: emailHtmlBody,
         attachmentUrl: pdfBase64,
         attachmentName: opt.filename
