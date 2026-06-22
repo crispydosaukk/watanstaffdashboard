@@ -820,7 +820,10 @@ export default function Dashboard() {
         ? `${snapshotCompareRestIds.length} Restaurants Selected`
         : (effectiveRestId === 'all' || !effectiveRestId
             ? 'All Restaurants'
-            : (restaurants.find(r => String(r.id) === String(effectiveRestId))?.restaurant_name || 'Selected Restaurant')
+            : (isSuper 
+                 ? restaurants.find(r => String(r.id) === String(effectiveRestId))?.restaurant_name || 'Selected Restaurant'
+                 : userData?.restaurant_name || restaurants.find(r => String(r.id) === String(effectiveRestId))?.restaurant_name || 'Selected Restaurant'
+              )
           );
 
       const filterDetailsHtml = `
@@ -847,7 +850,7 @@ export default function Dashboard() {
           const topEmp = restData?.stats?.top_employee || null;
 
           return `
-          <tr style="border-bottom:1px solid #e5e7eb;">
+          <tr style="border-bottom:1px solid #e5e7eb; page-break-inside: avoid;">
             <td style="padding:10px;font-size:13px;font-weight:bold;">${restName}</td>
             <td style="padding:10px;font-size:13px;text-align:center;">${pCount}</td>
             <td style="padding:10px;font-size:13px;text-align:right;">${tHours}h</td>
@@ -925,7 +928,7 @@ export default function Dashboard() {
         </div>`;
       } else {
         const staffRows = stats.snapshot?.single?.staff_list?.map(s => `
-          <tr style="border-bottom:1px solid #e5e7eb;">
+          <tr style="border-bottom:1px solid #e5e7eb; page-break-inside: avoid;">
             <td style="padding:10px;font-size:13px;font-weight:bold;">${s.name}</td>
             <td style="padding:10px;font-size:13px;color:#6b7280;">${s.designation}</td>
             <td style="padding:10px;font-size:13px;color:#6b7280;">${s.restaurant_name}</td>
@@ -979,7 +982,8 @@ export default function Dashboard() {
         filename: `snapshot_report_${reportDate.replace(/\//g, '-')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       const pdfBase64 = await html2pdf().from(reportHtml).set(opt).outputPdf('datauristring');
