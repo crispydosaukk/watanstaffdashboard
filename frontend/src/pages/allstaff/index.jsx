@@ -879,7 +879,7 @@ export default function AllStaffPage() {
 
       await Promise.all([
         sendEmailReportFunc({
-          to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com",
+          to: "rahulbadugu22@gmail.com, digitalbotsolutions@gmail.com, ataullah3@icloud.com",
           subject: `Watan Group Attendance Report - ${reportDate}`,
           htmlBody: emailHtmlBody,
           attachmentUrl: pdfDataUri,
