@@ -519,8 +519,8 @@ export default function NotificationsPage() {
                             </div>
                             <div className="text-[10px] text-white/20 mt-1 font-bold">
                               {item.status === 'scheduled' && item.scheduled_for?.toDate 
-                                ? item.scheduled_for.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : item.sent_at?.toDate ? item.sent_at.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                ? item.scheduled_for.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+                                : item.sent_at?.toDate ? item.sent_at.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : ''}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">

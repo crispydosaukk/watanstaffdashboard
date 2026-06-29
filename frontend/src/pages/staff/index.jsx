@@ -9,7 +9,7 @@ import { usePopup } from "../../context/PopupContext";
 import { db, storage, secondaryAuth, functionsInstance } from "../../lib/firebase";
 import { collection, query, onSnapshot, doc, getDoc, updateDoc, addDoc, deleteDoc, where, getDocs, orderBy, setDoc, writeBatch, serverTimestamp } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { httpsCallable } from "firebase/functions";
+import DateTime12HrInput from "../../components/common/DateTime12HrInput.jsx";
 
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -1566,20 +1566,18 @@ export default function StaffManagement() {
                                         <div className="flex flex-col md:flex-row gap-6">
                                           <div className="flex-1 space-y-2">
                                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Clock In</label>
-                                            <input
-                                              type="datetime-local"
+                                            <DateTime12HrInput
                                               value={editingAttendance.clock_in}
-                                              onChange={(e) => setEditingAttendance(p => ({ ...p, clock_in: e.target.value }))}
-                                              className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-4 py-3 text-sm text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
+                                              onChange={(val) => setEditingAttendance(p => ({ ...p, clock_in: val }))}
+                                              isGold
                                             />
                                           </div>
                                           <div className="flex-1 space-y-2">
                                             <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Clock Out</label>
-                                            <input
-                                              type="datetime-local"
+                                            <DateTime12HrInput
                                               value={editingAttendance.clock_out}
-                                              onChange={(e) => setEditingAttendance(p => ({ ...p, clock_out: e.target.value }))}
-                                              className="w-full bg-white/5 border border-[#D0B079]/30 rounded-xl px-4 py-3 text-sm text-[#D0B079] focus:outline-none focus:border-[#D0B079] transition-all"
+                                              onChange={(val) => setEditingAttendance(p => ({ ...p, clock_out: val }))}
+                                              isGold
                                             />
                                           </div>
                                         </div>
@@ -1839,8 +1837,8 @@ export default function StaffManagement() {
                                   <p className="text-sm font-semibold text-slate-500">{staffGroup.designation} — {staffGroup.restaurant_name}</p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Period Pay</p>
-                                  <p className="text-xl font-black text-[#D0B079]">{staffPay}</p>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Hours</p>
+                                  <p className="text-xl font-black text-[#D0B079]">{formatWorkTime(staffGroup.total_minutes)}</p>
                                 </div>
                               </div>
                               <table className="w-full border-collapse text-sm">
@@ -2007,21 +2005,17 @@ export default function StaffManagement() {
               <form onSubmit={handleAddAttendanceRecord} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Clock In Time <span className="text-rose-500">*</span></label>
-                  <input
-                    type="datetime-local"
+                  <DateTime12HrInput
                     value={manualAddData.clock_in}
-                    onChange={(e) => setManualAddData(p => ({ ...p, clock_in: e.target.value }))}
-                    className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-2 focus:ring-[#D0B079]/10 transition-all"
+                    onChange={(val) => setManualAddData(p => ({ ...p, clock_in: val }))}
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Clock Out Time <span className="text-rose-500">*</span></label>
-                  <input
-                    type="datetime-local"
+                  <DateTime12HrInput
                     value={manualAddData.clock_out}
-                    onChange={(e) => setManualAddData(p => ({ ...p, clock_out: e.target.value }))}
-                    className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white font-semibold focus:outline-none focus:border-[#D0B079]/40 focus:ring-2 focus:ring-[#D0B079]/10 transition-all"
+                    onChange={(val) => setManualAddData(p => ({ ...p, clock_out: val }))}
                     required
                   />
                 </div>

@@ -348,7 +348,7 @@ const FinanceManagement = () => {
                                 <span className="text-sm font-semibold text-white/90">{tx.customer_name || "Guest"}</span>
                               </td>
                               <td className="px-8 py-6 text-xs text-white/60">
-                                {new Date(tx.created_at).toLocaleDateString("en-GB")} {new Date(tx.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                                {new Date(tx.created_at).toLocaleDateString("en-GB")} {new Date(tx.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true })}
                               </td>
                               <td className="px-8 py-6">
                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${txType === "Sales" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>

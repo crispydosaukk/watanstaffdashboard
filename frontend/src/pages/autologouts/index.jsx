@@ -9,6 +9,7 @@ import { db } from "../../lib/firebase";
 import { collection, query, onSnapshot, where, getDocs, updateDoc, doc, arrayUnion } from "firebase/firestore";
 import { usePopup } from "../../context/PopupContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import DateTime12HrInput from "../../components/common/DateTime12HrInput.jsx";
 
 export default function AutoLogoutsPage() {
   const { showPopup } = usePopup();
@@ -658,21 +659,17 @@ export default function AutoLogoutsPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1.5 block">Clock In Time</label>
-                  <input
-                    type="datetime-local"
+                  <DateTime12HrInput
                     value={editingAttendance.clock_in}
-                    onChange={(e) => setEditingAttendance({ ...editingAttendance, clock_in: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D0B079]/50 font-medium"
+                    onChange={(val) => setEditingAttendance({ ...editingAttendance, clock_in: val })}
                     required
                   />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1.5 block">Clock Out Time</label>
-                  <input
-                    type="datetime-local"
+                  <DateTime12HrInput
                     value={editingAttendance.clock_out}
-                    onChange={(e) => setEditingAttendance({ ...editingAttendance, clock_out: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#D0B079]/50 font-medium"
+                    onChange={(val) => setEditingAttendance({ ...editingAttendance, clock_out: val })}
                     required
                   />
                 </div>

@@ -284,7 +284,7 @@ export default function Orders() {
                         <div className="p-6 border-b border-white/[0.05] flex justify-between items-start bg-white/[0.02]">
                           <div className="min-w-0 flex-1">
                             <h4 className="text-xl font-bold text-white tracking-tight truncate leading-none">{order.order_number}</h4>
-                            <div className="text-xs font-medium text-white/30 tracking-wide mt-2">{new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} • {order.items.length} Items</div>
+                            <div className="text-xs font-medium text-white/30 tracking-wide mt-2">{new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })} • {order.items.length} Items</div>
                             {order.allergy_note && (
                               <div className="mt-3 inline-flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest">
                                 <AlertCircle size={12} /> Food Allergy Alert
