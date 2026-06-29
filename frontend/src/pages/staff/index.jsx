@@ -1755,7 +1755,7 @@ export default function StaffManagement() {
                   </div>
 
                   {/* Staff Info Card with Date Range in Modal */}
-                  <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
+                  <div className="mb-10 flex justify-between items-center gap-6 bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
                     <div className="flex-1">
                       <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Staff details</p>
                       <h3 className="text-2xl font-bold" style={{ color: '#1e293b' }}>{attendanceData?.staff?.full_name}</h3>
@@ -1830,8 +1830,8 @@ export default function StaffManagement() {
                             ? `£${((staffGroup.total_minutes / 60) * staffGroup.hourly_rate).toFixed(2)}` 
                             : formatWorkTime(staffGroup.total_minutes);
                           return (
-                            <div key={i} className="bg-white border border-slate-200 rounded-[2rem] print:overflow-visible overflow-hidden shadow-sm" style={{ pageBreakInside: 'auto', pageBreakAfter: 'auto' }}>
-                              <div className="bg-slate-50 border-b border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div key={i} className="bg-white border border-slate-200 rounded-[2rem] print:overflow-visible overflow-hidden shadow-sm" style={{ pageBreakInside: 'avoid', pageBreakAfter: 'always' }}>
+                              <div className="bg-slate-50 border-b border-slate-200 p-6 flex justify-between items-center gap-4">
                                 <div>
                                   <h4 className="text-xl font-bold text-slate-900">{staffGroup.staff_name}</h4>
                                   <p className="text-sm font-semibold text-slate-500">{staffGroup.designation} — {staffGroup.restaurant_name}</p>
