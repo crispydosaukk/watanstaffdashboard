@@ -24,20 +24,9 @@ import { sendPushNotification } from "../../utils/fcm";
 
 
 // --- Helpers ---
-const getAutoLogoutTime = (clockIn) => {
+const getAutoLogoutTime = (clockIn, hours = 15) => {
   const d = new Date(clockIn);
-  const hour = d.getHours();
-
-  const logoutTime = new Date(d);
-  if (hour >= 0 && hour < 18) {
-    // Clocked in between 00:00 and 17:59 -> Auto logout at next midnight
-    logoutTime.setHours(24, 0, 0, 0);
-  } else {
-    // Clocked in between 18:00 and 23:59 -> Auto logout at next 18:00 (6 PM)
-    logoutTime.setDate(logoutTime.getDate() + 1);
-    logoutTime.setHours(18, 0, 0, 0);
-  }
-  return logoutTime;
+  return new Date(d.getTime() + hours * 60 * 60 * 1000);
 };
 
 const getTrend = (current, previous) => {
@@ -419,7 +408,13 @@ export default function Dashboard() {
     activeAllRecords = activeAllRecords.filter(r => {
       if (!r.clock_in) return true; // safety check
       const cinDate = r.clock_in?.toDate ? r.clock_in.toDate() : new Date(r.clock_in);
-      const autoLogout = getAutoLogoutTime(cinDate);
+      
+      const staffDoc = staffList.find(s => s.id === r.staff_id);
+      const restId = r.restaurant_id || staffDoc?.restaurant_id || staffDoc?.created_by;
+      const restDoc = restaurants.find(res => String(res.id) === String(restId));
+      const autoLogoutHours = restDoc?.auto_logout_hours ? parseFloat(restDoc.auto_logout_hours) : 15;
+      
+      const autoLogout = getAutoLogoutTime(cinDate, autoLogoutHours);
       if (now >= autoLogout) {
         expiredSessions.push({ ...r, autoLogout, cinDate });
         return false;
