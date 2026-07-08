@@ -158,3 +158,116 @@ exports.sendEmailReport = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
+
+/**
+ * Cron Job: Processes scheduled and recurring notifications every minute.
+ */
+exports.processScheduledNotifications = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
+  const now = admin.firestore.Timestamp.now();
+  
+  try {
+    const notificationsRef = admin.firestore().collection("notifications");
+    const snapshot = await notificationsRef
+      .where("status", "==", "scheduled")
+      .where("scheduled_for", "<=", now)
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No scheduled notifications to process.");
+      return null;
+    }
+
+    const batch = admin.firestore().batch();
+    const messagingPromises = [];
+
+    snapshot.docs.forEach((docSnap) => {
+      const data = docSnap.data();
+      
+      // 1. Prepare push notification
+      if (data.fcm_token) {
+        const message = {
+          token: data.fcm_token,
+          notification: {
+            title: data.title || "Notification",
+            body: data.body || "",
+          },
+          data: {
+            notificationId: String(docSnap.id),
+            type: String(data.type || 'announcement'),
+            priority: String(data.priority || "normal"),
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "high_importance_channel",
+              sound: "default",
+              defaultSound: true,
+              priority: "max",
+              visibility: "public"
+            }
+          },
+          apns: { payload: { aps: { sound: "default", badge: 1 } } }
+        };
+        messagingPromises.push(admin.messaging().send(message).catch(err => console.error("FCM Send Error:", err)));
+      }
+
+      // 2. Handle DB updates for recurrence vs one-time
+      if (data.recurring === "daily" || data.recurring === "weekly") {
+        // Calculate next run time
+        const currentScheduled = data.scheduled_for.toDate();
+        const nextScheduled = new Date(currentScheduled);
+        
+        if (data.recurring === "daily") {
+          nextScheduled.setDate(nextScheduled.getDate() + 1);
+        } else if (data.recurring === "weekly") {
+          nextScheduled.setDate(nextScheduled.getDate() + 7);
+        }
+        
+        // Ensure the next scheduled time is actually in the future (if the cron fell behind)
+        while(nextScheduled <= new Date()) {
+           if (data.recurring === "daily") nextScheduled.setDate(nextScheduled.getDate() + 1);
+           if (data.recurring === "weekly") nextScheduled.setDate(nextScheduled.getDate() + 7);
+        }
+
+        // Update original to next date (keeps it hidden in app but scheduled)
+        batch.update(docSnap.ref, {
+          scheduled_for: admin.firestore.Timestamp.fromDate(nextScheduled),
+          last_sent_at: now
+        });
+
+        // Create a new notification instance for the user's inbox
+        const newNotifRef = notificationsRef.doc();
+        batch.set(newNotifRef, {
+          ...data,
+          status: "pending",
+          scheduled_for: null, // No longer scheduled, it's an actual delivery
+          recurring: "none",
+          sent_at: now,
+          is_recurring_instance: true,
+          parent_schedule_id: docSnap.id
+        });
+
+      } else {
+        // One-time scheduled notification: just update status so it shows up in app inbox
+        batch.update(docSnap.ref, {
+          status: "pending",
+          sent_at: now
+        });
+      }
+    });
+
+    // Send FCM push notifications concurrently
+    if (messagingPromises.length > 0) {
+      await Promise.all(messagingPromises);
+    }
+    
+    // Commit all database updates
+    await batch.commit();
+
+    console.log(`Successfully processed ${snapshot.size} scheduled notifications.`);
+    return null;
+  } catch (error) {
+    console.error("Error processing scheduled notifications:", error);
+    return null;
+  }
+});

@@ -168,8 +168,9 @@ export default function NotificationsPage() {
           restaurant_id: s.restaurant_id || "",
           type: formData.type || "announcement",
           priority: formData.priority || "normal",
-          status: formData.scheduledFor ? "scheduled" : "pending",
-          scheduled_for: formData.scheduledFor ? new Date(formData.scheduledFor) : null,
+          status: (formData.scheduledFor || formData.recurring !== "none") ? "scheduled" : "pending",
+          scheduled_for: formData.scheduledFor ? new Date(formData.scheduledFor) : (formData.recurring !== "none" ? new Date() : null),
+          recurring: formData.recurring || "none",
           sent_at: serverTimestamp(),
           broadcast_id: broadcastId,
           target_group: targetGroup,
@@ -182,7 +183,7 @@ export default function NotificationsPage() {
 
       // 5. Send Push Notifications directly from Frontend
       // (This replaces the Cloud Function logic)
-      if (!formData.scheduledFor) {
+      if (!formData.scheduledFor && formData.recurring === "none") {
         targetStaff.forEach((s, index) => {
           const docRef = results[index];
           if (s.fcmToken || s.fcm_token) {

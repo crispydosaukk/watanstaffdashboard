@@ -13,7 +13,7 @@ import { Mail, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 export default function Settings() {
   const { showPopup } = usePopup();
   const { userData, perms } = useAuth();
-  
+
   const isSuper = useMemo(() => {
     if (!userData) return false;
     const roleId = String(userData.role_id || "");
@@ -26,12 +26,12 @@ export default function Settings() {
   const [autoLogoutHours, setAutoLogoutHours] = useState("15");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   // Persist the Apply to All toggle in localStorage so it doesn't reset on refresh
   const [applyToAll, setApplyToAll] = useState(() => {
     return localStorage.getItem("settings_apply_to_all") === "true";
   });
-  
+
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState("");
   const [showRestaurantMenu, setShowRestaurantMenu] = useState(false);
@@ -94,7 +94,7 @@ export default function Settings() {
       const unsubRestaurants = onSnapshot(collection(db, "restaurants"), (snapshot) => {
         const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setRestaurants(list);
-        
+
         // Auto-select the first restaurant on load if none selected
         if (list.length > 0 && !selectedRestaurant) {
           setSelectedRestaurant(list[0].id);
@@ -114,7 +114,7 @@ export default function Settings() {
   // Load the settings for the currently selected restaurant (always fetch so input fields are populated)
   useEffect(() => {
     if (!selectedRestaurant) return;
-    
+
     const fetchSettings = async () => {
       try {
         setLoading(true);
@@ -133,7 +133,7 @@ export default function Settings() {
         setLoading(false);
       }
     };
-    
+
     fetchSettings();
   }, [selectedRestaurant]);
 
@@ -142,7 +142,7 @@ export default function Settings() {
 
     try {
       setSaving(true);
-      
+
       const numericRadius = parseFloat(radius);
       if (isNaN(numericRadius) || numericRadius < 10) {
         showPopup({
@@ -166,7 +166,7 @@ export default function Settings() {
       }
 
       if (applyToAll && isSuper) {
-        const promises = restaurants.map(r => 
+        const promises = restaurants.map(r =>
           updateDoc(doc(db, "restaurants", r.id), {
             geofence_radius: numericRadius,
             auto_logout_hours: numericHours,
@@ -290,9 +290,8 @@ export default function Settings() {
                                   setSelectedRestaurant(r.id);
                                   setShowRestaurantMenu(false);
                                 }}
-                                className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-xs font-bold flex items-center justify-between ${
-                                  selectedRestaurant === r.id ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'
-                                }`}
+                                className={`w-full px-5 py-3 text-left hover:bg-white/5 transition-colors text-xs font-bold flex items-center justify-between ${selectedRestaurant === r.id ? 'text-[#D0B079] bg-[#D0B079]/5' : 'text-white/60'
+                                  }`}
                               >
                                 {r.restaurant_name}
                                 {selectedRestaurant === r.id && <div className="w-1.5 h-1.5 rounded-full bg-[#D0B079] shadow-[0_0_8px_#D0B079]" />}
@@ -412,8 +411,8 @@ export default function Settings() {
                             {applyToAll
                               ? "All Restaurant Locations"
                               : isSuper
-                              ? selectedRestData?.restaurant_name || "the selected store"
-                              : userData?.restaurant_name || "your store"}
+                                ? selectedRestData?.restaurant_name || "the selected store"
+                                : userData?.restaurant_name || "your store"}
                           </span>
                         </p>
                       </div>
@@ -466,7 +465,7 @@ export default function Settings() {
                           <div>
                             <p className="font-bold text-white mb-1">Geofence Radius</p>
                             <p className="leading-relaxed">
-                              {applyToAll 
+                              {applyToAll
                                 ? "This geofencing range will be enforced across all restaurants."
                                 : "Staff must be within this distance from the store coordinates to clock in or out."}
                             </p>
@@ -502,7 +501,7 @@ export default function Settings() {
                           <div>
                             <p className="font-bold text-white mb-1">Shift Duration Constraint</p>
                             <p className="leading-relaxed">
-                              Staff will be automatically clocked out after working this many hours. 
+                              Staff will be automatically clocked out after working this many hours.
                               Default is <strong className="text-white">15 hours</strong>. Can be customized with decimal hours (e.g. 12.5).
                             </p>
                           </div>
