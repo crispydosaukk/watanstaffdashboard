@@ -1472,9 +1472,9 @@ export default function StaffManagement() {
                 </div>
               </div>
 
-              <div className="p-10 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+              <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row items-end gap-6 bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 shadow-inner">
+                <div className="flex flex-col md:flex-row items-end gap-6 bg-white/[0.02] p-5 rounded-[2rem] border border-white/5 shadow-inner">
                   <div className="space-y-2 flex-1 w-full">
                     <label className="text-[10px] font-black text-white/30 tracking-widest ml-1 uppercase">Start Date</label>
                     <input
@@ -1514,10 +1514,10 @@ export default function StaffManagement() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-white/5">
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Timeline</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-In</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-Out</th>
-                        <th className="px-8 py-5 text-[10px] font-black tracking-widest text-white/30 uppercase text-right">Duration</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-widest text-white/30 uppercase">Timeline</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-In</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-widest text-white/30 uppercase">Clock-Out</th>
+                        <th className="px-6 py-4 text-[10px] font-black tracking-widest text-white/30 uppercase text-right">Duration</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -1533,7 +1533,7 @@ export default function StaffManagement() {
                           <React.Fragment key={group.dateKey}>
                             {/* Day Header Row */}
                             <tr className="bg-[#D0B079]/5 border-y border-[#D0B079]/10">
-                              <td colSpan="3" className="px-8 py-4">
+                              <td colSpan="3" className="px-6 py-3.5">
                                 <div className="flex items-center gap-3">
                                   <Calendar size={14} className="text-[#D0B079]" />
                                   <span className="text-sm font-black text-white tracking-wide">
@@ -1544,12 +1544,14 @@ export default function StaffManagement() {
                                   </span>
                                 </div>
                               </td>
-                              <td className="px-8 py-4 text-right">
-                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mr-3">Day Total:</span>
-                                <span className="text-sm font-black text-[#D0B079]">{formatWorkTime(group.total_minutes)}</span>
-                                {group.total_minutes !== group.sessions.reduce((s, r) => s + (r.total_minutes || 0), 0) && group.sessions.some(s => s.total_minutes > 0) && (
-                                  <span className="text-[8px] font-bold text-amber-400/60 ml-2" title="Recalculated from timestamps">(corrected)</span>
-                                )}
+                              <td className="px-6 py-3.5 text-right">
+                                <div className="flex items-center justify-end whitespace-nowrap">
+                                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mr-3">Day Total:</span>
+                                  <span className="text-sm font-black text-[#D0B079]">{formatWorkTime(group.total_minutes)}</span>
+                                  {group.total_minutes !== group.sessions.reduce((s, r) => s + (r.total_minutes || 0), 0) && group.sessions.some(s => s.total_minutes > 0) && (
+                                    <span className="text-[8px] font-bold text-amber-400/60 ml-2" title="Recalculated from timestamps">(corrected)</span>
+                                  )}
+                                </div>
                               </td>
                             </tr>
 
@@ -1558,7 +1560,7 @@ export default function StaffManagement() {
                               if (editingAttendance?.id === session.id) {
                                 return (
                                   <tr key={session.id} className="bg-[#D0B079]/5 border-y border-[#D0B079]/20 relative">
-                                    <td colSpan="3" className="px-8 py-6">
+                                    <td colSpan="4" className="px-6 py-5">
                                       <div className="flex flex-col gap-5">
                                         <div className="flex items-center gap-2 text-[#D0B079] font-bold text-xs uppercase tracking-widest">
                                           <Edit2 size={14} /> Update Session Times
@@ -1614,7 +1616,7 @@ export default function StaffManagement() {
 
                               return (
                                 <tr key={session.id} className="hover:bg-white/[0.02] transition-colors group relative">
-                                  <td className="px-8 py-5">
+                                  <td className="px-6 py-4">
                                     <div className="flex flex-col gap-2">
                                       <div className="flex items-center gap-3">
                                         <div className="w-1.5 h-8 bg-white/5 rounded-full" />
@@ -1631,7 +1633,7 @@ export default function StaffManagement() {
                                       )}
                                     </div>
                                   </td>
-                                  <td className="px-8 py-5">
+                                  <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                       <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
                                       <span className="text-white font-mono text-base font-medium">
@@ -1639,7 +1641,7 @@ export default function StaffManagement() {
                                       </span>
                                     </div>
                                   </td>
-                                  <td className="px-8 py-5">
+                                  <td className="px-6 py-4">
                                     <div className="flex flex-col gap-1">
                                       <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20" />
@@ -1652,7 +1654,7 @@ export default function StaffManagement() {
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-8 py-5 text-right">
+                                  <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-6">
                                       <div className="flex flex-col items-end">
                                         <span className={`text-sm font-black tracking-tight ${session.location_out === "System Auto-Logout" && (!session.edit_reason || session.edit_reason.trim() === "") ? 'text-white/40' : (session._calc_minutes || 0) === 0 ? 'text-rose-400/60' : 'text-[#D0B079]'}`}>
