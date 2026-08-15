@@ -9,6 +9,7 @@ import { httpsCallable } from "firebase/functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, Edit, Trash2, X, Users as UsersIcon, ChevronDown, Check, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { usePopup } from "../../context/PopupContext";
+import { useAuth } from "../../context/AuthContext";
 
 // Helper: Custom Glass MultiSelect (reused concept)
 const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
@@ -79,6 +80,33 @@ const GlassMultiSelect = ({ loading, options, selected, onToggle, label }) => {
 
 export default function Users() {
   const { showPopup } = usePopup();
+  const { userData } = useAuth();
+
+  const canDeleteUser = useMemo(() => {
+    try {
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const currentUser = userData || localUser;
+
+      const roleId = String(currentUser?.role_id || localUser?.role_id || "");
+      const roleTitle = String(
+        currentUser?.role_title ||
+        currentUser?.role?.title ||
+        currentUser?.role ||
+        localUser?.role_title ||
+        localUser?.role?.title ||
+        localUser?.role ||
+        ""
+      ).toLowerCase().trim();
+
+      const isSuperAdmin = roleId === "6" || roleTitle === "super admin" || roleTitle === "superadmin";
+      const isAdmin = roleTitle === "admin" || roleTitle === "administrator" || roleTitle.includes("admin");
+
+      return isSuperAdmin || isAdmin;
+    } catch {
+      return false;
+    }
+  }, [userData]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Table state
@@ -277,6 +305,10 @@ export default function Users() {
 
   // Delete
   const handleDelete = async (u) => {
+    if (!canDeleteUser) {
+      showPopup({ title: "Permission Denied", message: "Only Super Admin and Admin roles can delete user accounts.", type: "error" });
+      return;
+    }
     showPopup({
       title: "Delete User?",
       message: `Are you sure you want to delete "${u.name}"? This action cannot be undone.`,
@@ -404,13 +436,15 @@ export default function Users() {
                             >
                               <Edit size={18} strokeWidth={2.5} />
                             </button>
-                            <button
-                              onClick={() => handleDelete(u)}
-                              className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-500/5"
-                              title="Delete"
-                            >
-                              <Trash2 size={18} strokeWidth={2.5} />
-                            </button>
+                            {canDeleteUser && (
+                              <button
+                                onClick={() => handleDelete(u)}
+                                className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all border border-red-500/20 shadow-lg shadow-red-500/5"
+                                title="Delete"
+                              >
+                                <Trash2 size={18} strokeWidth={2.5} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </motion.tr>

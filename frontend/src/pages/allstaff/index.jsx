@@ -115,6 +115,31 @@ export default function AllStaffPage() {
     }
   }, [isSuper]);
 
+  const canDeleteStaff = useMemo(() => {
+    try {
+      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const currentUser = userData || localUser;
+
+      const roleId = String(currentUser?.role_id || localUser?.role_id || "");
+      const roleTitle = String(
+        currentUser?.role_title ||
+        currentUser?.role?.title ||
+        currentUser?.role ||
+        localUser?.role_title ||
+        localUser?.role?.title ||
+        localUser?.role ||
+        ""
+      ).toLowerCase().trim();
+
+      const isSuperAdmin = roleId === "6" || roleTitle === "super admin" || roleTitle === "superadmin";
+      const isAdmin = roleTitle === "admin" || roleTitle === "administrator" || roleTitle.includes("admin");
+
+      return isSuperAdmin || isAdmin;
+    } catch {
+      return false;
+    }
+  }, [userData]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -319,6 +344,30 @@ export default function AllStaffPage() {
     }
   };
 
+  const handleDeleteAttendanceRecord = async (sessionId) => {
+    if (!canDeleteStaff) {
+      showPopup({ title: "Permission Denied", message: "Only Super Admin and Admin roles can delete attendance sessions.", type: "error" });
+      return;
+    }
+    showPopup({
+      title: "Delete Session?",
+      message: "Are you sure you want to delete this attendance session? This action cannot be undone.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, "attendance", sessionId));
+          showPopup({ title: "Deleted", message: "Attendance session removed successfully.", type: "success" });
+          if (attendanceData?.staff?.id) {
+            handleViewAttendance(attendanceData.staff.id, attendanceFilters);
+          }
+        } catch (err) {
+          console.error("Delete attendance error:", err);
+          showPopup({ title: "Error", message: "Failed to delete attendance session.", type: "error" });
+        }
+      }
+    });
+  };
+
 
   // Recalculate minutes from actual timestamps using calculated (rounded) times
   const calcSessionMinutes = (record) => {
@@ -389,12 +438,13 @@ export default function AllStaffPage() {
       const staffId = record.staff_id;
       if (!staffGroups[staffId]) {
         const staffMember = typeof staff !== 'undefined' ? staff.find(s => s.id === staffId) : null;
+        const nameFallback = record.staff_name || record.full_name || record.employee_name || record.name || "Former Staff Member";
         staffGroups[staffId] = {
           staff_id: staffId,
-          staff_name: staffMember?.full_name || "Unknown Staff",
-          designation: staffMember?.designation || "Staff",
-          hourly_rate: Number(staffMember?.hourly_rate || 0),
-          restaurant_name: typeof restaurantsMap !== "undefined" && restaurantsMap[record.restaurant_id] ? restaurantsMap[record.restaurant_id] : "Unknown Restaurant",
+          staff_name: staffMember?.full_name || nameFallback,
+          designation: staffMember?.designation || record.designation || "Staff",
+          hourly_rate: Number(staffMember?.hourly_rate || record.hourly_rate || 0),
+          restaurant_name: typeof restaurantsMap !== "undefined" && restaurantsMap[record.restaurant_id] ? restaurantsMap[record.restaurant_id] : (record.restaurant_name || "Restaurant"),
           total_minutes: 0,
           sessions: []
         };
@@ -593,15 +643,24 @@ export default function AllStaffPage() {
   };
 
   const handleDeleteStaff = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
-      try {
-        await deleteDoc(doc(db, "staff", id));
-        showPopup({ title: "Deleted", message: `Account for ${name} has been deleted.`, type: "success" });
-      } catch (err) {
-        console.error("Delete Error:", err);
-        showPopup({ title: "Error", message: "Failed to delete account", type: "error" });
-      }
+    if (!canDeleteStaff) {
+      showPopup({ title: "Permission Denied", message: "Only Super Admin and Admin roles can delete staff accounts.", type: "error" });
+      return;
     }
+    showPopup({
+      title: "Delete Account?",
+      message: `Are you sure you want to delete ${name}? This action cannot be undone.`,
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, "staff", id));
+          showPopup({ title: "Deleted", message: `Account for ${name} has been deleted.`, type: "success" });
+        } catch (err) {
+          console.error("Delete Error:", err);
+          showPopup({ title: "Error", message: "Failed to delete account", type: "error" });
+        }
+      }
+    });
   };
 
   const handleSendNotification = async (e) => {
@@ -650,8 +709,7 @@ export default function AllStaffPage() {
   const handleOpenReport = async (staffId) => {
     try {
       setLoading(true);
-      const staffMember = staff.find(sm => sm.id === staffId);
-      if (!staffMember) throw new Error("Staff member not found");
+      let staffMember = staff.find(sm => sm.id === staffId);
 
       // Index-free query
       let q = query(collection(db, "attendance"), where("staff_id", "==", staffId));
@@ -685,13 +743,24 @@ export default function AllStaffPage() {
         return dateB - dateA;
       });
 
+      if (!staffMember) {
+        const firstRec = records[0] || {};
+        staffMember = {
+          id: staffId,
+          full_name: firstRec.staff_name || firstRec.full_name || firstRec.employee_name || firstRec.name || "Former Staff Member",
+          designation: firstRec.designation || "Staff",
+          hourly_rate: firstRec.hourly_rate || 0,
+          restaurant_name: firstRec.restaurant_name || "Restaurant"
+        };
+      }
+
       setAttendanceData({ staff: staffMember, records: records });
       setShowReportModal(true);
     } catch (err) {
-      console.error("Report Fetch Error:", err);
+      console.error("Attendance Fetch Error:", err);
       showPopup({
         title: "Error",
-        message: `Failed to load report: ${err.message || "Unknown error"}`,
+        message: `Failed to fetch attendance: ${err.message || "Unknown error"}`,
         type: "error"
       });
     } finally {
@@ -715,12 +784,23 @@ export default function AllStaffPage() {
       const isFilterEmployeeView = typeof reportEmployeeFilter !== 'undefined' && reportEmployeeFilter !== "all";
 
       const selectedRestaurantName = typeof reportRestaurantFilter !== 'undefined' && reportRestaurantFilter !== "all" ? (restaurantsMap[reportRestaurantFilter] || reportRestaurantFilter) : "All Restaurants";
-      const selectedEmployee = isIndividualView ? attendanceData.staff : (isFilterEmployeeView ? staff.find(s => s.id === reportEmployeeFilter) : null);
+      const firstRec = (attendanceData?.records && attendanceData.records[0]) || {};
+      const selectedEmployee = isIndividualView 
+        ? (attendanceData?.staff || {
+            full_name: firstRec.staff_name || firstRec.full_name || "Former Staff Member",
+            restaurant_name: firstRec.restaurant_name || "Restaurant"
+          }) 
+        : (isFilterEmployeeView 
+            ? (staff.find(s => s.id === reportEmployeeFilter) || {
+                full_name: firstRec.staff_name || firstRec.full_name || "Former Staff Member",
+                restaurant_name: firstRec.restaurant_name || "Restaurant"
+              }) 
+            : null);
       
       const scopeLabel = isIndividualView 
-        ? `${selectedEmployee.full_name} — ${selectedEmployee.restaurant_name || "Restaurant"}`
+        ? `${selectedEmployee?.full_name || "Staff Member"} — ${selectedEmployee?.restaurant_name || "Restaurant"}`
         : (isFilterEmployeeView 
-            ? `${selectedEmployee?.full_name || ""} — ${selectedRestaurantName}` 
+            ? `${selectedEmployee?.full_name || "Staff Member"} — ${selectedRestaurantName}` 
             : (typeof reportRestaurantFilter !== 'undefined' && reportRestaurantFilter !== "all" ? selectedRestaurantName : "All Staff"));
       const scope = scopeLabel;
 
@@ -1325,13 +1405,15 @@ export default function AllStaffPage() {
                                 >
                                   <Edit2 size={18} />
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteStaff(s.id, s.full_name)}
-                                  className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/30 hover:text-rose-500 rounded-xl border border-white/5 transition-all"
-                                  title="Delete account"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
+                                {canDeleteStaff && (
+                                  <button
+                                    onClick={() => handleDeleteStaff(s.id, s.full_name)}
+                                    className="p-3 bg-white/5 hover:bg-rose-500/20 text-white/30 hover:text-rose-500 rounded-xl border border-white/5 transition-all"
+                                    title="Delete account"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                )}
                               </div>
                             </div>
                             <span className="text-[#D0B079] text-[10px] font-bold bg-white/5 px-2 py-1 rounded-lg border border-white/5">{s.employee_id}</span>
@@ -1607,6 +1689,15 @@ export default function AllStaffPage() {
                                       >
                                         <Edit2 size={14} />
                                       </button>
+                                      {canDeleteStaff && (
+                                        <button
+                                          onClick={() => handleDeleteAttendanceRecord(session.id)}
+                                          className="p-2.5 bg-white/5 text-white/20 rounded-xl hover:bg-rose-500/20 hover:text-rose-500 hover:border-rose-500/30 border border-transparent transition-all opacity-0 group-hover:opacity-100"
+                                          title="Delete this session"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
@@ -1792,7 +1883,9 @@ export default function AllStaffPage() {
                   <div className="mb-10 flex justify-between items-center gap-6 bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
                     <div className="flex-1">
                       <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Staff details</p>
-                      <h3 className="text-2xl font-bold" style={{ color: '#1e293b' }}>{attendanceData?.staff?.full_name}</h3>
+                      <h3 className="text-2xl font-bold" style={{ color: '#1e293b' }}>
+                        {attendanceData?.staff?.full_name || attendanceData?.records?.[0]?.staff_name || attendanceData?.records?.[0]?.full_name || "Former Staff Member"}
+                      </h3>
                       <p className="text-sm font-semibold" style={{ color: '#64748b' }}>
                         ID: {attendanceData?.staff?.employee_id || "N/A"} • {attendanceData?.staff?.designation || "Staff"}
                       </p>

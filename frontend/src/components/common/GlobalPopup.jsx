@@ -66,7 +66,7 @@ const GlobalPopup = ({ isOpen, onClose, title, message, type = "success", onConf
                             <h3 className="text-white text-2xl font-black mb-2 tracking-tight">
                                 {title || (type === 'confirm' ? 'Are you sure?' : type.charAt(0).toUpperCase() + type.slice(1))}
                             </h3>
-                            <div className="text-white/60 leading-relaxed font-medium text-left">
+                            <div className="text-white/60 leading-relaxed font-medium text-center">
                                 {message}
                             </div>
                         </div>
